@@ -1,0 +1,11 @@
+[package]
+
+name = "mcp"
+version = "0.1.0"
+authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
+
+[lib]
+
+name = "mcp"
+path = "src/libmcp/lib.rs"
+crate_type = ["dylib"]
