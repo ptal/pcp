@@ -14,3 +14,7 @@
 #![comment = "Monadic Constraint Programming Library"]
 #![license = "Apache v2"]
 #![crate_type = "dylib"]
+
+#![feature(globs)]
+
+mod domain;
