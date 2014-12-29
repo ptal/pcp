@@ -20,17 +20,28 @@ use domain::Domain::*;
 use std::iter::range_inclusive;
 use std::cmp::{min, max};
 
-#[deriving(PartialEq, Eq, Clone)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub enum Domain {
   Set(BTreeSet<int>),
   Range(int, int)
 }
 
 impl Domain {
+  pub fn empty() -> Domain {
+    Range(1, 0)
+  }
+
   pub fn size(&self) -> uint {
     match self {
       &Set(ref ts) => ts.len(),
       &Range(l, u) => (u - l + 1) as uint
+    }
+  }
+
+  pub fn is_empty(&self) -> bool {
+    match self {
+      &Set(ref ts) => ts.is_empty(),
+      &Range(l, u) => l > u
     }
   }
 
@@ -45,9 +56,8 @@ impl Domain {
     match (self, d) {
       (&Set(ref ts), &Set(ref ts2)) => ts.is_subset(ts2),
       (&Range(l, u), &Range(l2,u2)) => l >= l2 && u <= u2,
-      (&Set(ref ts), r) => // (min, max) inside r.
-        Range(ts.iter().next().unwrap().clone(),
-              ts.iter().rev().next().unwrap().clone()).is_subset_of(r),
+      (s@&Set(_), r) => // (min, max) inside r.
+        Range(s.min(), s.max()).is_subset_of(r),
       (&Range(l, u), &Set(ref ts)) =>
         range_inclusive(l, u).all(|i| ts.contains(&i))
     }
@@ -66,6 +76,65 @@ impl Domain {
         inter.to_domain()
       }
       (r, s) => s.intersection(r)
+    }
+  }
+
+  pub fn union(&self, d: &Domain) -> Domain {
+    match (self, d) {
+      (&Set(ref ts), &Set(ref ts2)) => {
+        let inter: BTreeSet<int> = ts.union(ts2).cloned().collect();
+        inter.to_domain()
+      }
+      (&Range(l, u), &Range(l2, u2)) => {
+        if Domain::joinable(l,u,l2,u2) { Domain::join(l,u,l2,u2) }
+        else {
+          Domain::set_from_range(l, u).union(&Domain::set_from_range(l2, u2))
+        }
+      }
+      (s@&Set(_), &Range(l, u)) => {
+        if s.is_empty() { Range(l, u) }
+        else {
+          let lmin = s.min();
+          let umax = s.max();
+          if Domain::joinable(lmin, umax, l, u) {
+            Domain::join(lmin, umax, l, u)
+          } else {
+            s.union(&Domain::set_from_range(l, u))
+          }
+        }
+      }
+      (x, y) => y.union(x)
+    }
+  }
+
+  fn joinable(l:int, u: int, l2: int, u2: int) -> bool {
+    // sort on the lower bound (factorizing symetric cases).
+    if l2 < l { Domain::joinable(l2, u2, l, u) }
+    // Only 3 cases.
+    // |---|      |---|       |---|
+    //   |---|         |---|   |-|
+    else { l2 >= l && l2 <= u + 1 }
+  }
+
+  fn join(l: int, u: int, l2: int, u2: int) -> Domain {
+     Range(min(l,l2), max(u, u2))
+  }
+
+  fn set_from_range(l: int, u: int) -> Domain {
+    Set(FromIterator::from_iter(range_inclusive(l,u)))
+  }
+
+  pub fn min(&self) -> int {
+    match self {
+      &Set(ref ts) => ts.iter().next().unwrap().clone(),
+      &Range(l,_) => l
+    }
+  }
+
+  pub fn max(&self) -> int {
+    match self {
+      &Set(ref ts) => ts.iter().rev().next().unwrap().clone(),
+      &Range(_,u) => u
     }
   }
 }
@@ -174,4 +243,29 @@ fn intersection_test() {
   assert!(d5.intersection(&d1) == d5);
   assert!(d6.intersection(&d4) == vec![1,2,3].to_domain());
   assert!(d4.intersection(&d6) == vec![1,2,3].to_domain());
+}
+
+#[test]
+fn union_test() {
+  let d1 = Range(2, 4);
+  assert!(d1.union(&d1.clone()) == d1);
+  let d2 = Range(5, 7);
+  assert!(d1.union(&d2) == Range(2,7));
+  assert!(d2.union(&d1) == Range(2,7));
+  let d3 = Range(6, 7);
+  assert!(d1.union(&d3) == vec![2,3,4,6,7].to_domain());
+  assert!(d3.union(&d1) == vec![2,3,4,6,7].to_domain());
+  assert!(d2.union(&d3) == Range(5,7));
+  let d4 = vec![1,5].to_domain();
+  assert!(d1.union(&d4) == Range(1,5));
+  assert!(d2.union(&d4) == Range(1,7));
+  assert!(d3.union(&d4) == Range(1,7));
+  // disjoint test.
+  let d5 = Range(8,9);
+  assert!(d5.union(&d4) == vec![1,5,8,9].to_domain());
+  assert!(d4.union(&d5) == vec![1,5,8,9].to_domain());
+  let d6 = vec![8,9].to_domain();
+  let d7 = Range(1,5);
+  assert!(d6.union(&d7) == vec![1,2,3,4,5,8,9].to_domain());
+  assert!(d7.union(&d6) == vec![1,2,3,4,5,8,9].to_domain());
 }
