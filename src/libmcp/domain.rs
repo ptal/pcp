@@ -28,7 +28,18 @@ pub enum Domain {
 
 impl Domain {
   pub fn empty() -> Domain {
-    Range(1, 0)
+    (vec![]).to_domain()
+  }
+
+  pub fn singleton(x: int) -> Domain {
+    Range(x, x)
+  }
+
+  pub fn is_singleton(&self) -> bool {
+    match self {
+      &Set(ref ts) => ts.len() == 1,
+      &Range(l, u) => l == u
+    }
   }
 
   pub fn size(&self) -> uint {
@@ -107,6 +118,22 @@ impl Domain {
     }
   }
 
+  pub fn difference(&self, d: &Domain) -> Domain {
+    match (self, d) {
+      (&Set(ref ts), &Set(ref ts2)) => Set(ts.difference(ts2).cloned().collect()),
+      (&Range(l, u), &Range(l2, u2)) => {
+        if Domain::disjoint(l, u, l2, u2) { self.clone() }
+        else { Domain::set_from_iter(range_inclusive(l,u).filter(|&x| x < l2 || x > u2)) }
+      }
+      (&Range(l, u), s@&Set(_)) => Domain::set_from_range(l, u).difference(s),
+      (s@&Set(_), &Range(l, u)) => s.difference(&Domain::set_from_range(l, u))
+    }
+  }
+
+  fn disjoint(l:int, u: int, l2: int, u2: int) -> bool {
+    l > u2 || l2 > u
+  }
+
   fn joinable(l:int, u: int, l2: int, u2: int) -> bool {
     // sort on the lower bound (factorizing symetric cases).
     if l2 < l { Domain::joinable(l2, u2, l, u) }
@@ -121,7 +148,11 @@ impl Domain {
   }
 
   fn set_from_range(l: int, u: int) -> Domain {
-    Set(FromIterator::from_iter(range_inclusive(l,u)))
+    Domain::set_from_iter(range_inclusive(l,u))
+  }
+
+  fn set_from_iter<Iter: Iterator<int>>(iter: Iter) -> Domain {
+    Set(FromIterator::from_iter(iter))
   }
 
   pub fn min(&self) -> int {
@@ -162,7 +193,7 @@ impl ToDomain for (int, int) {
 
 impl ToDomain for int {
   fn to_domain(self) -> Domain {
-    Range(self.clone(), self)
+    Domain::singleton(self)
   }
 }
 
@@ -268,4 +299,31 @@ fn union_test() {
   let d7 = Range(1,5);
   assert!(d6.union(&d7) == vec![1,2,3,4,5,8,9].to_domain());
   assert!(d7.union(&d6) == vec![1,2,3,4,5,8,9].to_domain());
+}
+
+#[test]
+fn difference_test() {
+  let empty_set = Domain::empty();
+  let d1 = Range(2,4);
+  assert!(d1.difference(&d1.clone()) == empty_set);
+  let d2 = Range(6,8);
+  assert!(d1.difference(&d2.clone()) == d1);
+  assert!(d2.difference(&d1.clone()) == d2);
+  let d3 = Range(3, 6);
+  assert!(d1.difference(&d3.clone()) == vec![2].to_domain());
+  assert!(d3.difference(&d1.clone()) == vec![5,6].to_domain());
+  assert!(d2.difference(&d3.clone()) == vec![7,8].to_domain());
+  assert!(d3.difference(&d2.clone()) == vec![3,4,5].to_domain());
+
+  let d4 = vec![4].to_domain();
+  assert!(d4.difference(&d1.clone()) == empty_set);
+  assert!(d3.difference(&d4.clone()) == vec![3,5,6].to_domain());
+
+  let d5 = vec![2,3,4].to_domain();
+  assert!(d5.difference(&d1.clone()) == empty_set);
+  assert!(d1.difference(&d5.clone()) == empty_set);
+
+  let d6 = vec![3,4,5].to_domain();
+  assert!(d5.difference(&d6.clone()) == vec![2].to_domain());
+  assert!(d6.difference(&d5.clone()) == vec![5].to_domain());
 }
