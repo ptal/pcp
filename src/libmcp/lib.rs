@@ -15,6 +15,7 @@
 #![license = "Apache v2"]
 #![crate_type = "dylib"]
 
-#![feature(globs)]
+
+ #[allow(dead_code)]
 
 mod domain;

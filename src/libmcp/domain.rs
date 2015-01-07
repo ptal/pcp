@@ -16,11 +16,12 @@
 // credits to Control/CP/FD/OvertonFD/Domain.hs
 
 use std::collections::BTreeSet;
+use std::iter::FromIterator;
 use domain::Domain::*;
 use std::iter::range_inclusive;
 use std::cmp::{min, max};
 
-#[deriving(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Show)]
 pub enum Domain {
   Set(BTreeSet<int>),
   Range(int, int)
@@ -41,7 +42,6 @@ impl Domain {
       &Range(l, u) => l == u
     }
   }
-
   pub fn size(&self) -> uint {
     match self {
       &Set(ref ts) => ts.len(),
@@ -148,10 +148,10 @@ impl Domain {
   }
 
   fn set_from_range(l: int, u: int) -> Domain {
-    Domain::set_from_iter(range_inclusive(l,u))
+    Set(FromIterator::from_iter(range_inclusive(l,u)))
   }
 
-  fn set_from_iter<Iter: Iterator<int>>(iter: Iter) -> Domain {
+  fn set_from_iter<T: Iterator<Item=int>>(iter: T) -> Domain {
     Set(FromIterator::from_iter(iter))
   }
 
