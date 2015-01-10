@@ -1,4 +1,4 @@
-// Copyright 2014 Pierre Talbot (IRCAM)
+// Copyright 2015 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,18 +31,18 @@ pub enum VarEvent {
 
 impl VarEvent {
   pub fn merge(self, other: VarEvent) -> VarEvent {
-    FromPrimitive::from_int(min(self as int, other as int)).unwrap()
+    FromPrimitive::from_int(min(self as isize, other as isize)).unwrap()
   }
 }
 
 #[derive(Copy, PartialEq, Eq)]
 pub struct Var {
-  id: uint,
+  id: u32,
   dom: Interval
 }
 
 impl Var {
-  pub fn new(id: uint, dom: Interval) -> Var {
+  pub fn new(id: u32, dom: Interval) -> Var {
     Var {
       id: id,
       dom: dom
@@ -62,7 +62,7 @@ impl Var {
     else { Nothing }
   }
 
-  pub fn id(&self) -> uint { self.id }
+  pub fn id(&self) -> u32 { self.id }
 }
 
 #[cfg(test)]
