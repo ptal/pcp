@@ -12,13 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#![crate_name = "mcp"]
-#![experimental]
-// #![comment = "Monadic Constraint Programming Library"]
-// #![license = "Apache v2"]
-#![crate_type = "dylib"]
-
-extern crate interval;
-
-pub mod fd;
+pub mod var;

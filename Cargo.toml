@@ -9,3 +9,7 @@ authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 name = "mcp"
 path = "src/libmcp/lib.rs"
 crate_type = ["dylib"]
+
+[dependencies.interval]
+
+git = "https://github.com/ptal/Rust.Interval"
