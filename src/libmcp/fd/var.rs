@@ -20,7 +20,7 @@ use std::num::FromPrimitive;
 // we try to take the most precise first
 // which is failure, then Ass, then Bound,...
 // the union between two events is min(e1, e2)
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive)]
+#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Show)]
 pub enum VarEvent {
   Failure,
   Assignment,
@@ -49,6 +49,8 @@ impl Var {
     }
   }
 
+  pub fn id(&self) -> u32 { self.id }
+
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
   pub fn update(&mut self, dom: Interval) -> VarEvent {
     assert!(dom.is_subset_of(self.dom));
@@ -62,7 +64,23 @@ impl Var {
     else { Nothing }
   }
 
-  pub fn id(&self) -> u32 { self.id }
+  pub fn update_lb(&mut self, lb: i32) -> VarEvent {
+    let ub =  self.dom.upper();
+    self.update((lb, ub).to_interval())
+  }
+
+  pub fn update_ub(&mut self, ub: i32) -> VarEvent {
+    let lb = self.dom.lower();
+    self.update((lb, ub).to_interval())
+  }
+
+  pub fn lb(&self) -> i32 { self.dom.lower() }
+  pub fn ub(&self) -> i32 { self.dom.upper() }
+
+  pub fn intersection(v1: &mut Var, v2: &mut Var) -> Vec<(u32, VarEvent)> {
+    let new = v1.dom.intersection(v2.dom);
+    vec![(v1.id, v1.update(new)), (v2.id, v2.update(new))]
+  }
 }
 
 #[cfg(test)]
@@ -103,6 +121,76 @@ mod test {
     let mut var = var;
     assert!(var.update(dom) == expect);
     assert!(var.dom == dom);
+  }
+
+  #[test]
+  fn var_update_bound() {
+    let dom0_10 = (0,10).to_interval();
+    let var0_10 = Var::new(0, dom0_10);
+
+    var_update_lb_test_one(var0_10, 0, Nothing);
+    var_update_lb_test_one(var0_10, 10, Assignment);
+    var_update_lb_test_one(var0_10, 1, Bound);
+    var_update_lb_test_one(var0_10, 11, Failure);
+
+    var_update_ub_test_one(var0_10, 10, Nothing);
+    var_update_ub_test_one(var0_10, 0, Assignment);
+    var_update_ub_test_one(var0_10, 1, Bound);
+    var_update_ub_test_one(var0_10, -1, Failure);
+  }
+
+  fn var_update_lb_test_one(var: Var, lb: i32, expect: VarEvent) {
+    let mut var = var;
+    let ub = var.ub();
+    assert!(var.update_lb(lb) == expect);
+    assert!(var.dom == (lb,ub).to_interval());
+  }
+
+  fn var_update_ub_test_one(var: Var, ub: i32, expect: VarEvent) {
+    let mut var = var;
+    let lb = var.lb();
+    assert!(var.update_ub(ub) == expect);
+    assert!(var.dom == (lb,ub).to_interval());
+  }
+
+  #[test]
+  fn var_intersection_test() {
+    let empty = Var::new(0, Interval::empty());
+    let var0_10 = Var::new(0, (0,10).to_interval());
+    let var10_20 = Var::new(0, (10,20).to_interval());
+    let var11_20 = Var::new(0, (11,20).to_interval());
+    let var1_9 = Var::new(0, (1,9).to_interval());
+
+    var_intersection_test_one(var0_10, var10_20, (Assignment, Assignment));
+    var_intersection_test_one(var0_10, var1_9, (Bound, Nothing));
+    var_intersection_test_one(var1_9, var0_10, (Nothing, Bound));
+    var_intersection_test_one(var0_10, var11_20, (Failure, Failure));
+    var_intersection_test_one(var0_10, empty, (Failure, Failure));
+    var_intersection_test_one(empty, empty, (Failure, Failure));
+  }
+
+  fn var_intersection_test_one(v1: Var, v2: Var, (e1, e2): (VarEvent, VarEvent)) {
+    let mut v1 = v1;
+    let mut v2 = v2;
+    assert!(Var::intersection(&mut v1, &mut v2) == vec![(0,e1), (0,e2)]);
+  }
+
+  #[test]
+  #[should_fail]
+  fn var_non_monotonic_update_lb() {
+    let dom0_10 = (0,10).to_interval();
+    let mut var0_10 = Var::new(0, dom0_10);
+
+    var0_10.update_lb(-1);
+  }
+
+  #[test]
+  #[should_fail]
+  fn var_non_monotonic_update_ub() {
+    let dom0_10 = (0,10).to_interval();
+    let mut var0_10 = Var::new(0, dom0_10);
+
+    var0_10.update_ub(11);
   }
 
   #[test]
