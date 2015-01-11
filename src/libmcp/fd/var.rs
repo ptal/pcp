@@ -13,7 +13,9 @@
 // limitations under the License.
 
 pub use interval::interval::*;
-use self::VarEvent::*;
+pub use event::VarEvent;
+
+use self::FDEvent::*;
 use std::cmp::min;
 use std::num::FromPrimitive;
 
@@ -21,7 +23,7 @@ use std::num::FromPrimitive;
 // which is failure, then Ass, then Bound,...
 // the union between two events is min(e1, e2)
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Show)]
-pub enum VarEvent {
+pub enum FDEvent {
   Failure,
   Assignment,
   Bound,
@@ -29,9 +31,13 @@ pub enum VarEvent {
   Nothing
 }
 
-impl VarEvent {
-  pub fn merge(self, other: VarEvent) -> VarEvent {
+impl VarEvent for FDEvent {
+  fn merge(self, other: FDEvent) -> FDEvent {
     FromPrimitive::from_int(min(self as isize, other as isize)).unwrap()
+  }
+
+  fn to_index(self) -> usize {
+    self as usize
   }
 }
 
@@ -52,7 +58,7 @@ impl Var {
   pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  pub fn update(&mut self, dom: Interval) -> VarEvent {
+  pub fn update(&mut self, dom: Interval) -> FDEvent {
     assert!(dom.is_subset_of(self.dom));
     let old = self.dom;
     self.dom = dom;
@@ -64,12 +70,12 @@ impl Var {
     else { Nothing }
   }
 
-  pub fn update_lb(&mut self, lb: i32) -> VarEvent {
+  pub fn update_lb(&mut self, lb: i32) -> FDEvent {
     let ub =  self.dom.upper();
     self.update((lb, ub).to_interval())
   }
 
-  pub fn update_ub(&mut self, ub: i32) -> VarEvent {
+  pub fn update_ub(&mut self, ub: i32) -> FDEvent {
     let lb = self.dom.lower();
     self.update((lb, ub).to_interval())
   }
@@ -77,7 +83,7 @@ impl Var {
   pub fn lb(&self) -> i32 { self.dom.lower() }
   pub fn ub(&self) -> i32 { self.dom.upper() }
 
-  pub fn intersection(v1: &mut Var, v2: &mut Var) -> Vec<(u32, VarEvent)> {
+  pub fn intersection(v1: &mut Var, v2: &mut Var) -> Vec<(u32, FDEvent)> {
     let new = v1.dom.intersection(v2.dom);
     vec![(v1.id, v1.update(new)), (v2.id, v2.update(new))]
   }
@@ -86,7 +92,7 @@ impl Var {
 #[cfg(test)]
 mod test {
   use super::*;
-  use super::VarEvent::*;
+  use super::FDEvent::*;
 
   #[test]
   fn event_test() {
@@ -117,7 +123,7 @@ mod test {
     var_update_test_one(var0_10, dom1_9, Bound);
   }
 
-  fn var_update_test_one(var: Var, dom: Interval, expect: VarEvent) {
+  fn var_update_test_one(var: Var, dom: Interval, expect: FDEvent) {
     let mut var = var;
     assert!(var.update(dom) == expect);
     assert!(var.dom == dom);
@@ -139,14 +145,14 @@ mod test {
     var_update_ub_test_one(var0_10, -1, Failure);
   }
 
-  fn var_update_lb_test_one(var: Var, lb: i32, expect: VarEvent) {
+  fn var_update_lb_test_one(var: Var, lb: i32, expect: FDEvent) {
     let mut var = var;
     let ub = var.ub();
     assert!(var.update_lb(lb) == expect);
     assert!(var.dom == (lb,ub).to_interval());
   }
 
-  fn var_update_ub_test_one(var: Var, ub: i32, expect: VarEvent) {
+  fn var_update_ub_test_one(var: Var, ub: i32, expect: FDEvent) {
     let mut var = var;
     let lb = var.lb();
     assert!(var.update_ub(ub) == expect);
@@ -169,7 +175,7 @@ mod test {
     var_intersection_test_one(empty, empty, (Failure, Failure));
   }
 
-  fn var_intersection_test_one(v1: Var, v2: Var, (e1, e2): (VarEvent, VarEvent)) {
+  fn var_intersection_test_one(v1: Var, v2: Var, (e1, e2): (FDEvent, FDEvent)) {
     let mut v1 = v1;
     let mut v2 = v2;
     assert!(Var::intersection(&mut v1, &mut v2) == vec![(0,e1), (0,e2)]);
