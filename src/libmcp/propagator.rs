@@ -12,15 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use event::VarEvent;
 
-#![crate_name = "mcp"]
-#![experimental]
-// #![comment = "Monadic Constraint Programming Library"]
-// #![license = "Apache v2"]
-#![crate_type = "dylib"]
+#[derive(Copy, PartialEq, Eq, Show)]
+pub enum Status
+{
+  Entailed,
+  Disentailed,
+  Unknown
+}
 
-extern crate interval;
+pub trait Propagator
+{
+  type Event: VarEvent;
 
-pub mod fd;
-pub mod event;
-pub mod propagator;
+  // If the result is Entailed or Disentailed, it must not
+  // change after a propagate call.
+  fn status(&self) -> Status;
+
+  // The propagator is stable when all Event are "Nothing".
+  fn propagate(&mut self) -> Vec<(u32, Self::Event)>;
+}
