@@ -84,6 +84,14 @@ impl FDVar {
   pub fn lb(&self) -> i32 { self.dom.lower() }
   pub fn ub(&self) -> i32 { self.dom.upper() }
 
+  pub fn is_failed(&self) -> bool { self.dom.is_empty() }
+  pub fn failed(&mut self, events: &mut Vec<(u32, FDEvent)>) {
+    if !self.is_failed() {
+      self.dom = Interval::empty();
+      events.push((self.id, Failure));
+    }
+  }
+
   pub fn intersection(v1: &mut FDVar, v2: &mut FDVar) -> Vec<(u32, FDEvent)> {
     let mut events = vec![];
     let new = v1.dom.intersection(v2.dom);
