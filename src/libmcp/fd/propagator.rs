@@ -96,12 +96,10 @@ impl Propagator for XLessThanY {
   fn propagate(&mut self) -> Vec<(u32, <XLessThanY as Propagator>::Event)> {
     let mut events = vec![];
     if self.x.lb() >= self.y.lb() {
-      let ev = self.y.update_lb(self.x.lb() + 1);
-      events.push((self.x.id(), ev));
+      self.y.update_lb(self.x.lb() + 1, &mut events);
     }
     if self.x.ub() >= self.y.ub() {
-      let ev = self.x.update_ub(self.y.ub() - 1);
-      events.push((self.y.id(), ev));
+      self.x.update_ub(self.y.ub() - 1, &mut events);
     }
     events
   }
@@ -118,28 +116,26 @@ mod test {
   #[test]
   fn equalxy_propagate_test() {
     let empty = FDVar::new(0, Interval::empty());
-    let var0_10 = FDVar::new(0, (0,10).to_interval());
-    let var10_20 = FDVar::new(0, (10,20).to_interval());
-    let var5_15 = FDVar::new(0, (5,15).to_interval());
-    let var11_20 = FDVar::new(0, (11,20).to_interval());
-    let var1_1 = FDVar::new(0, (1,1).to_interval());
+    let var0_10 = FDVar::new(1, (0,10).to_interval());
+    let var10_20 = FDVar::new(2, (10,20).to_interval());
+    let var5_15 = FDVar::new(3, (5,15).to_interval());
+    let var11_20 = FDVar::new(4, (11,20).to_interval());
+    let var1_1 = FDVar::new(5, (1,1).to_interval());
 
-    equalxy_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![Assignment, Assignment]);
-    equalxy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![Bound, Bound]);
-    equalxy_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![Nothing, Assignment]);
-    equalxy_propagate_test_one(var0_10, var0_10, Unknown, Unknown, vec![Nothing, Nothing]);
-    equalxy_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![Failure, Nothing]);
-    equalxy_propagate_test_one(var1_1, empty, Disentailed, Disentailed, vec![Failure, Nothing]);
-    equalxy_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, vec![Failure, Failure]);
+    equalxy_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![(1, Assignment), (2, Assignment)]);
+    equalxy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![(3, Bound), (2, Bound)]);
+    equalxy_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![(1, Assignment)]);
+    equalxy_propagate_test_one(var0_10, var0_10, Unknown, Unknown, vec![]);
+    equalxy_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![(1, Failure)]);
+    equalxy_propagate_test_one(var1_1, empty, Disentailed, Disentailed, vec![(5, Failure)]);
+    equalxy_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, vec![(1, Failure), (4, Failure)]);
   }
 
-  fn equalxy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, events_expected: Vec<FDEvent>) {
+  fn equalxy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
     let mut propagator = EqualXY::new(v1, v2);
     assert_eq!(propagator.status(), before);
-    let var_events = propagator.propagate();
-    for ((_,ev), expected) in var_events.into_iter().zip(events_expected.into_iter()) {
-      assert_eq!(ev, expected);
-    }
+    let events = propagator.propagate();
+    assert_eq!(events, expected);
     assert_eq!(propagator.status(), after);
   }
 

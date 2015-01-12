@@ -27,8 +27,7 @@ pub enum FDEvent {
   Failure,
   Assignment,
   Bound,
-  Inner,
-  Nothing
+  Inner
 }
 
 impl VarEvent for FDEvent {
@@ -55,37 +54,42 @@ impl FDVar {
     }
   }
 
-  pub fn id(&self) -> u32 { self.id }
-
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  pub fn update(&mut self, dom: Interval) -> FDEvent {
+  pub fn update(&mut self, dom: Interval, events: &mut Vec<(u32, FDEvent)>) {
     assert!(dom.is_subset_of(self.dom));
     let old = self.dom;
     self.dom = dom;
-    if old == dom { Nothing }
-    else if dom.is_empty() { Failure }
-    else if dom.is_singleton() { Assignment }
-    else if dom.lower() != old.lower() ||
-            dom.upper() != old.upper() { Bound }
-    else { Inner }
+    if old == dom { return; }
+    else {
+      let ev =
+        if dom.is_empty() { Failure }
+        else if dom.is_singleton() { Assignment }
+        else if dom.lower() != old.lower() ||
+                dom.upper() != old.upper() { Bound }
+        else { Inner };
+      events.push((self.id, ev));
+    }
   }
 
-  pub fn update_lb(&mut self, lb: i32) -> FDEvent {
+  pub fn update_lb(&mut self, lb: i32, events: &mut Vec<(u32, FDEvent)>) {
     let ub =  self.dom.upper();
-    self.update((lb, ub).to_interval())
+    self.update((lb, ub).to_interval(), events);
   }
 
-  pub fn update_ub(&mut self, ub: i32) -> FDEvent {
+  pub fn update_ub(&mut self, ub: i32, events: &mut Vec<(u32, FDEvent)>) {
     let lb = self.dom.lower();
-    self.update((lb, ub).to_interval())
+    self.update((lb, ub).to_interval(), events);
   }
 
   pub fn lb(&self) -> i32 { self.dom.lower() }
   pub fn ub(&self) -> i32 { self.dom.upper() }
 
   pub fn intersection(v1: &mut FDVar, v2: &mut FDVar) -> Vec<(u32, FDEvent)> {
+    let mut events = vec![];
     let new = v1.dom.intersection(v2.dom);
-    vec![(v1.id, v1.update(new)), (v2.id, v2.update(new))]
+    v1.update(new, &mut events);
+    v2.update(new, &mut events);
+    events
   }
 
   pub fn is_disjoint(v1: &FDVar, v2: &FDVar) -> bool {
@@ -102,11 +106,13 @@ mod test {
   fn event_test() {
     let fail = Failure;
     let ass = Assignment;
+    let bound = Bound;
     assert_eq!(fail.merge(ass), Failure);
+    assert_eq!(fail.merge(fail), Failure);
     assert_eq!(ass.merge(fail), Failure);
-    let nothing = Nothing;
-    assert_eq!(nothing.merge(ass), Assignment);
-    assert_eq!(ass.merge(nothing), Assignment);
+    assert_eq!(bound.merge(fail), Failure);
+    assert_eq!(bound.merge(ass), Assignment);
+    assert_eq!(ass.merge(bound), Assignment);
   }
 
   #[test]
@@ -119,18 +125,26 @@ mod test {
     let empty = Interval::empty();
     let var0_10 = FDVar::new(0, dom0_10);
 
-    var_update_test_one(var0_10, dom0_10, Nothing);
-    var_update_test_one(var0_10, empty, Failure);
-    var_update_test_one(var0_10, dom0_0, Assignment);
-    var_update_test_one(var0_10, dom1_10, Bound);
-    var_update_test_one(var0_10, dom0_9, Bound);
-    var_update_test_one(var0_10, dom1_9, Bound);
+    var_update_test_one(var0_10, dom0_10, vec![]);
+    var_update_test_one(var0_10, empty, vec![Failure]);
+    var_update_test_one(var0_10, dom0_0, vec![Assignment]);
+    var_update_test_one(var0_10, dom1_10, vec![Bound]);
+    var_update_test_one(var0_10, dom0_9, vec![Bound]);
+    var_update_test_one(var0_10, dom1_9, vec![Bound]);
   }
 
-  fn var_update_test_one(var: FDVar, dom: Interval, expect: FDEvent) {
+  fn var_update_test_one(var: FDVar, dom: Interval, expect: Vec<FDEvent>) {
     let mut var = var;
-    assert_eq!(var.update(dom), expect);
+    let mut events = vec![];
+    var.update(dom, &mut events);
+    assert_eq_events(events, expect);
     assert_eq!(var.dom, dom);
+  }
+
+  fn assert_eq_events(events: Vec<(u32, FDEvent)>, expect: Vec<FDEvent>) {
+    for ((_,ev), expect) in events.into_iter().zip(expect.into_iter()) {
+      assert_eq!(ev, expect);
+    }
   }
 
   #[test]
@@ -138,51 +152,55 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let var0_10 = FDVar::new(0, dom0_10);
 
-    var_update_lb_test_one(var0_10, 0, Nothing);
-    var_update_lb_test_one(var0_10, 10, Assignment);
-    var_update_lb_test_one(var0_10, 1, Bound);
-    var_update_lb_test_one(var0_10, 11, Failure);
+    var_update_lb_test_one(var0_10, 0, vec![]);
+    var_update_lb_test_one(var0_10, 10, vec![Assignment]);
+    var_update_lb_test_one(var0_10, 1, vec![Bound]);
+    var_update_lb_test_one(var0_10, 11, vec![Failure]);
 
-    var_update_ub_test_one(var0_10, 10, Nothing);
-    var_update_ub_test_one(var0_10, 0, Assignment);
-    var_update_ub_test_one(var0_10, 1, Bound);
-    var_update_ub_test_one(var0_10, -1, Failure);
+    var_update_ub_test_one(var0_10, 10, vec![]);
+    var_update_ub_test_one(var0_10, 0, vec![Assignment]);
+    var_update_ub_test_one(var0_10, 1, vec![Bound]);
+    var_update_ub_test_one(var0_10, -1, vec![Failure]);
   }
 
-  fn var_update_lb_test_one(var: FDVar, lb: i32, expect: FDEvent) {
+  fn var_update_lb_test_one(var: FDVar, lb: i32, expect: Vec<FDEvent>) {
     let mut var = var;
     let ub = var.ub();
-    assert_eq!(var.update_lb(lb), expect);
+    let mut events = vec![];
+    var.update_lb(lb, &mut events);
+    assert_eq_events(events, expect);
     assert_eq!(var.dom, (lb,ub).to_interval());
   }
 
-  fn var_update_ub_test_one(var: FDVar, ub: i32, expect: FDEvent) {
+  fn var_update_ub_test_one(var: FDVar, ub: i32, expect: Vec<FDEvent>) {
     let mut var = var;
     let lb = var.lb();
-    assert_eq!(var.update_ub(ub), expect);
+    let mut events = vec![];
+    var.update_ub(ub, &mut events);
+    assert_eq_events(events, expect);
     assert_eq!(var.dom, (lb,ub).to_interval());
   }
 
   #[test]
   fn var_intersection_test() {
     let empty = FDVar::new(0, Interval::empty());
-    let var0_10 = FDVar::new(0, (0,10).to_interval());
-    let var10_20 = FDVar::new(0, (10,20).to_interval());
-    let var11_20 = FDVar::new(0, (11,20).to_interval());
-    let var1_9 = FDVar::new(0, (1,9).to_interval());
+    let var0_10 = FDVar::new(1, (0,10).to_interval());
+    let var10_20 = FDVar::new(2, (10,20).to_interval());
+    let var11_20 = FDVar::new(3, (11,20).to_interval());
+    let var1_9 = FDVar::new(4, (1,9).to_interval());
 
-    var_intersection_test_one(var0_10, var10_20, (Assignment, Assignment));
-    var_intersection_test_one(var0_10, var1_9, (Bound, Nothing));
-    var_intersection_test_one(var1_9, var0_10, (Nothing, Bound));
-    var_intersection_test_one(var0_10, var11_20, (Failure, Failure));
-    var_intersection_test_one(var0_10, empty, (Failure, Nothing));
-    var_intersection_test_one(empty, empty, (Nothing, Nothing));
+    var_intersection_test_one(var0_10, var10_20, vec![(1, Assignment), (2, Assignment)]);
+    var_intersection_test_one(var0_10, var1_9, vec![(1, Bound)]);
+    var_intersection_test_one(var1_9, var0_10, vec![(1, Bound)]);
+    var_intersection_test_one(var0_10, var11_20, vec![(1, Failure), (3, Failure)]);
+    var_intersection_test_one(var0_10, empty, vec![(1, Failure)]);
+    var_intersection_test_one(empty, empty, vec![]);
   }
 
-  fn var_intersection_test_one(v1: FDVar, v2: FDVar, (e1, e2): (FDEvent, FDEvent)) {
-    let mut v1 = v1;
-    let mut v2 = v2;
-    assert_eq!(FDVar::intersection(&mut v1, &mut v2), vec![(0,e1), (0,e2)]);
+  fn var_intersection_test_one(mut v1: FDVar, mut v2: FDVar, events: Vec<(u32, FDEvent)>) {
+    let v1 = &mut v1;
+    let v2 = &mut v2;
+    assert_eq!(FDVar::intersection(v1, v2), events);
   }
 
   #[test]
@@ -191,7 +209,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10 = FDVar::new(0, dom0_10);
 
-    var0_10.update_lb(-1);
+    var0_10.update_lb(-1, &mut vec![]);
   }
 
   #[test]
@@ -200,7 +218,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10 = FDVar::new(0, dom0_10);
 
-    var0_10.update_ub(11);
+    var0_10.update_ub(11, &mut vec![]);
   }
 
   #[test]
@@ -210,7 +228,7 @@ mod test {
     let mut var0_10 = FDVar::new(0, dom0_10);
     let dom11_11 = 11.to_interval();
 
-    var0_10.update(dom11_11);
+    var0_10.update(dom11_11, &mut vec![]);
   }
 
   #[test]
@@ -220,6 +238,6 @@ mod test {
     let mut var0_10 = FDVar::new(0, dom0_10);
     let domm5_15 = (-5, 15).to_interval();
 
-    var0_10.update(domm5_15);
+    var0_10.update(domm5_15, &mut vec![]);
   }
 }
