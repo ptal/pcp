@@ -16,18 +16,18 @@ use fd::var::*;
 use propagator::*;
 use propagator::Status::*;
 
-pub struct EqualXY {
+pub struct XEqualY {
   x: FDVar,
   y: FDVar
 }
 
-impl EqualXY {
-  pub fn new(x: FDVar, y: FDVar) -> EqualXY {
-    EqualXY { x: x, y: y }
+impl XEqualY {
+  pub fn new(x: FDVar, y: FDVar) -> XEqualY {
+    XEqualY { x: x, y: y }
   }
 }
 
-impl Propagator for EqualXY {
+impl Propagator for XEqualY {
   type Event = FDEvent;
 
   fn status(&self) -> Status {
@@ -52,7 +52,7 @@ impl Propagator for EqualXY {
     }
   }
 
-  fn propagate(&mut self) -> Vec<(u32, <EqualXY as Propagator>::Event)> {
+  fn propagate(&mut self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
     FDVar::intersection(&mut self.x, &mut self.y)
   }
 }
@@ -124,17 +124,17 @@ mod test {
     let var11_20 = FDVar::new(4, (11,20).to_interval());
     let var1_1 = FDVar::new(5, (1,1).to_interval());
 
-    equalxy_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![(1, Assignment), (2, Assignment)]);
-    equalxy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![(3, Bound), (2, Bound)]);
-    equalxy_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![(1, Assignment)]);
-    equalxy_propagate_test_one(var0_10, var0_10, Unknown, Unknown, vec![]);
-    equalxy_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![(1, Failure)]);
-    equalxy_propagate_test_one(var1_1, empty, Disentailed, Disentailed, vec![(5, Failure)]);
-    equalxy_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, vec![(1, Failure), (4, Failure)]);
+    xequaly_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![(1, Assignment), (2, Assignment)]);
+    xequaly_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![(3, Bound), (2, Bound)]);
+    xequaly_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![(1, Assignment)]);
+    xequaly_propagate_test_one(var0_10, var0_10, Unknown, Unknown, vec![]);
+    xequaly_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![(1, Failure)]);
+    xequaly_propagate_test_one(var1_1, empty, Disentailed, Disentailed, vec![(5, Failure)]);
+    xequaly_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, vec![(1, Failure), (4, Failure)]);
   }
 
-  fn equalxy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
-    let propagator = EqualXY::new(v1, v2);
+  fn xequaly_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
+    let propagator = XEqualY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
 
@@ -162,7 +162,8 @@ mod test {
     propagate_test_one(propagator, before, after, expected);
   }
 
-  fn propagate_test_one<P: Propagator<Event=FDEvent>>(mut prop: P, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
+  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Vec<(u32, FDEvent)>)
+   where P: Propagator<Event=FDEvent> {
     assert_eq!(prop.status(), before);
     let events = prop.propagate();
     assert_eq!(events, expected);
