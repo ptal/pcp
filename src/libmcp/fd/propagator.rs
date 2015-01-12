@@ -41,11 +41,9 @@ impl Propagator for EqualXY {
     //
     // Unknown: Everything else.
 
-    // Disentailed.
     if FDVar::is_disjoint(&self.x, &self.y) {
       Disentailed
     }
-    // Entailed.
     else if self.x.lb() == self.y.ub() && self.x.ub() == self.y.lb() {
       Entailed
     }
@@ -59,6 +57,55 @@ impl Propagator for EqualXY {
   }
 }
 
+pub struct XLessThanY {
+  x: FDVar,
+  y: FDVar
+}
+
+impl XLessThanY {
+  pub fn new(x: FDVar, y: FDVar) -> XLessThanY {
+    XLessThanY { x: x, y: y }
+  }
+}
+
+impl Propagator for XLessThanY {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    // Disentailed:
+    //     |--|
+    // |--|
+    //
+    // Entailed:
+    // |--|
+    //     |--|
+    //
+    // Unknown: Everything else.
+
+    if self.x.lb() > self.y.ub() {
+      Disentailed
+    }
+    else if self.x.ub() < self.y.lb() {
+      Entailed
+    }
+    else {
+      Unknown
+    }
+  }
+
+  fn propagate(&mut self) -> Vec<(u32, <XLessThanY as Propagator>::Event)> {
+    let mut events = vec![];
+    if self.x.lb() >= self.y.lb() {
+      let ev = self.y.update_lb(self.x.lb() + 1);
+      events.push((self.x.id(), ev));
+    }
+    if self.x.ub() >= self.y.ub() {
+      let ev = self.x.update_ub(self.y.ub() - 1);
+      events.push((self.y.id(), ev));
+    }
+    events
+  }
+}
 
 #[cfg(test)]
 mod test {
@@ -95,4 +142,20 @@ mod test {
     }
     assert_eq!(propagator.status(), after);
   }
+
+  // #[test]
+  // fn xlessy_propagate_test() {
+  //   let empty = FDVar::new(0, Interval::empty());
+  //   let var0_10 = FDVar::new(0, (0,10).to_interval());
+  //   let var10_20 = FDVar::new(0, (10,20).to_interval());
+  //   let var5_15 = FDVar::new(0, (5,15).to_interval());
+  //   let var11_20 = FDVar::new(0, (11,20).to_interval());
+  //   let var1_1 = FDVar::new(0, (1,1).to_interval());
+
+  //   xlessy_propagate_test_one(var0_10, var10_20, Unknown, Unknown, vec![Nothing, Nothing]);
+  //   xlessy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![Nothing, Nothing]);
+  //   xlessy_propagate_test_one(var5_15, var0_10, Unknown, Unknown, vec![Bound, Bound]);
+  //   xlessy_propagate_test_one(var0_10, var11_20, Entailed, Entailed, vec![Nothing, Nothing]);
+  //   xlessy_propagate_test_one(var11_20, var0_10, Disentailed, Disentailed, vec![Failure, Failure]);
+  // }
 }
