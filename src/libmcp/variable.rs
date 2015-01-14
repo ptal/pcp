@@ -12,16 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub use event::VarEvent;
 
-#![crate_name = "mcp"]
-#![experimental]
-// #![comment = "Monadic Constraint Programming Library"]
-// #![license = "Apache v2"]
-#![crate_type = "dylib"]
+pub trait Variable {
+  type Domain;
+  type Event: VarEvent;
 
-extern crate interval;
-
-pub mod fd;
-pub mod event;
-pub mod propagator;
-pub mod variable;
+  fn new(id: u32, dom: Self::Domain) -> Self;
+}

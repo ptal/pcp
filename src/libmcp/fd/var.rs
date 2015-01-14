@@ -14,6 +14,7 @@
 
 pub use interval::interval::*;
 pub use event::VarEvent;
+pub use variable::Variable;
 
 use self::FDEvent::*;
 use std::cmp::min;
@@ -50,14 +51,19 @@ pub struct FDVar {
   dom: Interval
 }
 
-impl FDVar {
-  pub fn new(id: u32, dom: Interval) -> FDVar {
+impl Variable for FDVar {
+  type Domain = Interval;
+  type Event = FDEvent;
+
+  fn new(id: u32, dom: Interval) -> FDVar {
     FDVar {
       id: id,
       dom: dom
     }
   }
+}
 
+impl FDVar {
   pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
@@ -137,7 +143,7 @@ mod test {
     let dom1_9 = (1,9).to_interval();
     let dom0_0 = (0,0).to_interval();
     let empty = Interval::empty();
-    let var0_10 = FDVar::new(0, dom0_10);
+    let var0_10 = Variable::new(0, dom0_10);
 
     var_update_test_one(var0_10, dom0_10, vec![]);
     var_update_test_one(var0_10, empty, vec![Failure]);
@@ -164,7 +170,7 @@ mod test {
   #[test]
   fn var_update_bound() {
     let dom0_10 = (0,10).to_interval();
-    let var0_10 = FDVar::new(0, dom0_10);
+    let var0_10 = Variable::new(0, dom0_10);
 
     var_update_lb_test_one(var0_10, 0, vec![]);
     var_update_lb_test_one(var0_10, 10, vec![Assignment]);
@@ -197,11 +203,11 @@ mod test {
 
   #[test]
   fn var_intersection_test() {
-    let empty = FDVar::new(0, Interval::empty());
-    let var0_10 = FDVar::new(1, (0,10).to_interval());
-    let var10_20 = FDVar::new(2, (10,20).to_interval());
-    let var11_20 = FDVar::new(3, (11,20).to_interval());
-    let var1_9 = FDVar::new(4, (1,9).to_interval());
+    let empty = Variable::new(0, Interval::empty());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var11_20 = Variable::new(3, (11,20).to_interval());
+    let var1_9 = Variable::new(4, (1,9).to_interval());
 
     var_intersection_test_one(var0_10, var10_20, vec![(1, Assignment), (2, Assignment)]);
     var_intersection_test_one(var0_10, var1_9, vec![(1, Bound)]);
@@ -221,7 +227,7 @@ mod test {
   #[should_fail]
   fn var_non_monotonic_update_lb() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10 = FDVar::new(0, dom0_10);
+    let mut var0_10: FDVar = Variable::new(0, dom0_10);
 
     var0_10.update_lb(-1, &mut vec![]);
   }
@@ -230,7 +236,7 @@ mod test {
   #[should_fail]
   fn var_non_monotonic_update_ub() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10 = FDVar::new(0, dom0_10);
+    let mut var0_10: FDVar = Variable::new(0, dom0_10);
 
     var0_10.update_ub(11, &mut vec![]);
   }
@@ -239,7 +245,7 @@ mod test {
   #[should_fail]
   fn var_non_monotonic_update_singleton() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10 = FDVar::new(0, dom0_10);
+    let mut var0_10: FDVar = Variable::new(0, dom0_10);
     let dom11_11 = 11.to_interval();
 
     var0_10.update(dom11_11, &mut vec![]);
@@ -249,7 +255,7 @@ mod test {
   #[should_fail]
   fn var_non_monotonic_update_widen() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10 = FDVar::new(0, dom0_10);
+    let mut var0_10: FDVar = Variable::new(0, dom0_10);
     let domm5_15 = (-5, 15).to_interval();
 
     var0_10.update(domm5_15, &mut vec![]);

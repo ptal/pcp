@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use fd::var::*;
+use fd::var::FDEvent::*;
 use propagator::*;
 use propagator::Status::*;
-use fd::var::FDEvent::*;
 
 pub struct XEqualY {
   x: FDVar,
@@ -136,12 +136,12 @@ mod test {
 
   #[test]
   fn equalxy_propagate_test() {
-    let empty = FDVar::new(0, Interval::empty());
-    let var0_10 = FDVar::new(1, (0,10).to_interval());
-    let var10_20 = FDVar::new(2, (10,20).to_interval());
-    let var5_15 = FDVar::new(3, (5,15).to_interval());
-    let var11_20 = FDVar::new(4, (11,20).to_interval());
-    let var1_1 = FDVar::new(5, (1,1).to_interval());
+    let empty = Variable::new(0, Interval::empty());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var11_20 = Variable::new(4, (11,20).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
 
     xequaly_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![(1, Assignment), (2, Assignment)]);
     xequaly_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![(3, Bound), (2, Bound)]);
@@ -159,12 +159,12 @@ mod test {
 
   #[test]
   fn xlessy_propagate_test() {
-    let empty = FDVar::new(0, Interval::empty());
-    let var0_10 = FDVar::new(1, (0,10).to_interval());
-    let var10_20 = FDVar::new(2, (10,20).to_interval());
-    let var5_15 = FDVar::new(3, (5,15).to_interval());
-    let var11_20 = FDVar::new(4, (11,20).to_interval());
-    let var1_1 = FDVar::new(5, (1,1).to_interval());
+    let empty = Variable::new(0, Interval::empty());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var11_20 = Variable::new(4, (11,20).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
 
     xlessy_propagate_test_one(var0_10, var10_20, Unknown, Unknown, vec![]);
     xlessy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![]);
