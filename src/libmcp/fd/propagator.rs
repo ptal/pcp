@@ -15,6 +15,7 @@
 use fd::var::*;
 use propagator::*;
 use propagator::Status::*;
+use fd::var::FDEvent::*;
 
 pub struct XEqualY {
   x: FDVar,
@@ -54,6 +55,10 @@ impl Propagator for XEqualY {
 
   fn propagate(&mut self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
     FDVar::intersection(&mut self.x, &mut self.y)
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
+    vec![(self.x.id(), Inner), (self.y.id(), Inner)]
   }
 }
 
@@ -97,13 +102,19 @@ impl Propagator for XLessThanY {
     let mut events = vec![];
     if self.x.is_failed() { self.y.failed(&mut events); }
     else if self.y.is_failed() { self.x.failed(&mut events); }
-    else if self.x.ub() >= self.y.ub() {
+    else {
+      if self.x.ub() >= self.y.ub() {
       self.x.update_ub(self.y.ub() - 1, &mut events);
-    }
-    if self.x.lb() >= self.y.lb() {
-      self.y.update_lb(self.x.lb() + 1, &mut events);
+      }
+      if self.x.lb() >= self.y.lb() {
+        self.y.update_lb(self.x.lb() + 1, &mut events);
+      }
     }
     events
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
+    vec![(self.x.id(), Bound), (self.y.id(), Bound)]
   }
 }
 
@@ -114,6 +125,14 @@ mod test {
   use fd::var::FDEvent::*;
   use propagator::Status::*;
   use propagator::*;
+
+  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Vec<(u32, FDEvent)>)
+   where P: Propagator<Event=FDEvent> {
+    assert_eq!(prop.status(), before);
+    let events = prop.propagate();
+    assert_eq!(events, expected);
+    assert_eq!(prop.status(), after);
+  }
 
   #[test]
   fn equalxy_propagate_test() {
@@ -160,13 +179,5 @@ mod test {
   fn xlessy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
     let propagator = XLessThanY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
-  }
-
-  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Vec<(u32, FDEvent)>)
-   where P: Propagator<Event=FDEvent> {
-    assert_eq!(prop.status(), before);
-    let events = prop.propagate();
-    assert_eq!(events, expected);
-    assert_eq!(prop.status(), after);
   }
 }

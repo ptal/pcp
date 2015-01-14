@@ -38,6 +38,10 @@ impl VarEvent for FDEvent {
   fn to_index(self) -> usize {
     self as usize
   }
+
+  fn size() -> usize {
+    Inner.to_index() + 1
+  }
 }
 
 #[derive(Copy, PartialEq, Eq)]
@@ -53,6 +57,8 @@ impl FDVar {
       dom: dom
     }
   }
+
+  pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
   pub fn update(&mut self, dom: Interval, events: &mut Vec<(u32, FDEvent)>) {

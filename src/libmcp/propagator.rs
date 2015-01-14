@@ -30,8 +30,8 @@ pub trait Propagator
   // change after a propagate call.
   fn status(&self) -> Status;
 
-  // The propagator is stable when all Event are "Nothing".
-
-  // Should Nothing exist? Or should the vector be empty in this case?...
+  // The propagator is stable when the returned vector is empty.
   fn propagate(&mut self) -> Vec<(u32, Self::Event)>;
+
+  fn dependencies(&self) -> Vec<(u32, Self::Event)>;
 }
