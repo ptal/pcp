@@ -25,3 +25,4 @@ pub mod fd;
 pub mod event;
 pub mod propagator;
 pub mod variable;
+pub mod agenda;
