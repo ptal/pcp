@@ -110,29 +110,27 @@ mod test {
   fn subscribe_test() {
     let mut deps = make_deps();
     assert!(deps.is_empty());
-    deps.subscribe(0, Failure, 4);
+    deps.subscribe(0, Assignment, 4);
     assert!(!deps.is_empty());
 
-    iter_deps(&mut deps, 0, Failure, vec![4]);
+    iter_deps(&mut deps, 0, Assignment, vec![4]);
 
-    // Failure is more precise than Inner, so we don't care.
+    // Assignment is more precise than Inner, so we don't care.
     iter_deps(&mut deps, 0, Inner, vec![]);
 
     // If we subscribe to Inner, we must react on Inner
     // or more precise events.
     deps.subscribe(0, Inner, 5);
     iter_deps(&mut deps, 0, Inner, vec![5]);
-    iter_deps(&mut deps, 0, Assignment, vec![5]);
-    iter_deps(&mut deps, 0, Failure, vec![4,5]);
+    iter_deps(&mut deps, 0, Assignment, vec![4,5]);
 
     deps.subscribe(1, Bound, 6);
     deps.subscribe(1, Assignment, 7);
-    iter_deps(&mut deps, 1, Failure, vec![7,6]);
     iter_deps(&mut deps, 1, Inner, vec![]);
     iter_deps(&mut deps, 1, Bound, vec![6]);
     iter_deps(&mut deps, 1, Assignment, vec![7,6]);
 
-    iter_deps(&mut deps, 2, Failure, vec![]);
+    iter_deps(&mut deps, 2, Assignment, vec![]);
 
     deps.subscribe(2, Assignment, 8);
     iter_deps(&mut deps, 1, Inner, vec![]);
@@ -141,19 +139,19 @@ mod test {
   #[test]
   fn unsubscribe_test() {
     let mut deps = make_deps();
-    deps.subscribe(0, Failure, 4);
+    deps.subscribe(0, Assignment, 4);
     deps.subscribe(0, Bound, 5);
 
-    iter_deps(&mut deps, 0, Failure, vec![4,5]);
+    iter_deps(&mut deps, 0, Assignment, vec![4,5]);
 
     deps.unsubscribe(0, Bound, 5);
-    iter_deps(&mut deps, 0, Failure, vec![4]);
+    iter_deps(&mut deps, 0, Assignment, vec![4]);
 
-    deps.unsubscribe(0, Failure, 4);
-    iter_deps(&mut deps, 0, Failure, vec![]);
+    deps.unsubscribe(0, Assignment, 4);
+    iter_deps(&mut deps, 0, Assignment, vec![]);
 
-    deps.subscribe(0, Failure, 4);
-    iter_deps(&mut deps, 0, Failure, vec![4]);
+    deps.subscribe(0, Assignment, 4);
+    iter_deps(&mut deps, 0, Assignment, vec![4]);
   }
 
   #[test]
@@ -161,8 +159,8 @@ mod test {
   fn subscribe_fail_test() {
     let mut deps = make_deps();
 
-    deps.subscribe(0, Failure, 0);
-    deps.subscribe(0, Failure, 0);
+    deps.subscribe(0, Assignment, 0);
+    deps.subscribe(0, Assignment, 0);
   }
 
   #[test]
@@ -170,7 +168,7 @@ mod test {
   fn unsubscribe_fail_test() {
     let mut deps = make_deps();
 
-    deps.unsubscribe(0, Failure, 0);
+    deps.unsubscribe(0, Assignment, 0);
   }
 
   #[test]
@@ -178,7 +176,7 @@ mod test {
   fn subscribe_two_events_fail_test() {
     let mut deps = make_deps();
 
-    deps.subscribe(0, Failure, 0);
+    deps.subscribe(0, Assignment, 0);
     deps.subscribe(0, Bound, 0); // already subscribed to this variable
   }
 }

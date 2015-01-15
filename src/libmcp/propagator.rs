@@ -28,10 +28,12 @@ pub trait Propagator
 
   // If the result is Entailed or Disentailed, it must not
   // change after a propagate call.
+  // Also no need to check if the variables are failed, this
+  // should be handled at the return of propagate.
   fn status(&self) -> Status;
 
   // The propagator is stable when the returned vector is empty.
-  fn propagate(&mut self) -> Vec<(u32, Self::Event)>;
+  fn propagate(&mut self) -> Option<Vec<(u32, Self::Event)>>;
 
   fn dependencies(&self) -> Vec<(u32, Self::Event)>;
 }

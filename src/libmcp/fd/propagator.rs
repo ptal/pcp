@@ -53,7 +53,7 @@ impl Propagator for XEqualY {
     }
   }
 
-  fn propagate(&mut self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
+  fn propagate(&mut self) -> Option<Vec<(u32, <XEqualY as Propagator>::Event)>> {
     FDVar::intersection(&mut self.x, &mut self.y)
   }
 
@@ -87,7 +87,7 @@ impl Propagator for XLessThanY {
     //
     // Unknown: Everything else.
 
-    if self.x.is_failed() || self.y.is_failed() || self.x.lb() > self.y.ub() {
+    if self.x.lb() > self.y.ub() {
       Disentailed
     }
     else if self.x.ub() < self.y.lb() {
@@ -98,19 +98,19 @@ impl Propagator for XLessThanY {
     }
   }
 
-  fn propagate(&mut self) -> Vec<(u32, <XLessThanY as Propagator>::Event)> {
+  fn propagate(&mut self) -> Option<Vec<(u32, <XLessThanY as Propagator>::Event)>> {
     let mut events = vec![];
-    if self.x.is_failed() { self.y.failed(&mut events); }
-    else if self.y.is_failed() { self.x.failed(&mut events); }
-    else {
-      if self.x.ub() >= self.y.ub() {
-      self.x.update_ub(self.y.ub() - 1, &mut events);
-      }
-      if self.x.lb() >= self.y.lb() {
-        self.y.update_lb(self.x.lb() + 1, &mut events);
+    if self.x.ub() >= self.y.ub() {
+      if !self.x.update_ub(self.y.ub() - 1, &mut events) {
+        return None;
       }
     }
-    events
+    if self.x.lb() >= self.y.lb() {
+      if !self.y.update_lb(self.x.lb() + 1, &mut events) {
+        return None;
+      }
+    }
+    Some(events)
   }
 
   fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
@@ -126,57 +126,56 @@ mod test {
   use propagator::Status::*;
   use propagator::*;
 
-  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Vec<(u32, FDEvent)>)
+  fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(u32, FDEvent)>>)
    where P: Propagator<Event=FDEvent> {
-    assert_eq!(prop.status(), before);
     let events = prop.propagate();
     assert_eq!(events, expected);
+  }
+
+  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>)
+   where P: Propagator<Event=FDEvent> {
+    assert_eq!(prop.status(), before);
+    propagate_only_test(&mut prop, expected);
     assert_eq!(prop.status(), after);
   }
 
   #[test]
   fn equalxy_propagate_test() {
-    let empty = Variable::new(0, Interval::empty());
     let var0_10 = Variable::new(1, (0,10).to_interval());
     let var10_20 = Variable::new(2, (10,20).to_interval());
     let var5_15 = Variable::new(3, (5,15).to_interval());
     let var11_20 = Variable::new(4, (11,20).to_interval());
     let var1_1 = Variable::new(5, (1,1).to_interval());
 
-    xequaly_propagate_test_one(var0_10, var10_20, Unknown, Entailed, vec![(1, Assignment), (2, Assignment)]);
-    xequaly_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![(3, Bound), (2, Bound)]);
-    xequaly_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![(1, Assignment)]);
-    xequaly_propagate_test_one(var0_10, var0_10, Unknown, Unknown, vec![]);
-    xequaly_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![(1, Failure)]);
-    xequaly_propagate_test_one(var1_1, empty, Disentailed, Disentailed, vec![(5, Failure)]);
-    xequaly_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, vec![(1, Failure), (4, Failure)]);
+    xequaly_propagate_test_one(var0_10, var10_20, Unknown, Entailed, Some(vec![(1, Assignment), (2, Assignment)]));
+    xequaly_propagate_test_one(var5_15, var10_20, Unknown, Unknown, Some(vec![(3, Bound), (2, Bound)]));
+    xequaly_propagate_test_one(var1_1, var0_10, Unknown, Entailed, Some(vec![(1, Assignment)]));
+    xequaly_propagate_test_one(var0_10, var0_10, Unknown, Unknown, Some(vec![]));
+    xequaly_propagate_test_one(var0_10, var11_20, Disentailed, Disentailed, None);
   }
 
-  fn xequaly_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
+  fn xequaly_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
     let propagator = XEqualY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
 
   #[test]
   fn xlessy_propagate_test() {
-    let empty = Variable::new(0, Interval::empty());
     let var0_10 = Variable::new(1, (0,10).to_interval());
     let var10_20 = Variable::new(2, (10,20).to_interval());
     let var5_15 = Variable::new(3, (5,15).to_interval());
     let var11_20 = Variable::new(4, (11,20).to_interval());
     let var1_1 = Variable::new(5, (1,1).to_interval());
 
-    xlessy_propagate_test_one(var0_10, var10_20, Unknown, Unknown, vec![]);
-    xlessy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, vec![]);
-    xlessy_propagate_test_one(var5_15, var0_10, Unknown, Unknown, vec![(3, Bound), (1, Bound)]);
-    xlessy_propagate_test_one(var0_10, var11_20, Entailed, Entailed, vec![]);
-    xlessy_propagate_test_one(var11_20, var0_10, Disentailed, Disentailed, vec![(4, Failure), (1, Failure)]);
-    xlessy_propagate_test_one(var1_1, var0_10, Unknown, Entailed, vec![(1, Bound)]);
-    xlessy_propagate_test_one(empty, var0_10, Disentailed, Disentailed, vec![(1, Failure)]);
-    xlessy_propagate_test_one(var0_10, empty, Disentailed, Disentailed, vec![(1, Failure)]);
+    xlessy_propagate_test_one(var0_10, var10_20, Unknown, Unknown, Some(vec![]));
+    xlessy_propagate_test_one(var5_15, var10_20, Unknown, Unknown, Some(vec![]));
+    xlessy_propagate_test_one(var5_15, var0_10, Unknown, Unknown, Some(vec![(3, Bound), (1, Bound)]));
+    xlessy_propagate_test_one(var0_10, var11_20, Entailed, Entailed, Some(vec![]));
+    xlessy_propagate_test_one(var11_20, var0_10, Disentailed, Disentailed, None);
+    xlessy_propagate_test_one(var1_1, var0_10, Unknown, Entailed, Some(vec![(1, Bound)]));
   }
 
-  fn xlessy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Vec<(u32, FDEvent)>) {
+  fn xlessy_propagate_test_one(v1: FDVar, v2: FDVar, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
     let propagator = XLessThanY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
