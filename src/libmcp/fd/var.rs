@@ -23,6 +23,8 @@ use std::num::FromPrimitive;
 // we try to take the most precise first
 // which is failure, then Ass, then Bound,...
 // the union between two events is min(e1, e2)
+// We don't have a Nothing event because some functions have two ways of returning
+// 'nothing', with an empty vector or `Nothing`, we select only one.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Show)]
 pub enum FDEvent {
   Failure,
@@ -40,7 +42,8 @@ impl VarEvent for FDEvent {
     self as usize
   }
 
-  fn size() -> usize {
+  // Fixme: dummy argument mandatory until a PR lands...
+  fn size(_: Option<FDEvent>) -> usize {
     Inner.to_index() + 1
   }
 }

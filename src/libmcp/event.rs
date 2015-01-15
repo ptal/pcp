@@ -16,5 +16,5 @@
 pub trait VarEvent {
   fn merge(self, other: Self) -> Self;
   fn to_index(self) -> usize;
-  fn size() -> usize;
+  fn size(_: Option<Self>) -> usize;
 }

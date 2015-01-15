@@ -24,6 +24,13 @@ pub trait Agenda {
   fn is_empty(&self) -> bool;
 }
 
+// It is a "relaxed FIFO" because the unschedule operation
+// might not preserve the ordering. However, this operation
+// is not call as often as pop, hence the ordering shouldn't
+// be too much modified. Anyways, we don't care, the unschedule
+// operation is always a good news, it is called when a
+// propagator is entailed, so the problem is reduced.
+
 pub struct RelaxedFifoAgenda {
   inside_queue: Vec<bool>,
   queue: RingBuf<usize>
