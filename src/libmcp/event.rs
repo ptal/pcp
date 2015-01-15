@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-pub trait VarEvent {
+pub trait VarEvent : Copy{
   fn merge(self, other: Self) -> Self;
   fn to_index(self) -> usize;
   fn size(_: Option<Self>) -> usize;
