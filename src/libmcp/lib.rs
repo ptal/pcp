@@ -27,3 +27,4 @@ pub mod propagator;
 pub mod variable;
 pub mod agenda;
 pub mod dependencies;
+pub mod solver;
