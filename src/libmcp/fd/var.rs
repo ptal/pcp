@@ -40,7 +40,7 @@ impl VarEvent for FDEvent {
   }
 }
 
-#[derive(Copy, PartialEq, Eq)]
+#[derive(Copy, PartialEq, Eq, Show)]
 pub struct FDVar {
   id: u32,
   dom: Interval
@@ -51,6 +51,7 @@ impl Variable for FDVar {
   type Event = FDEvent;
 
   fn new(id: u32, dom: Interval) -> FDVar {
+    assert!(!dom.is_empty());
     FDVar {
       id: id,
       dom: dom
@@ -190,7 +191,6 @@ mod test {
 
   #[test]
   fn var_intersection_test() {
-    let empty = Variable::new(0, Interval::empty());
     let var0_10 = Variable::new(1, (0,10).to_interval());
     let var10_20 = Variable::new(2, (10,20).to_interval());
     let var11_20 = Variable::new(3, (11,20).to_interval());
@@ -200,8 +200,6 @@ mod test {
     var_intersection_test_one(var0_10, var1_9, Some(vec![(1, Bound)]));
     var_intersection_test_one(var1_9, var0_10, Some(vec![(1, Bound)]));
     var_intersection_test_one(var0_10, var11_20, None);
-    var_intersection_test_one(var0_10, empty, None);
-    var_intersection_test_one(empty, empty, None);
   }
 
   fn var_intersection_test_one(mut v1: FDVar, mut v2: FDVar, events: Option<Vec<(u32, FDEvent)>>) {

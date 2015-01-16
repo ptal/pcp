@@ -14,7 +14,7 @@
 
 pub use event::VarEvent;
 
-pub trait Variable : Copy {
+pub trait Variable {
   type Domain;
   type Event: VarEvent;
 

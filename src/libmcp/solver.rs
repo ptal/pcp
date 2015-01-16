@@ -18,11 +18,11 @@ use variable::Variable;
 use dependencies::VarEventDependencies;
 use agenda::Agenda;
 use std::rc::Rc;
-use std::cell::Cell;
+use std::cell::RefCell;
 
 pub struct Solver<V, D, A> {
   propagators: Vec<Box<Propagator + 'static>>,
-  variables: Vec<Rc<Cell<V>>>,
+  variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
 }
@@ -41,9 +41,9 @@ impl<'d, V, D, A> Solver<V, D, A> where
     }
   }
 
-  pub fn newvar(&mut self, dom: <V as Variable>::Domain) -> Rc<Cell<V>> {
+  pub fn newvar(&mut self, dom: <V as Variable>::Domain) -> Rc<RefCell<V>> {
     let var_idx = self.variables.len();
-    self.variables.push(Rc::new(Cell::new(Variable::new(var_idx as u32, dom))));
+    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx as u32, dom))));
     self.variables[var_idx].clone()
   }
 }
