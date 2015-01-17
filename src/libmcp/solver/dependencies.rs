@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use event::VarEvent;
+use solver::event::VarEvent;
 use std::iter::{FromIterator, repeat};
 
 pub trait VarEventDependencies {
@@ -83,9 +83,9 @@ impl VarEventDependencies for VarEventDepsVector {
 #[cfg(test)]
 mod test {
   use super::*;
-  use fd::var::FDEvent;
-  use fd::var::FDEvent::*;
-  use event::VarEvent;
+  use solver::fd::var::FDEvent;
+  use solver::fd::var::FDEvent::*;
+  use solver::event::VarEvent;
 
   fn make_deps() -> VarEventDepsVector {
     let dummy: Option<FDEvent> = None;

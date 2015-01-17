@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use fd::var::*;
-use fd::var::FDEvent::*;
-use propagator::*;
-use propagator::Status::*;
+use solver::fd::var::*;
+use solver::fd::var::FDEvent::*;
+use solver::propagator::*;
+use solver::propagator::Status::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
@@ -136,10 +136,10 @@ impl Propagator for XLessThanY {
 #[cfg(test)]
 mod test {
   use super::*;
-  use fd::var::*;
-  use fd::var::FDEvent::*;
-  use propagator::Status::*;
-  use propagator::*;
+  use solver::fd::var::*;
+  use solver::fd::var::FDEvent::*;
+  use solver::propagator::Status::*;
+  use solver::propagator::*;
   use std::rc::Rc;
   use std::cell::RefCell;
 

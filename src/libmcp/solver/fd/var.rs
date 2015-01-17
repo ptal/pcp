@@ -13,8 +13,8 @@
 // limitations under the License.
 
 pub use interval::interval::*;
-pub use event::VarEvent;
-pub use variable::Variable;
+pub use solver::event::VarEvent;
+pub use solver::variable::Variable;
 
 use self::FDEvent::*;
 

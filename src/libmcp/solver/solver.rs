@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use propagator::Propagator;
-use propagator::Status as PStatus;
-use variable::Variable;
-use dependencies::VarEventDependencies;
-use agenda::Agenda;
-use event::VarEvent;
+use solver::propagator::Propagator;
+use solver::propagator::Status as PStatus;
+use solver::variable::Variable;
+use solver::dependencies::VarEventDependencies;
+use solver::agenda::Agenda;
+use solver::event::VarEvent;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -139,11 +139,11 @@ impl<V, D, A> Solver<V, D, A> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use fd::var::*;
-  use fd::propagator::*;
-  use propagator::Propagator;
-  use agenda::RelaxedFifoAgenda;
-  use dependencies::VarEventDepsVector;
+  use solver::fd::var::*;
+  use solver::fd::propagator::*;
+  use solver::propagator::Propagator;
+  use solver::agenda::RelaxedFifoAgenda;
+  use solver::dependencies::VarEventDepsVector;
 
   type FDSolver = Solver<FDVar, VarEventDepsVector, RelaxedFifoAgenda>;
 

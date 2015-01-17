@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use event::VarEvent;
+use solver::event::VarEvent;
 
 #[derive(Copy, PartialEq, Eq, Show)]
 pub enum Status

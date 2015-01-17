@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use event::VarEvent;
+pub use solver::event::VarEvent;
 
 pub trait Variable {
   type Domain;
