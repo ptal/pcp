@@ -17,11 +17,18 @@ use propagator::Propagator;
 use variable::Variable;
 use dependencies::VarEventDependencies;
 use agenda::Agenda;
+use event::VarEvent;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-pub struct Solver<V, D, A> {
-  propagators: Vec<Box<Propagator + 'static>>,
+pub enum Status {
+  Satisfiable,
+  Unsatisfiable,
+  Unknown
+}
+
+pub struct Solver<V: Variable, D, A> {
+  propagators: Vec<Box<Propagator<Event=V::Event> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
@@ -46,13 +53,42 @@ impl<'d, V, D, A> Solver<V, D, A> where
     self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx as u32, dom))));
     self.variables[var_idx].clone()
   }
+
+  pub fn add(&mut self, p: Box<Propagator<Event=<V as Variable>::Event> + 'static>) {
+    self.propagators.push(p);
+  }
+
+  pub fn solve(&mut self) -> Status {
+    self.prepare();
+    Status::Satisfiable
+  }
+
+  fn prepare(&mut self) {
+    self.init_deps();
+    self.init_agenda();
+  }
+
+  fn init_deps(&mut self) {
+    let dummy: Option<<V as Variable>::Event> = None;
+    self.deps = VarEventDependencies::new(self.variables.len(), VarEvent::size(dummy));
+    for (p_idx, p) in self.propagators.iter().enumerate() {
+      for (v, ev) in p.dependencies().into_iter() {
+        self.deps.subscribe(v as usize, ev, p_idx);
+      }
+    }
+  }
+
+  fn init_agenda(&mut self) {
+    self.agenda = Agenda::new(self.propagators.len());
+  }
 }
 
 #[cfg(test)]
 mod test {
   use super::*;
-  use propagator::*;
   use fd::var::*;
+  use fd::propagator::*;
+  use propagator::Propagator;
   use agenda::RelaxedFifoAgenda;
   use dependencies::VarEventDepsVector;
 
@@ -63,5 +99,8 @@ mod test {
     let mut solver: FDSolver = Solver::new();
     let var1 = solver.newvar(Interval::new(1,4));
     let var2 = solver.newvar(Interval::new(1,4));
+
+    let prop: Box<Propagator<Event=FDEvent>> = Box::new(XLessThanY::new(var1, var2));
+    solver.add(prop);
   }
 }
