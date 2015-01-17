@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::iter::repeat;
 use propagator::Propagator;
+use propagator::Status as PStatus;
 use variable::Variable;
 use dependencies::VarEventDependencies;
 use agenda::Agenda;
@@ -21,6 +21,7 @@ use event::VarEvent;
 use std::rc::Rc;
 use std::cell::RefCell;
 
+#[derive(Copy, Show, PartialEq, Eq)]
 pub enum Status {
   Satisfiable,
   Unsatisfiable,
@@ -34,9 +35,9 @@ pub struct Solver<V: Variable, D, A> {
   agenda: A
 }
 
-impl<'d, V, D, A> Solver<V, D, A> where
+impl<V, D, A> Solver<V, D, A> where
  V: Variable,
- D: VarEventDependencies<'d>,
+ D: VarEventDependencies,
  A: Agenda
 {
   pub fn new() -> Solver<V, D, A> {
@@ -60,7 +61,7 @@ impl<'d, V, D, A> Solver<V, D, A> where
 
   pub fn solve(&mut self) -> Status {
     self.prepare();
-    Status::Satisfiable
+    self.propagation_loop()
   }
 
   fn prepare(&mut self) {
@@ -80,6 +81,58 @@ impl<'d, V, D, A> Solver<V, D, A> where
 
   fn init_agenda(&mut self) {
     self.agenda = Agenda::new(self.propagators.len());
+  }
+
+  fn propagation_loop(&mut self) -> Status {
+    let mut unsatisfiable = false;
+    while let Some(p_idx) = self.agenda.pop() {
+      unsatisfiable = !self.propagate_one(p_idx);
+      if unsatisfiable { break; }
+    }
+    if unsatisfiable { Status::Unsatisfiable }
+    else if self.deps.is_empty() { Status::Satisfiable }
+    else { Status::Unknown }
+  }
+
+  fn propagate_one(&mut self, p_idx: usize) -> bool {
+    let (events, status) = {
+      let mut prop = &mut self.propagators[p_idx];
+      if let Some(events) = prop.propagate() {
+        (events, prop.status())
+      } else {
+        return false
+      }
+    };
+    match status {
+      PStatus::Disentailed => return false,
+      PStatus::Entailed => self.unlink_prop(p_idx),
+      PStatus::Unknown => self.reschedule_prop(&events, p_idx)
+    };
+    self.react(events);
+    true
+  }
+
+  fn reschedule_prop(&mut self, events: &Vec<(u32, <V as Variable>::Event)>, p_idx: usize) {
+    if !events.is_empty() {
+      self.agenda.schedule(p_idx);
+    }
+  }
+
+  fn react(&mut self, events: Vec<(u32, <V as Variable>::Event)>) {
+    for (v, ev) in events.into_iter() {
+      let mut reactions = self.deps.react(v as usize, ev);
+      for &p in *reactions {
+        self.agenda.schedule(p);
+      }
+    }
+  }
+
+  fn unlink_prop(&mut self, p_idx: usize) {
+    self.agenda.unschedule(p_idx);
+    let deps = self.propagators[p_idx].dependencies();
+    for &(var, ev) in deps.iter() {
+      self.deps.unsubscribe(var as usize, ev, p_idx)
+    }
   }
 }
 
@@ -102,5 +155,6 @@ mod test {
 
     let prop: Box<Propagator<Event=FDEvent>> = Box::new(XLessThanY::new(var1, var2));
     solver.add(prop);
+    assert_eq!(solver.solve(), Status::Unknown);
   }
 }

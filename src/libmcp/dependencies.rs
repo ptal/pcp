@@ -15,14 +15,14 @@
 use event::VarEvent;
 use std::iter::{FromIterator, repeat};
 
-pub trait VarEventDependencies<'a> {
+pub trait VarEventDependencies {
 
   fn new(num_vars: usize, num_events: usize) -> Self;
   fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
   // We box the iterator because defining it in term of associated type makes
   // the definition very tedious...
-  fn react<E>(&'a self, var: usize, ev: E) -> Box<Iterator<Item=&'a usize>> where E: VarEvent;
+  fn react<'a, E>(&'a self, var: usize, ev: E) -> Box<Iterator<Item=&'a usize>> where E: VarEvent;
   fn is_empty(&self) -> bool;
 }
 
@@ -43,7 +43,7 @@ impl VarEventDepsVector {
   }
 }
 
-impl<'a> VarEventDependencies<'a> for VarEventDepsVector {
+impl VarEventDependencies for VarEventDepsVector {
   fn new(num_vars: usize, num_events: usize) -> VarEventDepsVector {
     VarEventDepsVector {
       num_events: num_events,
@@ -68,7 +68,7 @@ impl<'a> VarEventDependencies<'a> for VarEventDepsVector {
     props.swap_remove(idx.unwrap());
   }
 
-  fn react<E>(&'a self, var: usize, ev: E) ->
+  fn react<'a, E>(&'a self, var: usize, ev: E) ->
    Box<Iterator<Item=&'a usize>> where E: VarEvent {
     let from = self.index_of(var, ev);
     let len = self.num_events - ev.to_index();
