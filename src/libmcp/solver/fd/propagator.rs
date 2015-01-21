@@ -22,6 +22,7 @@ use std::ops::{Deref, DerefMut};
 
 pub type SharedFDVar = Rc<RefCell<FDVar>>;
 
+#[derive(Show)]
 pub struct XEqualY {
   x: SharedFDVar,
   y: SharedFDVar
@@ -72,18 +73,29 @@ impl Propagator for XEqualY {
   }
 }
 
-pub struct XLessThanY {
-  x: SharedFDVar,
-  y: SharedFDVar
-}
+#[derive(Copy)]
+pub struct XLessThanY;
 
 impl XLessThanY {
-  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanY {
-    XLessThanY { x: x, y: y }
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(x, y, 0)
   }
 }
 
-impl Propagator for XLessThanY {
+#[derive(Show)]
+pub struct XLessThanYPlusC {
+  x: SharedFDVar,
+  y: SharedFDVar,
+  c: i32
+}
+
+impl XLessThanYPlusC {
+  pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XLessThanYPlusC {
+    XLessThanYPlusC { x: x, y: y, c: c }
+  }
+}
+
+impl Propagator for XLessThanYPlusC {
   type Event = FDEvent;
 
   fn status(&self) -> Status {
@@ -100,10 +112,10 @@ impl Propagator for XLessThanY {
     let x = self.x.borrow();
     let y = self.y.borrow();
 
-    if x.lb() > y.ub() {
+    if x.lb() > y.ub() + self.c {
       Disentailed
     }
-    else if x.ub() < y.lb() {
+    else if x.ub() < y.lb() + self.c {
       Entailed
     }
     else {
@@ -111,24 +123,24 @@ impl Propagator for XLessThanY {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XLessThanY as Propagator>::Event)>> {
+  fn propagate(&mut self) -> Option<Vec<(u32, <XLessThanYPlusC as Propagator>::Event)>> {
     let mut events = vec![];
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    if x.ub() >= y.ub() {
-      if !x.update_ub(y.ub() - 1, &mut events) {
+    if x.ub() >= y.ub() + self.c {
+      if !x.update_ub(y.ub() - 1 + self.c, &mut events) {
         return None;
       }
     }
-    if x.lb() >= y.lb() {
-      if !y.update_lb(x.lb() + 1, &mut events) {
+    if x.lb() >= y.lb() + self.c {
+      if !y.update_lb(x.lb() + 1 - self.c, &mut events) {
         return None;
       }
     }
     Some(events)
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, <XLessThanYPlusC as Propagator>::Event)> {
     vec![(self.x.borrow().id(), Bound), (self.y.borrow().id(), Bound)]
   }
 }
@@ -183,11 +195,13 @@ mod test {
   #[test]
   fn xlessy_propagate_test() {
     let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var0_10_ = Variable::new(12, (0,10).to_interval());
     let var10_20 = Variable::new(2, (10,20).to_interval());
     let var5_15 = Variable::new(3, (5,15).to_interval());
     let var11_20 = Variable::new(4, (11,20).to_interval());
     let var1_1 = Variable::new(5, (1,1).to_interval());
 
+    xlessy_propagate_test_one(make_var(var0_10), make_var(var0_10_), Unknown, Unknown, Some(vec![(1, Bound), (12, Bound)]));
     xlessy_propagate_test_one(make_var(var0_10), make_var(var10_20), Unknown, Unknown, Some(vec![]));
     xlessy_propagate_test_one(make_var(var5_15), make_var(var10_20), Unknown, Unknown, Some(vec![]));
     xlessy_propagate_test_one(make_var(var5_15), make_var(var0_10), Unknown, Unknown, Some(vec![(3, Bound), (1, Bound)]));
@@ -198,6 +212,28 @@ mod test {
 
   fn xlessy_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
     let propagator = XLessThanY::new(v1, v2);
+    propagate_test_one(propagator, before, after, expected);
+  }
+
+  #[test]
+  fn xlessyplusc_propagate_test() {
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
+
+    // Same test as x < y but we shift y.
+    xlessyplusc_propagate_test_one(make_var(var0_10), make_var(var5_15), -5, Unknown, Unknown, Some(vec![(1, Bound), (3, Bound)]));
+    xlessyplusc_propagate_test_one(make_var(var0_10), make_var(var0_10), 10, Unknown, Unknown, Some(vec![]));
+    xlessyplusc_propagate_test_one(make_var(var5_15), make_var(var5_15), 5, Unknown, Unknown, Some(vec![]));
+    xlessyplusc_propagate_test_one(make_var(var5_15), make_var(var10_20), -10, Unknown, Unknown, Some(vec![(3, Bound), (2, Bound)]));
+    xlessyplusc_propagate_test_one(make_var(var0_10), make_var(var0_10), 11, Entailed, Entailed, Some(vec![]));
+    xlessyplusc_propagate_test_one(make_var(var0_10), make_var(var0_10), -11, Disentailed, Disentailed, None);
+    xlessyplusc_propagate_test_one(make_var(var1_1), make_var(var5_15), -5, Unknown, Entailed, Some(vec![(3, Bound)]));
+  }
+
+  fn xlessyplusc_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+    let propagator = XLessThanYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
   }
 }

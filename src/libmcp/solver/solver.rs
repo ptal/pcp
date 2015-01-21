@@ -144,17 +144,21 @@ mod test {
   use solver::propagator::Propagator;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
+  use std::iter::range;
 
   type FDSolver = Solver<FDVar, VarEventDepsVector, RelaxedFifoAgenda>;
 
   #[test]
-  fn newvar_test() {
+  fn basic_test() {
     let mut solver: FDSolver = Solver::new();
     let var1 = solver.newvar(Interval::new(1,4));
     let var2 = solver.newvar(Interval::new(1,4));
+    let var3 = solver.newvar(Interval::new(1,1));
 
-    let prop: Box<Propagator<Event=FDEvent>> = Box::new(XLessThanY::new(var1, var2));
-    solver.add(prop);
+    solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
     assert_eq!(solver.solve(), Status::Unknown);
+
+    solver.add(Box::new(XEqualY::new(var1, var3)));
+    assert_eq!(solver.solve(), Status::Satisfiable);
   }
 }
