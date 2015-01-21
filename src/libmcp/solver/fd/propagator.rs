@@ -22,6 +22,77 @@ use std::ops::{Deref, DerefMut};
 
 pub type SharedFDVar = Rc<RefCell<FDVar>>;
 
+// x < y
+#[derive(Copy)]
+pub struct XLessThanY;
+
+impl XLessThanY {
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(x, y, 0)
+  }
+}
+
+// x <= y
+#[derive(Copy)]
+pub struct XLessEqThanY;
+
+impl XLessEqThanY {
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(x, y, 1)
+  }
+}
+
+// x <= y + c
+#[derive(Copy)]
+pub struct XLessEqThanYPlusC;
+
+impl XLessEqThanYPlusC {
+  pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(x, y, c + 1)
+  }
+}
+
+// x > y
+#[derive(Copy)]
+pub struct XGreaterThanY;
+
+impl XGreaterThanY {
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
+    XLessThanY::new(y, x)
+  }
+}
+
+// x >= y
+#[derive(Copy)]
+pub struct XGreaterEqThanY;
+
+impl XGreaterEqThanY {
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
+    XLessEqY::new(y, x)
+  }
+}
+
+// x > y + c
+#[derive(Copy)]
+pub struct XGreaterThanYPlusC;
+
+impl XGreaterThanYPlusC {
+  pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(y, x, -c)
+  }
+}
+
+// x >= y + c
+#[derive(Copy)]
+pub struct XGreaterThanYPlusC;
+
+impl XGreaterThanYPlusC {
+  pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(y, x, 1 - c)
+  }
+}
+
+// x = y
 #[derive(Show)]
 pub struct XEqualY {
   x: SharedFDVar,
@@ -73,15 +144,7 @@ impl Propagator for XEqualY {
   }
 }
 
-#[derive(Copy)]
-pub struct XLessThanY;
-
-impl XLessThanY {
-  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
-    XLessThanYPlusC::new(x, y, 0)
-  }
-}
-
+// x < y + c
 #[derive(Show)]
 pub struct XLessThanYPlusC {
   x: SharedFDVar,
