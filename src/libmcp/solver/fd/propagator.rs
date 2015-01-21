@@ -68,7 +68,7 @@ pub struct XGreaterEqThanY;
 
 impl XGreaterEqThanY {
   pub fn new(x: SharedFDVar, y: SharedFDVar) -> XLessThanYPlusC {
-    XLessEqY::new(y, x)
+    XLessEqThanY::new(y, x)
   }
 }
 
@@ -84,9 +84,9 @@ impl XGreaterThanYPlusC {
 
 // x >= y + c
 #[derive(Copy)]
-pub struct XGreaterThanYPlusC;
+pub struct XGreaterEqThanYPlusC;
 
-impl XGreaterThanYPlusC {
+impl XGreaterEqThanYPlusC {
   pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(y, x, 1 - c)
   }

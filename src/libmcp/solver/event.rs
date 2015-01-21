@@ -15,5 +15,5 @@
 
 pub trait VarEvent : Copy {
   fn to_index(self) -> usize;
-  fn size(_: Option<Self>) -> usize;
+  fn size() -> usize;
 }

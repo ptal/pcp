@@ -70,8 +70,7 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn init_deps(&mut self) {
-    let dummy: Option<<V as Variable>::Event> = None;
-    self.deps = VarEventDependencies::new(self.variables.len(), VarEvent::size(dummy));
+    self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as VarEvent>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
       for (v, ev) in p.dependencies().into_iter() {
         self.deps.subscribe(v as usize, ev, p_idx);

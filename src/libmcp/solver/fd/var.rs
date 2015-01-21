@@ -34,8 +34,7 @@ impl VarEvent for FDEvent {
     self as usize
   }
 
-  // Fixme: dummy argument mandatory until a PR lands...
-  fn size(_: Option<FDEvent>) -> usize {
+  fn size() -> usize {
     Inner.to_index() + 1
   }
 }
