@@ -88,7 +88,7 @@ mod test {
   use solver::event::VarEvent;
 
   fn make_deps() -> VarEventDepsVector {
-    let res: VarEventDepsVector = VarEventDependencies::new(3, <FDEvent as VarEvent>::size(dummy));
+    let res: VarEventDepsVector = VarEventDependencies::new(3, <FDEvent as VarEvent>::size());
     res
   }
 

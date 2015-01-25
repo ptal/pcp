@@ -1,4 +1,3 @@
-// Copyright 2015 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,7 +92,7 @@ impl XGreaterEqThanYPlusC {
 }
 
 // x = y
-#[derive(Show)]
+#[derive(Debug)]
 pub struct XEqualY {
   x: SharedFDVar,
   y: SharedFDVar
@@ -145,7 +144,7 @@ impl Propagator for XEqualY {
 }
 
 // x < y + c
-#[derive(Show)]
+#[derive(Debug)]
 pub struct XLessThanYPlusC {
   x: SharedFDVar,
   y: SharedFDVar,
@@ -205,6 +204,114 @@ impl Propagator for XLessThanYPlusC {
 
   fn dependencies(&self) -> Vec<(u32, <XLessThanYPlusC as Propagator>::Event)> {
     vec![(self.x.borrow().id(), Bound), (self.y.borrow().id(), Bound)]
+  }
+}
+
+// x > c
+#[derive(Copy)]
+pub struct XGreaterThanC;
+
+impl XGreaterThanC {
+  pub fn new(x: SharedFDVar, c: i32) -> XGreaterEqThanC {
+    XGreaterEqThanC::new(x, c + 1)
+  }
+}
+
+// x >= c
+#[derive(Debug)]
+pub struct XGreaterEqThanC {
+  x: SharedFDVar,
+  c: i32
+}
+
+impl XGreaterEqThanC {
+  pub fn new(x: SharedFDVar, c: i32) -> XGreaterEqThanC {
+    XGreaterEqThanC { x: x, c: c }
+  }
+}
+
+impl Propagator for XGreaterEqThanC {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    let x = self.x.borrow();
+
+    if x.ub() < self.c {
+      Disentailed
+    }
+    else if x.lb() >= self.c {
+      Entailed
+    }
+    else {
+      Unknown
+    }
+  }
+
+  fn propagate(&mut self) -> Option<Vec<(u32, <XGreaterEqThanC as Propagator>::Event)>> {
+    let mut events = vec![];
+    let mut x = self.x.borrow_mut();
+    if x.lb() < self.c && !x.update_lb(self.c, &mut events) {
+      return None;
+    }
+    Some(events)
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XGreaterEqThanC as Propagator>::Event)> {
+    vec![]
+  }
+}
+
+// x < c
+#[derive(Copy)]
+pub struct XLessThanC;
+
+impl XLessThanC {
+  pub fn new(x: SharedFDVar, c: i32) -> XLessEqThanC {
+    XLessEqThanC::new(x, c - 1)
+  }
+}
+
+// x <= c
+#[derive(Debug)]
+pub struct XLessEqThanC {
+  x: SharedFDVar,
+  c: i32
+}
+
+impl XLessEqThanC {
+  pub fn new(x: SharedFDVar, c: i32) -> XLessEqThanC {
+    XLessEqThanC { x: x, c: c }
+  }
+}
+
+impl Propagator for XLessEqThanC {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    let x = self.x.borrow();
+
+    if x.lb() > self.c {
+      Disentailed
+    }
+    else if x.ub() <= self.c {
+      Entailed
+    }
+    else {
+      Unknown
+    }
+  }
+
+  fn propagate(&mut self) -> Option<Vec<(u32, <XLessEqThanC as Propagator>::Event)>> {
+    let mut events = vec![];
+    let mut x = self.x.borrow_mut();
+    if x.ub() > self.c && !x.update_ub(self.c, &mut events) {
+      return None;
+    }
+    Some(events)
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XLessEqThanC as Propagator>::Event)> {
+    vec![]
   }
 }
 
@@ -298,5 +405,29 @@ mod test {
   fn xlessyplusc_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
     let propagator = XLessThanYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
+  }
+
+  #[test]
+  fn unary_propagator_test() {
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let make_xlessc = |&:c| XLessThanC::new(make_var(var0_10), c);
+    propagate_test_one(make_xlessc(0), Disentailed, Disentailed, None);
+    propagate_test_one(make_xlessc(11), Entailed, Entailed, Some(vec![]));
+    propagate_test_one(make_xlessc(10), Unknown, Entailed, Some(vec![(1, Bound)]));
+
+    let make_xlesseqc = |&:c| XLessEqThanC::new(make_var(var0_10), c);
+    propagate_test_one(make_xlesseqc(-1), Disentailed, Disentailed, None);
+    propagate_test_one(make_xlesseqc(10), Entailed, Entailed, Some(vec![]));
+    propagate_test_one(make_xlesseqc(9), Unknown, Entailed, Some(vec![(1, Bound)]));
+
+    let make_xgreaterc = |&:c| XGreaterThanC::new(make_var(var0_10), c);
+    propagate_test_one(make_xgreaterc(10), Disentailed, Disentailed, None);
+    propagate_test_one(make_xgreaterc(-1), Entailed, Entailed, Some(vec![]));
+    propagate_test_one(make_xgreaterc(0), Unknown, Entailed, Some(vec![(1, Bound)]));
+
+    let make_xgreatereqc = |&:c| XGreaterEqThanC::new(make_var(var0_10), c);
+    propagate_test_one(make_xgreatereqc(11), Disentailed, Disentailed, None);
+    propagate_test_one(make_xgreatereqc(0), Entailed, Entailed, Some(vec![]));
+    propagate_test_one(make_xgreatereqc(1), Unknown, Entailed, Some(vec![(1, Bound)]));
   }
 }
