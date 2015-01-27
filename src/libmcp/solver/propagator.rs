@@ -35,5 +35,7 @@ pub trait Propagator
   // The propagator is stable when the returned vector is empty.
   fn propagate(&mut self) -> Option<Vec<(u32, Self::Event)>>;
 
+  // Each event on a variable that can change the result of
+  // the `status` method should be listed here.
   fn dependencies(&self) -> Vec<(u32, Self::Event)>;
 }

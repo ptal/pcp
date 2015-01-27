@@ -1,3 +1,4 @@
+// Copyright 2015 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -257,7 +258,7 @@ impl Propagator for XGreaterEqThanC {
   }
 
   fn dependencies(&self) -> Vec<(u32, <XGreaterEqThanC as Propagator>::Event)> {
-    vec![]
+    vec![(self.x.borrow().id(), Bound)]
   }
 }
 
@@ -311,7 +312,108 @@ impl Propagator for XLessEqThanC {
   }
 
   fn dependencies(&self) -> Vec<(u32, <XLessEqThanC as Propagator>::Event)> {
-    vec![]
+    vec![(self.x.borrow().id(), Bound)]
+  }
+}
+
+// x != c
+#[derive(Debug)]
+pub struct XNotEqualC {
+  x: SharedFDVar,
+  c: i32
+}
+
+impl XNotEqualC {
+  pub fn new(x: SharedFDVar, c: i32) -> XNotEqualC {
+    XNotEqualC { x: x, c: c }
+  }
+}
+
+impl Propagator for XNotEqualC {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    let x = self.x.borrow();
+
+    if x.lb() == self.c && x.ub() == self.c {
+      Disentailed
+    }
+    else if x.is_disjoint_value(self.c) {
+      Entailed
+    }
+    else {
+      Unknown
+    }
+  }
+
+  fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualC as Propagator>::Event)>> {
+    self.x.borrow_mut().remove_value(self.c)
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XNotEqualC as Propagator>::Event)> {
+    vec![(self.x.borrow().id(), Inner)]
+  }
+}
+
+
+// x != y
+#[derive(Copy)]
+pub struct XNotEqualY;
+
+impl XNotEqualY {
+  pub fn new(x: SharedFDVar, y: SharedFDVar) -> XNotEqualYPlusC {
+    XNotEqualYPlusC { x: x, y: y, c: 0 }
+  }
+}
+
+// x != y + c
+#[derive(Debug)]
+pub struct XNotEqualYPlusC {
+  x: SharedFDVar,
+  y: SharedFDVar,
+  c: i32
+}
+
+impl XNotEqualYPlusC {
+  pub fn new(x: SharedFDVar, y: SharedFDVar, c: i32) -> XNotEqualYPlusC {
+    XNotEqualYPlusC { x: x, y: y, c: c }
+  }
+}
+
+impl Propagator for XNotEqualYPlusC {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    let x = self.x.borrow();
+    let y = self.y.borrow();
+
+    if x.lb() == y.ub() + self.c && x.ub() == y.lb() + self.c {
+      Disentailed
+    }
+    else if x.lb() > y.ub() + self.c || x.ub() < y.lb() + self.c {
+      Entailed
+    }
+    else {
+      Unknown
+    }
+  }
+
+  fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)>> {
+    let mut x = self.x.borrow_mut();
+    let mut y = self.y.borrow_mut();
+    if x.lb() == x.ub() {
+      y.remove_value(x.lb() - self.c)
+    }
+    else if y.lb() == y.ub() {
+      x.remove_value(y.lb() + self.c)
+    }
+    else {
+      Some(vec![])
+    }
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)> {
+    vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
   }
 }
 
@@ -410,6 +512,7 @@ mod test {
   #[test]
   fn unary_propagator_test() {
     let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var0_0 = Variable::new(2, (0,0).to_interval());
     let make_xlessc = |&:c| XLessThanC::new(make_var(var0_10), c);
     propagate_test_one(make_xlessc(0), Disentailed, Disentailed, None);
     propagate_test_one(make_xlessc(11), Entailed, Entailed, Some(vec![]));
@@ -429,5 +532,32 @@ mod test {
     propagate_test_one(make_xgreatereqc(11), Disentailed, Disentailed, None);
     propagate_test_one(make_xgreatereqc(0), Entailed, Entailed, Some(vec![]));
     propagate_test_one(make_xgreatereqc(1), Unknown, Entailed, Some(vec![(1, Bound)]));
+
+    let make_xnotequalc = |&:c| XNotEqualC::new(make_var(var0_10), c);
+    propagate_test_one(make_xnotequalc(5), Unknown, Unknown, Some(vec![]));
+    propagate_test_one(make_xnotequalc(0), Unknown, Entailed, Some(vec![(1, Bound)]));
+    propagate_test_one(make_xnotequalc(10), Unknown, Entailed, Some(vec![(1, Bound)]));
+    propagate_test_one(XNotEqualC::new(make_var(var0_0), 0), Disentailed, Disentailed, None);
+  }
+
+  #[test]
+  fn x_neq_y_plus_c_test() {
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var0_0 = Variable::new(5, (0,0).to_interval());
+
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_10), 0, Unknown, Unknown, Some(vec![]));
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var10_20), 0, Unknown, Unknown, Some(vec![]));
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var10_20), 1, Entailed, Entailed, Some(vec![]));
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 0, Unknown, Entailed, Some(vec![(1, Bound)]));
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 10, Unknown, Entailed, Some(vec![(1, Bound)]));
+    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 5, Unknown, Unknown, Some(vec![]));
+    x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 10, Entailed, Entailed, Some(vec![]));
+    x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 0, Disentailed, Disentailed, None);
+  }
+
+  fn x_neq_y_plus_c_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+    let propagator = XNotEqualYPlusC::new(v1, v2, c);
+    propagate_test_one(propagator, before, after, expected);
   }
 }

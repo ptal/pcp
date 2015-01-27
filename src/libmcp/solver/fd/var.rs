@@ -95,6 +95,15 @@ impl FDVar {
 
   pub fn is_failed(&self) -> bool { self.dom.is_empty() }
 
+  pub fn remove_value(&mut self, x: i32) -> Option<Vec<(u32, FDEvent)>> {
+    let mut events = vec![];
+    let new = self.dom.difference(Interval::singleton(x));
+    if self.update(new, &mut events) {
+      Some(events)
+    }
+    else { None }
+  }
+
   pub fn intersection(v1: &mut FDVar, v2: &mut FDVar) -> Option<Vec<(u32, FDEvent)>> {
     let mut events = vec![];
     let new = v1.dom.intersection(v2.dom);
@@ -108,6 +117,10 @@ impl FDVar {
 
   pub fn is_disjoint(v1: &FDVar, v2: &FDVar) -> bool {
     v1.dom.is_disjoint(v2.dom)
+  }
+
+  pub fn is_disjoint_value(&self, x: i32) -> bool {
+    self.dom.is_disjoint(Interval::singleton(x))
   }
 }
 
