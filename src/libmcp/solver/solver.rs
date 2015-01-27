@@ -28,11 +28,47 @@ pub enum Status {
   Unknown
 }
 
+pub trait Space {
+  type Constraint;
+  type Variable;
+  type Domain;
+
+  fn newvar(&mut self, dom: Self::Domain) -> Self::Variable;
+  fn add(&mut self, c: Self::Constraint);
+  fn solve(&mut self) -> Status;
+}
+
 pub struct Solver<V: Variable, D, A> {
   propagators: Vec<Box<Propagator<Event=V::Event> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
+}
+
+impl<V, D, A> Space for Solver<V, D, A> where
+ V: Variable,
+ D: VarEventDependencies,
+ A: Agenda
+{
+  type Constraint = Box<Propagator<Event=<V as Variable>::Event> + 'static>;
+  type Variable = Rc<RefCell<V>>;
+  type Domain = <V as Variable>::Domain;
+
+  fn newvar(&mut self, dom: <Solver<V, D, A> as Space>::Domain) ->
+   <Solver<V, D, A> as Space>::Variable {
+    let var_idx = self.variables.len();
+    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx as u32, dom))));
+    self.variables[var_idx].clone()
+  }
+
+  fn add(&mut self, p: <Solver<V, D, A> as Space>::Constraint) {
+    self.propagators.push(p);
+  }
+
+  fn solve(&mut self) -> Status {
+    self.prepare();
+    self.propagation_loop()
+  }
 }
 
 impl<V, D, A> Solver<V, D, A> where
@@ -47,21 +83,6 @@ impl<V, D, A> Solver<V, D, A> where
       deps: VarEventDependencies::new(0,0),
       agenda: Agenda::new(0)
     }
-  }
-
-  pub fn newvar(&mut self, dom: <V as Variable>::Domain) -> Rc<RefCell<V>> {
-    let var_idx = self.variables.len();
-    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx as u32, dom))));
-    self.variables[var_idx].clone()
-  }
-
-  pub fn add(&mut self, p: Box<Propagator<Event=<V as Variable>::Event> + 'static>) {
-    self.propagators.push(p);
-  }
-
-  pub fn solve(&mut self) -> Status {
-    self.prepare();
-    self.propagation_loop()
   }
 
   fn prepare(&mut self) {
