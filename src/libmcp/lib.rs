@@ -19,6 +19,9 @@
 // #![license = "Apache v2"]
 #![crate_type = "dylib"]
 
+#![allow(unstable)]
+
 extern crate interval;
 
 pub mod solver;
+pub mod search;

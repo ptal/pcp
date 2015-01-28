@@ -17,16 +17,23 @@ pub use solver::event::VarEvent;
 pub use solver::variable::Variable;
 
 use self::FDEvent::*;
+use std::cmp::min;
 
 // We don't have a Nothing event because some functions have two ways of returning
 // 'nothing', with an empty vector or `Nothing`, we select only one.
 // We don't have Failure event because it's not an event that propagator
 // should subscribe too. If a failure occurs, it's over.
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Show)]
+#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Debug)]
 pub enum FDEvent {
   Assignment,
   Bound,
   Inner
+}
+
+impl FDEvent {
+  pub fn merge(self, ev: FDEvent) -> FDEvent {
+    min(self, ev)
+  }
 }
 
 impl VarEvent for FDEvent {

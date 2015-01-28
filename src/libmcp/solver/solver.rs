@@ -166,19 +166,20 @@ mod test {
 
   type FDSolver = Solver<FDVar, VarEventDepsVector, RelaxedFifoAgenda>;
 
-  // #[test]
-  // fn basic_test() {
-  //   let mut solver: FDSolver = Solver::new();
-  //   let var1 = solver.newvar(Interval::new(1,4));
-  //   let var2 = solver.newvar(Interval::new(1,4));
-  //   let var3 = solver.newvar(Interval::new(1,1));
+  #[test]
+  fn basic_test() {
+    let mut solver: FDSolver = Solver::new();
+    let var1 = solver.newvar(Interval::new(1,4));
+    let var2 = solver.newvar(Interval::new(1,4));
+    let var3 = solver.newvar(Interval::new(1,1));
 
-  //   solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
-  //   assert_eq!(solver.solve(), Status::Unknown);
+    // solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
 
-  //   solver.add(Box::new(XEqualY::new(var1, var3)));
-  //   assert_eq!(solver.solve(), Status::Satisfiable);
-  // }
+    // assert_eq!(solver.solve(), Status::Unknown);
+
+    // solver.add(Box::new(XEqualY::new(var1, var3)));
+    // assert_eq!(solver.solve(), Status::Satisfiable);
+  }
 
   // #[test]
   // fn example_nqueens() {}

@@ -19,6 +19,7 @@ use solver::propagator::Status::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
+use std::collections::HashMap;
 
 pub type SharedFDVar = Rc<RefCell<FDVar>>;
 
@@ -355,9 +356,8 @@ impl Propagator for XNotEqualC {
   }
 }
 
-
 // x != y
-#[derive(Copy)]
+#[derive(Copy, Debug)]
 pub struct XNotEqualY;
 
 impl XNotEqualY {
@@ -417,6 +417,72 @@ impl Propagator for XNotEqualYPlusC {
   }
 }
 
+// distinct(x1,..,xN)
+#[derive(Debug)]
+pub struct Distinct {
+  vars: Vec<SharedFDVar>,
+  props: Vec<XNotEqualYPlusC>
+}
+
+impl Distinct {
+  pub fn new(vars: Vec<SharedFDVar>) -> Distinct {
+    let mut props = vec![];
+    for i in range(0, vars.len()-1) {
+      for j in range(i+1, vars.len()) {
+        let i_neq_j = XNotEqualY::new(vars[i].clone(), vars[j].clone());
+        props.push(i_neq_j);
+      }
+    }
+    Distinct { vars: vars, props: props }
+  }
+
+  fn merge_keys(key: u32, value: FDEvent, vars_events: &mut HashMap<u32, FDEvent>) {
+    let old = vars_events.insert(key, value);
+    match old {
+      None => (),
+      Some(x) => {
+        vars_events.insert(key, value.merge(x));
+      }
+    }
+  }
+}
+
+impl Propagator for Distinct {
+  type Event = FDEvent;
+
+  fn status(&self) -> Status {
+    let mut all_entailed = true;
+    for p in self.props.iter() {
+      match p.status() {
+        Disentailed => return Disentailed,
+        Unknown => all_entailed = false,
+        _ => ()
+      }
+    }
+    if all_entailed { Entailed }
+    else { Unknown }
+  }
+
+  fn propagate(&mut self) -> Option<Vec<(u32, <Distinct as Propagator>::Event)>> {
+    let mut events = HashMap::new();
+    for p in self.props.iter_mut() {
+      match p.propagate() {
+        None => return None,
+        Some(prop_events) => {
+          for (var_id, ev) in prop_events.into_iter() {
+            Distinct::merge_keys(var_id, ev, &mut events);
+          }
+        }
+      }
+    }
+    Some(events.into_iter().collect())
+  }
+
+  fn dependencies(&self) -> Vec<(u32, <Distinct as Propagator>::Event)> {
+    self.vars.iter().map(|x| (x.borrow().id(), Inner)).collect()
+  }
+}
+
 #[cfg(test)]
 mod test {
   use super::*;
@@ -426,11 +492,28 @@ mod test {
   use solver::propagator::*;
   use std::rc::Rc;
   use std::cell::RefCell;
+  use std::iter::range;
+  use std::collections::VecMap;
+
+  fn make_vec_map(events: Vec<(u32, FDEvent)>) -> VecMap<FDEvent> {
+    let mut new_events = VecMap::new();
+    for (id, ev) in events.into_iter() {
+      let old = new_events.insert(id as usize, ev);
+      assert!(old.is_none(), "Duplications are not allowed from propagate().");
+    }
+    new_events
+  }
 
   fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(u32, FDEvent)>>)
    where P: Propagator<Event=FDEvent> {
     let events = prop.propagate();
-    assert_eq!(events, expected);
+    if events != None && expected != None {
+      let events = make_vec_map(events.unwrap());
+      let expected = make_vec_map(expected.unwrap());
+      assert_eq!(events, expected);
+    } else {
+      assert_eq!(events, expected);
+    }
   }
 
   fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>)
@@ -558,6 +641,32 @@ mod test {
 
   fn x_neq_y_plus_c_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
     let propagator = XNotEqualYPlusC::new(v1, v2, c);
+    propagate_test_one(propagator, before, after, expected);
+  }
+
+  #[test]
+  fn distinct_test() {
+    let mut vars: Vec<FDVar> = range(0, 3)
+      .map(|v| Variable::new(v, Interval::singleton(v as i32)))
+      .collect();
+    vars.push(Variable::new(3, (0,3).to_interval()));
+    vars.push(Variable::new(4, (0,1).to_interval()));
+    vars.push(Variable::new(5, (0,3).to_interval()));
+
+    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[2])],
+      Entailed, Entailed, Some(vec![]));
+    distinct_test_one(vec![make_var(vars[0]), make_var(vars[0]), make_var(vars[2])],
+      Disentailed, Disentailed, None);
+    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[3])],
+      Unknown, Entailed, Some(vec![(3,Bound)]));
+    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[4])],
+      Unknown, Disentailed, None);
+    distinct_test_one(vec![make_var(vars[0]), make_var(vars[3]), make_var(vars[5])],
+      Unknown, Unknown, Some(vec![(3,Bound),(5,Bound)]));
+  }
+
+  fn distinct_test_one(vars: Vec<SharedFDVar>, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+    let propagator = Distinct::new(vars);
     propagate_test_one(propagator, before, after, expected);
   }
 }
