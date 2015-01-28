@@ -181,10 +181,20 @@ mod test {
     // assert_eq!(solver.solve(), Status::Satisfiable);
   }
 
-  // #[test]
-  // fn example_nqueens() {}
+  #[test]
+  fn example_nqueens() {
+    // nqueens(1, Entailed);
+    // nqueens(2, Unknown);
+    // nqueens(3, Unknown);
+  }
 
-  // fn nqueens(u32 n) {
+  // fn nqueens(n: u32, expect: Status) {
   //   let mut solver: FDSolver = Solver::new();
+  //   let mut queens = vec![];
+  //   for i in range(0,n) {
+  //     queens.push(solver.newvar((1, n as i32).to_interval()));
+  //   }
+  //   solver.add(Box::new(Distinct::new(queens)));
+  //   assert_eq!(solver.solve(), expect);
   // }
 }

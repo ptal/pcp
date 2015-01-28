@@ -663,6 +663,7 @@ mod test {
       Unknown, Disentailed, None);
     distinct_test_one(vec![make_var(vars[0]), make_var(vars[3]), make_var(vars[5])],
       Unknown, Unknown, Some(vec![(3,Bound),(5,Bound)]));
+    distinct_test_one(vec![make_var(vars[3])], Entailed, Entailed, Some(vec![]));
   }
 
   fn distinct_test_one(vars: Vec<SharedFDVar>, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
