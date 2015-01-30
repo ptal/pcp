@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use solver::event::VarEvent;
+use solver::variable::Variable;
 
 #[derive(Copy, PartialEq, Eq, Show)]
 pub enum Status
@@ -38,4 +39,9 @@ pub trait Propagator
   // Each event on a variable that can change the result of
   // the `status` method should be listed here.
   fn dependencies(&self) -> Vec<(u32, Self::Event)>;
+}
+
+pub trait DeepClonePropagator<V> : Propagator
+{
+  fn deep_clone(&self, cloned_vars: &Vec<V>) -> Self;
 }

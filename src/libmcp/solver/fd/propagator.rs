@@ -23,6 +23,11 @@ use std::collections::HashMap;
 
 pub type SharedFDVar = Rc<RefCell<FDVar>>;
 
+fn deep_var_clone(v: &SharedFDVar, from: &Vec<SharedFDVar>) -> SharedFDVar
+{
+  from[v.borrow().id() as usize].clone()
+}
+
 // x < y
 #[derive(Copy)]
 pub struct XLessThanY;
@@ -145,6 +150,15 @@ impl Propagator for XEqualY {
   }
 }
 
+impl DeepClonePropagator<SharedFDVar> for XEqualY
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XEqualY {
+    XEqualY::new(
+      deep_var_clone(&self.x, from),
+      deep_var_clone(&self.y, from))
+  }
+}
+
 // x < y + c
 #[derive(Debug)]
 pub struct XLessThanYPlusC {
@@ -209,6 +223,16 @@ impl Propagator for XLessThanYPlusC {
   }
 }
 
+impl DeepClonePropagator<SharedFDVar> for XLessThanYPlusC
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(
+      deep_var_clone(&self.x, from),
+      deep_var_clone(&self.y, from),
+      self.c)
+  }
+}
+
 // x > c
 #[derive(Copy)]
 pub struct XGreaterThanC;
@@ -260,6 +284,15 @@ impl Propagator for XGreaterEqThanC {
 
   fn dependencies(&self) -> Vec<(u32, <XGreaterEqThanC as Propagator>::Event)> {
     vec![(self.x.borrow().id(), Bound)]
+  }
+}
+
+impl DeepClonePropagator<SharedFDVar> for XGreaterEqThanC
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XGreaterEqThanC {
+    XGreaterEqThanC::new(
+      deep_var_clone(&self.x, from),
+      self.c)
   }
 }
 
@@ -317,6 +350,15 @@ impl Propagator for XLessEqThanC {
   }
 }
 
+impl DeepClonePropagator<SharedFDVar> for XLessEqThanC
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XLessEqThanC {
+    XLessEqThanC::new(
+      deep_var_clone(&self.x, from),
+      self.c)
+  }
+}
+
 // x != c
 #[derive(Debug)]
 pub struct XNotEqualC {
@@ -353,6 +395,15 @@ impl Propagator for XNotEqualC {
 
   fn dependencies(&self) -> Vec<(u32, <XNotEqualC as Propagator>::Event)> {
     vec![(self.x.borrow().id(), Inner)]
+  }
+}
+
+impl DeepClonePropagator<SharedFDVar> for XNotEqualC
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XNotEqualC {
+    XNotEqualC::new(
+      deep_var_clone(&self.x, from),
+      self.c)
   }
 }
 
@@ -414,6 +465,16 @@ impl Propagator for XNotEqualYPlusC {
 
   fn dependencies(&self) -> Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)> {
     vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
+  }
+}
+
+impl DeepClonePropagator<SharedFDVar> for XNotEqualYPlusC
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> XNotEqualYPlusC {
+    XNotEqualYPlusC::new(
+      deep_var_clone(&self.x, from),
+      deep_var_clone(&self.y, from),
+      self.c)
   }
 }
 
@@ -480,6 +541,16 @@ impl Propagator for Distinct {
 
   fn dependencies(&self) -> Vec<(u32, <Distinct as Propagator>::Event)> {
     self.vars.iter().map(|x| (x.borrow().id(), Inner)).collect()
+  }
+}
+
+impl DeepClonePropagator<SharedFDVar> for Distinct
+{
+  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Distinct {
+    Distinct {
+      vars: self.vars.iter().map(|v| deep_var_clone(v, from)).collect(),
+      props: self.props.iter().map(|p| p.deep_clone(from)).collect()
+    }
   }
 }
 
