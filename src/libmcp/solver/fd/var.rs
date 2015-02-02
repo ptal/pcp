@@ -46,7 +46,7 @@ impl VarEvent for FDEvent {
   }
 }
 
-#[derive(Copy, PartialEq, Eq, Show)]
+#[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct FDVar {
   id: u32,
   dom: Interval

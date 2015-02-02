@@ -15,7 +15,7 @@
 use solver::event::VarEvent;
 use solver::variable::Variable;
 
-#[derive(Copy, PartialEq, Eq, Show)]
+#[derive(Copy, PartialEq, Eq, Debug)]
 pub enum Status
 {
   Entailed,
@@ -41,7 +41,7 @@ pub trait Propagator
   fn dependencies(&self) -> Vec<(u32, Self::Event)>;
 }
 
-pub trait DeepClonePropagator<V> : Propagator
+pub trait DeepClonePropagator<SharedVar>
 {
-  fn deep_clone(&self, cloned_vars: &Vec<V>) -> Self;
+  fn deep_clone(&self, cloned_vars: &Vec<SharedVar>) -> Self;
 }

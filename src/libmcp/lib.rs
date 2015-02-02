@@ -14,14 +14,15 @@
 
 
 #![crate_name = "mcp"]
-#![experimental]
+// #![experimental]
 // #![comment = "Monadic Constraint Programming Library"]
 // #![license = "Apache v2"]
 #![crate_type = "dylib"]
 
-#![allow(unstable)]
+#![feature(core)]
+#![feature(collections)]
 
 extern crate interval;
 
 pub mod solver;
-pub mod search;
+// pub mod search;

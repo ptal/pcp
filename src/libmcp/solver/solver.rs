@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::propagator::Propagator;
+use solver::propagator::{Propagator,DeepClonePropagator};
 use solver::propagator::Status as PStatus;
 use solver::variable::Variable;
 use solver::dependencies::VarEventDependencies;
@@ -21,7 +21,7 @@ use solver::event::VarEvent;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-#[derive(Copy, Show, PartialEq, Eq)]
+#[derive(Copy, Debug, PartialEq, Eq)]
 pub enum Status {
   Satisfiable,
   Unsatisfiable,
@@ -30,29 +30,44 @@ pub enum Status {
 
 pub trait Space {
   type Constraint;
-  type Variable;
+  type Variable : Clone;
   type Domain;
+  type Label;
 
   fn newvar(&mut self, dom: Self::Domain) -> Self::Variable;
   fn add(&mut self, c: Self::Constraint);
   fn solve(&mut self) -> Status;
+  fn mark(&self) -> Self::Label;
+  fn goto(&self, label: Self::Label) -> Self;
 }
 
-pub struct Solver<V: Variable, D, A> {
-  propagators: Vec<Box<Propagator<Event=V::Event> + 'static>>,
+trait PropagatorErasure<V: Variable>:
+    Propagator<Event=<V as Variable>::Event>
+  + DeepClonePropagator<Rc<RefCell<V>>>
+{}
+
+impl<
+  V: Variable,
+  R: Propagator<Event=<V as Variable>::Event>
+   + DeepClonePropagator<Rc<RefCell<V>>>
+> PropagatorErasure<V> for R {}
+
+pub struct Solver<V: Variable+Clone, D, A> {
+  propagators: Vec<Box<PropagatorErasure<V> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
 }
 
 impl<V, D, A> Space for Solver<V, D, A> where
- V: Variable,
+ V: Variable+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
-  type Constraint = Box<Propagator<Event=<V as Variable>::Event> + 'static>;
+  type Constraint = Box<PropagatorErasure<V> + 'static>;
   type Variable = Rc<RefCell<V>>;
   type Domain = <V as Variable>::Domain;
+  type Label = Solver<V, D, A>;
 
   fn newvar(&mut self, dom: <Solver<V, D, A> as Space>::Domain) ->
    <Solver<V, D, A> as Space>::Variable {
@@ -69,10 +84,27 @@ impl<V, D, A> Space for Solver<V, D, A> where
     self.prepare();
     self.propagation_loop()
   }
+
+  fn mark(&self) -> <Solver<V, D, A> as Space>::Label
+  {
+    let mut solver = Solver::new();
+    solver.variables = self.variables.iter()
+      .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
+      .collect();
+    solver.propagators = self.propagators.iter()
+      .map(|p| Box::new(p.deep_clone(&solver.variables)))
+      .collect();
+    solver
+  }
+
+  fn goto(&self, label: <Solver<V, D, A> as Space>::Label) -> Self
+  {
+    label
+  }
 }
 
 impl<V, D, A> Solver<V, D, A> where
- V: Variable,
+ V: Variable+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
