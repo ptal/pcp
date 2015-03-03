@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::RingBuf;
+use std::collections::VecDeque;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
@@ -33,14 +33,14 @@ pub trait Agenda {
 
 pub struct RelaxedFifoAgenda {
   inside_queue: Vec<bool>,
-  queue: RingBuf<usize>
+  queue: VecDeque<usize>
 }
 
 impl Agenda for RelaxedFifoAgenda {
   fn new(capacity: usize) -> RelaxedFifoAgenda {
     RelaxedFifoAgenda {
       inside_queue: FromIterator::from_iter(repeat(false).take(capacity)),
-      queue: RingBuf::with_capacity(capacity)
+      queue: VecDeque::with_capacity(capacity)
     }
   }
 

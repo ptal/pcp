@@ -14,9 +14,7 @@
 
 
 #![crate_name = "mcp"]
-// #![experimental]
-// #![comment = "Monadic Constraint Programming Library"]
-// #![license = "Apache v2"]
+#![unstable]
 #![crate_type = "dylib"]
 
 #![feature(core)]

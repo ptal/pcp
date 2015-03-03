@@ -14,6 +14,7 @@
 
 use solver::event::VarEvent;
 use std::iter::{FromIterator, repeat};
+use std::slice::Iter;
 
 pub trait VarEventDependencies {
 
@@ -22,7 +23,7 @@ pub trait VarEventDependencies {
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
   // We box the iterator because defining it in term of associated type makes
   // the definition very tedious...
-  fn react<'a, E>(&'a self, var: usize, ev: E) -> Box<Iterator<Item=&'a usize>> where E: VarEvent;
+  fn react<'a, E>(&'a self, var: usize, ev: E) -> &'a Iterator<Item=&'a usize> where E: VarEvent;
   fn is_empty(&self) -> bool;
 }
 
@@ -69,10 +70,12 @@ impl VarEventDependencies for VarEventDepsVector {
   }
 
   fn react<'a, E>(&'a self, var: usize, ev: E) ->
-   Box<Iterator<Item=&'a usize>> where E: VarEvent {
+   &'a Iterator<Item=&'a usize> where E: VarEvent {
     let from = self.index_of(var, ev);
     let len = self.num_events - ev.to_index();
-    Box::new(self.deps.iter().skip(from).take(len).flat_map(|&:x| x.iter()))
+    &self.deps.iter()
+      .skip(from).take(len)
+      .flat_map(|&:x| x.iter())
   }
 
   fn is_empty(&self) -> bool {

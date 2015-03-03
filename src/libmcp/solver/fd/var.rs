@@ -49,14 +49,14 @@ impl VarEvent for FDEvent {
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct FDVar {
   id: u32,
-  dom: Interval
+  dom: Interval<i32>
 }
 
 impl Variable for FDVar {
-  type Domain = Interval;
+  type Domain = Interval<i32>;
   type Event = FDEvent;
 
-  fn new(id: u32, dom: Interval) -> FDVar {
+  fn new(id: u32, dom: Interval<i32>) -> FDVar {
     assert!(!dom.is_empty());
     FDVar {
       id: id,
@@ -69,7 +69,7 @@ impl FDVar {
   pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  pub fn update(&mut self, dom: Interval, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  pub fn update(&mut self, dom: Interval<i32>, events: &mut Vec<(u32, FDEvent)>) -> bool {
     assert!(dom.is_subset_of(self.dom));
     if dom.is_empty() { false } // Failure
     else {
@@ -154,7 +154,7 @@ mod test {
     var_update_test_one(var0_10, dom1_9, vec![Bound], true);
   }
 
-  fn var_update_test_one(var: FDVar, dom: Interval, expect: Vec<FDEvent>, expect_success: bool) {
+  fn var_update_test_one(var: FDVar, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
     let mut var = var;
     let mut events = vec![];
     assert_eq!(var.update(dom, &mut events), expect_success);

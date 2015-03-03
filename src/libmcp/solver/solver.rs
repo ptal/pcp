@@ -85,8 +85,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
     self.propagation_loop()
   }
 
-  fn mark(&self) -> <Solver<V, D, A> as Space>::Label
-  {
+  fn mark(&self) -> <Solver<V, D, A> as Space>::Label {
     let mut solver = Solver::new();
     solver.variables = self.variables.iter()
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
