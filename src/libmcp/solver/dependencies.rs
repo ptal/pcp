@@ -21,9 +21,7 @@ pub trait VarEventDependencies {
   fn new(num_vars: usize, num_events: usize) -> Self;
   fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
-  // We box the iterator because defining it in term of associated type makes
-  // the definition very tedious...
-  fn react<'a, E>(&'a self, var: usize, ev: E) -> &'a Iterator<Item=&'a usize> where E: VarEvent;
+  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: VarEvent;
   fn is_empty(&self) -> bool;
 }
 
@@ -54,7 +52,9 @@ impl VarEventDependencies for VarEventDepsVector {
   }
 
   fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent {
-    assert!(self.deps.iter().skip(var*self.num_events).take(self.num_events).flat_map(|&:x| x.iter()).all(|&: &x| x != prop),
+    assert!(self.deps.iter()
+      .skip(var*self.num_events).take(self.num_events)
+      .flat_map(|x| x.iter()).all(|&x| x != prop),
       "propagator already subscribed to this variable");
     self.num_subscriptions += 1;
     let mut props = self.deps_of_mut(var, ev);
@@ -69,13 +69,14 @@ impl VarEventDependencies for VarEventDepsVector {
     props.swap_remove(idx.unwrap());
   }
 
-  fn react<'a, E>(&'a self, var: usize, ev: E) ->
-   &'a Iterator<Item=&'a usize> where E: VarEvent {
+  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: VarEvent {
     let from = self.index_of(var, ev);
     let len = self.num_events - ev.to_index();
-    &self.deps.iter()
+    self.deps.iter()
       .skip(from).take(len)
-      .flat_map(|&:x| x.iter())
+      .flat_map(|x| x.iter())
+      .cloned()
+      .collect()
   }
 
   fn is_empty(&self) -> bool {
@@ -96,13 +97,13 @@ mod test {
   }
 
   fn iter_deps(deps: &mut VarEventDepsVector, var: usize, ev: FDEvent, expect: Vec<usize>) {
-    let mut it = deps.react(var, ev);
+    let mut it = deps.react(var, ev).into_iter();
     let mut it_e = expect.into_iter();
     loop {
       let next = it.next();
       let next_e = it_e.next();
       if next.is_none() || next_e.is_none() { break; }
-      assert_eq!(*next.unwrap(), next_e.unwrap());
+      assert_eq!(next.unwrap(), next_e.unwrap());
     }
     assert_eq!(it.next(), None);
     assert_eq!(it_e.next(), None);

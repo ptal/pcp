@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::propagator::{Propagator,DeepClonePropagator};
+use solver::propagator::Propagator;
 use solver::propagator::Status as PStatus;
 use solver::variable::Variable;
 use solver::dependencies::VarEventDependencies;
@@ -41,19 +41,8 @@ pub trait Space {
   fn goto(&self, label: Self::Label) -> Self;
 }
 
-trait PropagatorErasure<V: Variable>:
-    Propagator<Event=<V as Variable>::Event>
-  + DeepClonePropagator<Rc<RefCell<V>>>
-{}
-
-impl<
-  V: Variable,
-  R: Propagator<Event=<V as Variable>::Event>
-   + DeepClonePropagator<Rc<RefCell<V>>>
-> PropagatorErasure<V> for R {}
-
 pub struct Solver<V: Variable+Clone, D, A> {
-  propagators: Vec<Box<PropagatorErasure<V> + 'static>>,
+  propagators: Vec<Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
@@ -64,7 +53,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
  D: VarEventDependencies,
  A: Agenda
 {
-  type Constraint = Box<PropagatorErasure<V> + 'static>;
+  type Constraint = Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>;
   type Variable = Rc<RefCell<V>>;
   type Domain = <V as Variable>::Domain;
   type Label = Solver<V, D, A>;
@@ -91,7 +80,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
       .collect();
     solver.propagators = self.propagators.iter()
-      .map(|p| Box::new(p.deep_clone(&solver.variables)))
+      .map(|p| p.deep_clone(&solver.variables))
       .collect();
     solver
   }
@@ -124,7 +113,8 @@ impl<V, D, A> Solver<V, D, A> where
   fn init_deps(&mut self) {
     self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as VarEvent>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
-      for (v, ev) in p.dependencies().into_iter() {
+      let p_deps: Vec<(u32, _)> = p.dependencies();
+      for (v, ev) in p_deps.into_iter() {
         self.deps.subscribe(v as usize, ev, p_idx);
       }
     }
@@ -171,8 +161,8 @@ impl<V, D, A> Solver<V, D, A> where
 
   fn react(&mut self, events: Vec<(u32, <V as Variable>::Event)>) {
     for (v, ev) in events.into_iter() {
-      let mut reactions = self.deps.react(v as usize, ev);
-      for &p in *reactions {
+      let reactions = self.deps.react(v as usize, ev);
+      for p in reactions.into_iter() {
         self.agenda.schedule(p);
       }
     }
@@ -180,7 +170,7 @@ impl<V, D, A> Solver<V, D, A> where
 
   fn unlink_prop(&mut self, p_idx: usize) {
     self.agenda.unschedule(p_idx);
-    let deps = self.propagators[p_idx].dependencies();
+    let deps: Vec<(u32, _)> = self.propagators[p_idx].dependencies();
     for &(var, ev) in deps.iter() {
       self.deps.unsubscribe(var as usize, ev, p_idx)
     }
@@ -204,12 +194,12 @@ mod test {
     let var2 = solver.newvar(Interval::new(1,4));
     let var3 = solver.newvar(Interval::new(1,1));
 
-    // solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
+    solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
 
-    // assert_eq!(solver.solve(), Status::Unknown);
+    assert_eq!(solver.solve(), Status::Unknown);
 
-    // solver.add(Box::new(XEqualY::new(var1, var3)));
-    // assert_eq!(solver.solve(), Status::Satisfiable);
+    solver.add(Box::new(XEqualY::new(var1, var3)));
+    assert_eq!(solver.solve(), Status::Satisfiable);
   }
 
   #[test]

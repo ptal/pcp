@@ -23,9 +23,10 @@ pub enum Status
   Unknown
 }
 
-pub trait Propagator
+pub trait Propagator where <Self as Propagator>::SharedVar: Sized
 {
   type Event: VarEvent;
+  type SharedVar;
 
   // If the result is Entailed or Disentailed, it must not
   // change after a propagate call.
@@ -39,9 +40,6 @@ pub trait Propagator
   // Each event on a variable that can change the result of
   // the `status` method should be listed here.
   fn dependencies(&self) -> Vec<(u32, Self::Event)>;
-}
 
-pub trait DeepClonePropagator<SharedVar>
-{
-  fn deep_clone(&self, cloned_vars: &Vec<SharedVar>) -> Self;
+  fn deep_clone(&self, cloned_vars: &Vec<Self::SharedVar>) -> Box<Propagator<Event=Self::Event, SharedVar=Self::SharedVar>>;
 }
