@@ -228,12 +228,25 @@ mod test {
     nqueens(4, Status::Unknown);
   }
 
-  fn nqueens(n: u32, expect: Status) {
+  fn nqueens(n: usize, expect: Status) {
     let mut solver: FDSolver = Solver::new();
     let mut queens = vec![];
+    // 2 queens can't share the same line.
     for _ in range(0,n) {
       queens.push(solver.newvar((1, n as i32).to_interval()));
     }
+    for i in range(0usize,n-1) {
+      for j in range(i + 1, n) {
+        // 2 queens can't share the same diagonal.
+        let q1 = (i + 1) as i32;
+        let q2 = (j + 1) as i32;
+        // Xi + i != Xj + j
+        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), q2 - q1)));
+        // Xi - i != Xj - j
+        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), -q2 + q1)));
+      }
+    }
+    // 2 queens can't share the same column.
     solver.add(Box::new(Distinct::new(queens)));
     assert_eq!(solver.solve(), expect);
   }
