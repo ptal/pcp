@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use solver::event::VarEvent;
-use solver::variable::Variable;
 
 #[derive(Copy, PartialEq, Eq, Debug)]
 pub enum Status

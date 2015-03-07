@@ -20,6 +20,9 @@ use solver::agenda::Agenda;
 use solver::event::VarEvent;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::fmt::{Formatter, Display, Error};
+use std::result::fold;
+use std::iter::range;
 
 #[derive(Copy, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -41,7 +44,7 @@ pub trait Space {
   fn goto(&self, label: Self::Label) -> Self;
 }
 
-pub struct Solver<V: Variable+Clone, D, A> {
+pub struct Solver<V: Variable, D, A> {
   propagators: Vec<Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
@@ -121,7 +124,11 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn init_agenda(&mut self) {
-    self.agenda = Agenda::new(self.propagators.len());
+    let num_props = self.propagators.len();
+    self.agenda = Agenda::new(num_props);
+    for p_idx in range(0, num_props) {
+      self.agenda.schedule(p_idx);
+    }
   }
 
   fn propagation_loop(&mut self) -> Status {
@@ -177,6 +184,18 @@ impl<V, D, A> Solver<V, D, A> where
   }
 }
 
+impl<V, D, A> Display for Solver<V, D, A> where
+ V: Variable+Display
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    let format_vars =
+      self.variables.iter()
+      .map(|v| v.borrow())
+      .map(|v| formatter.write_fmt(format_args!("{}\n", *v)));
+    fold(format_vars, (), |a,_| a)
+  }
+}
+
 #[cfg(test)]
 mod test {
   use super::*;
@@ -195,7 +214,6 @@ mod test {
     let var3 = solver.newvar(Interval::new(1,1));
 
     solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
-
     assert_eq!(solver.solve(), Status::Unknown);
 
     solver.add(Box::new(XEqualY::new(var1, var3)));
@@ -204,18 +222,19 @@ mod test {
 
   #[test]
   fn example_nqueens() {
-    // nqueens(1, Entailed);
-    // nqueens(2, Unknown);
-    // nqueens(3, Unknown);
+    nqueens(1, Status::Satisfiable);
+    nqueens(2, Status::Unknown);
+    nqueens(3, Status::Unknown);
+    nqueens(4, Status::Unknown);
   }
 
-  // fn nqueens(n: u32, expect: Status) {
-  //   let mut solver: FDSolver = Solver::new();
-  //   let mut queens = vec![];
-  //   for i in range(0,n) {
-  //     queens.push(solver.newvar((1, n as i32).to_interval()));
-  //   }
-  //   solver.add(Box::new(Distinct::new(queens)));
-  //   assert_eq!(solver.solve(), expect);
-  // }
+  fn nqueens(n: u32, expect: Status) {
+    let mut solver: FDSolver = Solver::new();
+    let mut queens = vec![];
+    for _ in range(0,n) {
+      queens.push(solver.newvar((1, n as i32).to_interval()));
+    }
+    solver.add(Box::new(Distinct::new(queens)));
+    assert_eq!(solver.solve(), expect);
+  }
 }

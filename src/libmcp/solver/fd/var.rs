@@ -16,6 +16,7 @@ pub use interval::interval::*;
 pub use solver::event::VarEvent;
 pub use solver::variable::Variable;
 
+use std::fmt::{Formatter, Display, Error};
 use self::FDEvent::*;
 use std::cmp::min;
 
@@ -50,6 +51,12 @@ impl VarEvent for FDEvent {
 pub struct FDVar {
   id: u32,
   dom: Interval<i32>
+}
+
+impl Display for FDVar {
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("({}, {})", self.id, self.dom))
+  }
 }
 
 impl Variable for FDVar {

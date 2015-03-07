@@ -14,7 +14,6 @@
 
 use solver::event::VarEvent;
 use std::iter::{FromIterator, repeat};
-use std::slice::Iter;
 
 pub trait VarEventDependencies {
 
