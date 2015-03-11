@@ -18,31 +18,12 @@ use solver::variable::Variable;
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
 use solver::event::VarEvent;
+use solver::space::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 use std::iter::range;
-
-#[derive(Copy, Debug, PartialEq, Eq)]
-pub enum Status {
-  Satisfiable,
-  Unsatisfiable,
-  Unknown
-}
-
-pub trait Space {
-  type Constraint;
-  type Variable : Clone;
-  type Domain;
-  type Label;
-
-  fn newvar(&mut self, dom: Self::Domain) -> Self::Variable;
-  fn add(&mut self, c: Self::Constraint);
-  fn solve(&mut self) -> Status;
-  fn mark(&self) -> Self::Label;
-  fn goto(&self, label: Self::Label) -> Self;
-}
 
 pub struct Solver<V: Variable, D, A> {
   propagators: Vec<Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>>,
@@ -200,6 +181,7 @@ impl<V, D, A> Display for Solver<V, D, A> where
 mod test {
   use super::*;
   use solver::fd::var::*;
+  use solver::space::*;
   use solver::fd::propagator::*;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;

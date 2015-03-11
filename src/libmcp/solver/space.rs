@@ -12,11 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod fd;
-pub mod event;
-pub mod propagator;
-pub mod variable;
-pub mod agenda;
-pub mod dependencies;
-pub mod solver;
-pub mod space;
+#[derive(Copy, Debug, PartialEq, Eq)]
+pub enum Status {
+  Satisfiable,
+  Unsatisfiable,
+  Unknown
+}
+
+pub trait Space {
+  type Constraint;
+  type Variable : Clone;
+  type Domain;
+  type Label;
+
+  fn newvar(&mut self, dom: Self::Domain) -> Self::Variable;
+  fn add(&mut self, c: Self::Constraint);
+  fn solve(&mut self) -> Status;
+  fn mark(&self) -> Self::Label;
+  fn goto(&self, label: Self::Label) -> Self;
+}
