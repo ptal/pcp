@@ -209,15 +209,44 @@ mod test {
   #[test]
   fn basic_test() {
     let mut solver: FDSolver = Solver::new();
+
+    assert_eq!(solver.solve(), Status::Satisfiable);
+
     let var1 = solver.newvar(Interval::new(1,4));
     let var2 = solver.newvar(Interval::new(1,4));
     let var3 = solver.newvar(Interval::new(1,1));
+
+    assert_eq!(solver.solve(), Status::Satisfiable);
 
     solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
     assert_eq!(solver.solve(), Status::Unknown);
 
     solver.add(Box::new(XEqualY::new(var1, var3)));
     assert_eq!(solver.solve(), Status::Satisfiable);
+  }
+
+  fn chained_lt(n: usize, expect: Status) {
+    // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
+
+    let mut solver: FDSolver = Solver::new();
+    let mut vars = vec![];
+    for _ in range(0,n) {
+      vars.push(solver.newvar(Interval::new(1,10)));
+    }
+    for i in range(0,n-1) {
+      solver.add(Box::new(XLessThanY::new(vars[i].clone(), vars[i+1].clone())));
+    }
+    assert_eq!(solver.solve(), expect);
+  }
+
+  #[test]
+  fn chained_lt_tests() {
+    chained_lt(1, Status::Satisfiable);
+    chained_lt(2, Status::Unknown);
+    chained_lt(5, Status::Unknown);
+    chained_lt(9, Status::Unknown);
+    chained_lt(10, Status::Satisfiable);
+    chained_lt(11, Status::Unsatisfiable);
   }
 
   #[test]
