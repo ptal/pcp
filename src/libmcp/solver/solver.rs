@@ -180,6 +180,7 @@ impl<V, D, A> Display for Solver<V, D, A> where
 #[cfg(test)]
 mod test {
   use super::*;
+  use interval::ops::*;
   use solver::fd::var::*;
   use solver::space::*;
   use solver::fd::propagator::*;

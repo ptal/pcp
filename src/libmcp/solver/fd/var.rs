@@ -19,6 +19,8 @@ pub use solver::variable::Variable;
 use std::fmt::{Formatter, Display, Error};
 use self::FDEvent::*;
 use std::cmp::min;
+use interval::ncollections::ops::*;
+use interval::ops::*;
 
 // We don't have a Nothing event because some functions have two ways of returning
 // 'nothing', with an empty vector or `Nothing`, we restict ourself to only one (empty vector).
@@ -77,7 +79,7 @@ impl FDVar {
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
   pub fn update(&mut self, dom: Interval<i32>, events: &mut Vec<(u32, FDEvent)>) -> bool {
-    assert!(dom.is_subset_of(self.dom));
+    assert!(dom.is_subset(&self.dom));
     if dom.is_empty() { false } // Failure
     else {
       let old = self.dom;
@@ -130,11 +132,11 @@ impl FDVar {
   }
 
   pub fn is_disjoint(v1: &FDVar, v2: &FDVar) -> bool {
-    v1.dom.is_disjoint(v2.dom)
+    v1.dom.is_disjoint(&v2.dom)
   }
 
   pub fn is_disjoint_value(&self, x: i32) -> bool {
-    self.dom.is_disjoint(Interval::singleton(x))
+    self.dom.is_disjoint(&Interval::singleton(x))
   }
 }
 
@@ -142,6 +144,7 @@ impl FDVar {
 mod test {
   use super::*;
   use super::FDEvent::*;
+  use interval::ncollections::ops::*;
 
   #[test]
   fn var_update_test() {

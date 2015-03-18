@@ -548,6 +548,7 @@ mod test {
   use solver::fd::var::FDEvent::*;
   use solver::propagator::Status::*;
   use solver::propagator::*;
+  use interval::ncollections::ops::*;
   use std::rc::Rc;
   use std::cell::RefCell;
   use std::iter::range;
