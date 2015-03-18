@@ -120,14 +120,14 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn schedule_outofbound() {
     let mut sched: RelaxedFifoAgenda = Agenda::new(3);
     sched.schedule(3);
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn unschedule_outofbound() {
     let mut sched: RelaxedFifoAgenda = Agenda::new(3);
     sched.unschedule(3);

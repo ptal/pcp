@@ -157,7 +157,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn subscribe_fail_test() {
     let mut deps = make_deps();
 
@@ -166,7 +166,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn unsubscribe_fail_test() {
     let mut deps = make_deps();
 
@@ -174,7 +174,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn subscribe_two_events_fail_test() {
     let mut deps = make_deps();
 

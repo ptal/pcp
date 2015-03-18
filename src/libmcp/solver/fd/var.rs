@@ -21,7 +21,7 @@ use self::FDEvent::*;
 use std::cmp::min;
 
 // We don't have a Nothing event because some functions have two ways of returning
-// 'nothing', with an empty vector or `Nothing`, we select only one.
+// 'nothing', with an empty vector or `Nothing`, we restict ourself to only one (empty vector).
 // We don't have Failure event because it's not an event that propagator
 // should subscribe too. If a failure occurs, it's over.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Debug)]
@@ -235,7 +235,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn var_non_monotonic_update_lb() {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10: FDVar = Variable::new(0, dom0_10);
@@ -244,7 +244,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn var_non_monotonic_update_ub() {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10: FDVar = Variable::new(0, dom0_10);
@@ -253,7 +253,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn var_non_monotonic_update_singleton() {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10: FDVar = Variable::new(0, dom0_10);
@@ -263,7 +263,7 @@ mod test {
   }
 
   #[test]
-  #[should_fail]
+  #[should_panic]
   fn var_non_monotonic_update_widen() {
     let dom0_10 = (0,10).to_interval();
     let mut var0_10: FDVar = Variable::new(0, dom0_10);
