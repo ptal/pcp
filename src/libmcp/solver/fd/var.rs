@@ -13,41 +13,12 @@
 // limitations under the License.
 
 pub use interval::interval::*;
-pub use solver::event::VarEvent;
-pub use solver::variable::Variable;
+pub use solver::fd::event::*;
+use solver::event::*;
+use solver::variable::Variable;
 
 use std::fmt::{Formatter, Display, Error};
-use self::FDEvent::*;
-use std::cmp::min;
 use interval::ncollections::ops::*;
-use interval::ops::*;
-
-// We don't have a Nothing event because some functions have two ways of returning
-// 'nothing', with an empty vector or `Nothing`, we restict ourself to only one (empty vector).
-// We don't have Failure event because it's not an event that propagator
-// should subscribe too. If a failure occurs, it's over.
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Debug)]
-pub enum FDEvent {
-  Assignment,
-  Bound,
-  Inner
-}
-
-impl FDEvent {
-  pub fn merge(self, ev: FDEvent) -> FDEvent {
-    min(self, ev)
-  }
-}
-
-impl VarEvent for FDEvent {
-  fn to_index(self) -> usize {
-    self as usize
-  }
-
-  fn size() -> usize {
-    Inner.to_index() + 1
-  }
-}
 
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct FDVar {
@@ -79,18 +50,12 @@ impl FDVar {
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
   pub fn update(&mut self, dom: Interval<i32>, events: &mut Vec<(u32, FDEvent)>) -> bool {
-    assert!(dom.is_subset(&self.dom));
+    assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
-      let old = self.dom;
-      self.dom = dom;
-      if old != dom {
-        let ev =
-          if dom.is_singleton() { Assignment }
-          else if dom.lower() != old.lower() ||
-                  dom.upper() != old.upper() { Bound }
-          else { Inner };
-        events.push((self.id, ev));
+      if let Some(event) = FDEvent::new(&dom, &self.dom) {
+        events.push((self.id, event));
+        self.dom = dom;
       }
       true
     }
@@ -144,6 +109,7 @@ impl FDVar {
 mod test {
   use super::*;
   use super::FDEvent::*;
+  use solver::variable::Variable;
   use interval::ncollections::ops::*;
 
   #[test]

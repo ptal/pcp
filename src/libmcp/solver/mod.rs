@@ -20,3 +20,4 @@ pub mod agenda;
 pub mod dependencies;
 pub mod solver;
 pub mod space;
+pub mod merge;

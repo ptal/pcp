@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use solver::event::VarEvent;
+use solver::event::*;
+
 
 pub trait Variable {
   type Domain;
-  type Event: VarEvent;
+  type Event: EventIndex + MonotonicEvent<Self::Domain>;
 
   fn new(id: u32, dom: Self::Domain) -> Self;
 }

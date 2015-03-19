@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::event::VarEvent;
+use solver::event::EventIndex;
 use std::iter::{FromIterator, repeat};
 
 pub trait VarEventDependencies {
 
   fn new(num_vars: usize, num_events: usize) -> Self;
-  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
-  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent;
-  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: VarEvent;
+  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
+  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
+  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex;
   fn is_empty(&self) -> bool;
 }
 
@@ -31,11 +31,11 @@ pub struct VarEventDepsVector {
 }
 
 impl VarEventDepsVector {
-  fn index_of<E>(&self, var: usize, ev: E) -> usize where E: VarEvent {
+  fn index_of<E>(&self, var: usize, ev: E) -> usize where E: EventIndex {
     self.num_events*var + ev.to_index()
   }
 
-  fn deps_of_mut<'a, E>(&'a mut self, var: usize, ev: E) -> &'a mut Vec<usize> where E: VarEvent {
+  fn deps_of_mut<'a, E>(&'a mut self, var: usize, ev: E) -> &'a mut Vec<usize> where E: EventIndex {
     let idx = self.index_of(var, ev);
     &mut self.deps[idx]
   }
@@ -50,7 +50,7 @@ impl VarEventDependencies for VarEventDepsVector {
     }
   }
 
-  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent {
+  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex {
     assert!(self.deps.iter()
       .skip(var*self.num_events).take(self.num_events)
       .flat_map(|x| x.iter()).all(|&x| x != prop),
@@ -60,7 +60,7 @@ impl VarEventDependencies for VarEventDepsVector {
     props.push(prop);
   }
 
-  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: VarEvent {
+  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex {
     self.num_subscriptions -= 1;
     let mut props = self.deps_of_mut(var, ev);
     let idx = props.iter().position(|&v| v == prop);
@@ -68,7 +68,7 @@ impl VarEventDependencies for VarEventDepsVector {
     props.swap_remove(idx.unwrap());
   }
 
-  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: VarEvent {
+  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex {
     let from = self.index_of(var, ev);
     let len = self.num_events - ev.to_index();
     self.deps.iter()
@@ -88,10 +88,10 @@ mod test {
   use super::*;
   use solver::fd::var::FDEvent;
   use solver::fd::var::FDEvent::*;
-  use solver::event::VarEvent;
+  use solver::event::EventIndex;
 
   fn make_deps() -> VarEventDepsVector {
-    let res: VarEventDepsVector = VarEventDependencies::new(3, <FDEvent as VarEvent>::size());
+    let res: VarEventDepsVector = VarEventDependencies::new(3, <FDEvent as EventIndex>::size());
     res
   }
 

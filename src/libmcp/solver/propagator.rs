@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::event::VarEvent;
+use solver::event::EventIndex;
 
 #[derive(Copy, PartialEq, Eq, Debug)]
 pub enum Status
@@ -24,7 +24,7 @@ pub enum Status
 
 pub trait Propagator where <Self as Propagator>::SharedVar: Sized
 {
-  type Event: VarEvent;
+  type Event: EventIndex;
   type SharedVar;
 
   // If the result is Entailed or Disentailed, it must not

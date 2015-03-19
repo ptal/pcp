@@ -16,6 +16,7 @@ use solver::fd::var::*;
 use solver::fd::var::FDEvent::*;
 use solver::propagator::*;
 use solver::propagator::Status::*;
+use solver::merge::Merge;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
@@ -491,7 +492,7 @@ impl Distinct {
     match old {
       None => (),
       Some(x) => {
-        vars_events.insert(key, value.merge(x));
+        vars_events.insert(key, FDEvent::merge(value, x));
       }
     }
   }
@@ -547,6 +548,7 @@ mod test {
   use solver::fd::var::*;
   use solver::fd::var::FDEvent::*;
   use solver::propagator::Status::*;
+  use solver::variable::Variable;
   use solver::propagator::*;
   use interval::ncollections::ops::*;
   use std::rc::Rc;

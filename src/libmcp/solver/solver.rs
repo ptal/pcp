@@ -17,7 +17,7 @@ use solver::propagator::Status as PStatus;
 use solver::variable::Variable;
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
-use solver::event::VarEvent;
+use solver::event::EventIndex;
 use solver::space::*;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -95,7 +95,7 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn init_deps(&mut self) {
-    self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as VarEvent>::size());
+    self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as EventIndex>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
       let p_deps: Vec<(u32, _)> = p.dependencies();
       for (v, ev) in p_deps.into_iter() {
