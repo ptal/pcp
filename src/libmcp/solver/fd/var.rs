@@ -19,24 +19,27 @@ use solver::variable::Variable;
 
 use std::fmt::{Formatter, Display, Error};
 use interval::ncollections::ops::*;
+use interval::ops::*;
 
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
-pub struct FDVar {
+pub struct FDVar<Domain> {
   id: u32,
-  dom: Interval<i32>
+  dom: Domain
 }
 
-impl Display for FDVar {
+impl<Domain: Display> Display for FDVar<Domain> {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     formatter.write_fmt(format_args!("({}, {})", self.id, self.dom))
   }
 }
 
-impl Variable for FDVar {
-  type Domain = Interval<i32>;
+impl<Domain> Variable for FDVar<Domain>
+where Domain: Cardinality
+{
+  type Domain = Domain;
   type Event = FDEvent;
 
-  fn new(id: u32, dom: Interval<i32>) -> FDVar {
+  fn new(id: u32, dom: Domain) -> FDVar<Domain> {
     assert!(!dom.is_empty());
     FDVar {
       id: id,
@@ -45,11 +48,36 @@ impl Variable for FDVar {
   }
 }
 
-impl FDVar {
+trait VarDomain :
+  Bounded + Cardinality + Subset +
+  Difference + Intersection +
+  Singleton<<Self as Bounded>::Bound> +
+  Disjoint + Clone +
+  Range<<Self as Bounded>::Bound> +
+  Difference<Output=Self> +
+  Intersection<Output=Self>
+// where
+  // <Self as Bounded>::Bound : Ord
+{}
+
+impl<R> VarDomain for R where
+  R:
+    Bounded + Cardinality + Subset +
+    Difference + Intersection +
+    Singleton<<R as Bounded>::Bound> +
+    Disjoint + Clone +
+    Range<<R as Bounded>::Bound> +
+    Difference<Output=R> +
+    Intersection<Output=R> //,
+  // <R as Bounded>::Bound: Ord
+{}
+
+impl<Domain: VarDomain> FDVar<Domain>
+{
   pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  pub fn update(&mut self, dom: Interval<i32>, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  pub fn update(&mut self, dom: Domain, events: &mut Vec<(u32, FDEvent)>) -> bool {
     assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
@@ -61,34 +89,34 @@ impl FDVar {
     }
   }
 
-  pub fn update_lb(&mut self, lb: i32, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  pub fn update_lb(&mut self, lb: Domain::Bound, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let ub =  self.dom.upper();
-    self.update((lb, ub).to_interval(), events)
+    self.update(Domain::new(lb, ub), events)
   }
 
-  pub fn update_ub(&mut self, ub: i32, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  pub fn update_ub(&mut self, ub: Domain::Bound, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let lb = self.dom.lower();
-    self.update((lb, ub).to_interval(), events)
+    self.update(Domain::new(lb, ub), events)
   }
 
-  pub fn lb(&self) -> i32 { self.dom.lower() }
-  pub fn ub(&self) -> i32 { self.dom.upper() }
+  pub fn lb(&self) -> Domain::Bound { self.dom.lower() }
+  pub fn ub(&self) -> Domain::Bound { self.dom.upper() }
 
   pub fn is_failed(&self) -> bool { self.dom.is_empty() }
 
-  pub fn remove_value(&mut self, x: i32) -> Option<Vec<(u32, FDEvent)>> {
+  pub fn remove_value(&mut self, x: Domain::Bound) -> Option<Vec<(u32, FDEvent)>> {
     let mut events = vec![];
-    let new = self.dom.difference(Interval::singleton(x));
+    let new = self.dom.clone().difference(Domain::singleton(x));
     if self.update(new, &mut events) {
       Some(events)
     }
     else { None }
   }
 
-  pub fn intersection(v1: &mut FDVar, v2: &mut FDVar) -> Option<Vec<(u32, FDEvent)>> {
+  pub fn intersection(v1: &mut FDVar<Domain>, v2: &mut FDVar<Domain>) -> Option<Vec<(u32, FDEvent)>> {
     let mut events = vec![];
-    let new = v1.dom.intersection(v2.dom);
-    if v1.update(new, &mut events) {
+    let new = v1.dom.clone().intersection(v2.dom.clone());
+    if v1.update(new.clone(), &mut events) {
       if v2.update(new, &mut events) {
         return Some(events);
       }
@@ -96,12 +124,12 @@ impl FDVar {
     None
   }
 
-  pub fn is_disjoint(v1: &FDVar, v2: &FDVar) -> bool {
+  pub fn is_disjoint(v1: &FDVar<Domain>, v2: &FDVar<Domain>) -> bool {
     v1.dom.is_disjoint(&v2.dom)
   }
 
-  pub fn is_disjoint_value(&self, x: i32) -> bool {
-    self.dom.is_disjoint(&Interval::singleton(x))
+  pub fn is_disjoint_value(&self, x: Domain::Bound) -> bool {
+    self.dom.is_disjoint(&Domain::singleton(x))
   }
 }
 
@@ -130,7 +158,7 @@ mod test {
     var_update_test_one(var0_10, dom1_9, vec![Bound], true);
   }
 
-  fn var_update_test_one(var: FDVar, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
+  fn var_update_test_one(var: FDVar<Interval<i32>>, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
     let mut var = var;
     let mut events = vec![];
     assert_eq!(var.update(dom, &mut events), expect_success);
@@ -162,7 +190,7 @@ mod test {
     var_update_ub_test_one(var0_10, -1, vec![], false);
   }
 
-  fn var_update_lb_test_one(var: FDVar, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
+  fn var_update_lb_test_one(var: FDVar<Interval<i32>>, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let mut var = var;
     let ub = var.ub();
     let mut events = vec![];
@@ -173,7 +201,7 @@ mod test {
     }
   }
 
-  fn var_update_ub_test_one(var: FDVar, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
+  fn var_update_ub_test_one(var: FDVar<Interval<i32>>, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let mut var = var;
     let lb = var.lb();
     let mut events = vec![];
@@ -197,7 +225,7 @@ mod test {
     var_intersection_test_one(var0_10, var11_20, None);
   }
 
-  fn var_intersection_test_one(mut v1: FDVar, mut v2: FDVar, events: Option<Vec<(u32, FDEvent)>>) {
+  fn var_intersection_test_one(mut v1: FDVar<Interval<i32>>, mut v2: FDVar<Interval<i32>>, events: Option<Vec<(u32, FDEvent)>>) {
     let v1 = &mut v1;
     let v2 = &mut v2;
     assert_eq!(FDVar::intersection(v1, v2), events);
@@ -207,7 +235,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_lb() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar = Variable::new(0, dom0_10);
+    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
 
     var0_10.update_lb(-1, &mut vec![]);
   }
@@ -216,7 +244,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_ub() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar = Variable::new(0, dom0_10);
+    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
 
     var0_10.update_ub(11, &mut vec![]);
   }
@@ -225,7 +253,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_singleton() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar = Variable::new(0, dom0_10);
+    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
     let dom11_11 = 11.to_interval();
 
     var0_10.update(dom11_11, &mut vec![]);
@@ -235,7 +263,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_widen() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar = Variable::new(0, dom0_10);
+    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
     let domm5_15 = (-5, 15).to_interval();
 
     var0_10.update(domm5_15, &mut vec![]);

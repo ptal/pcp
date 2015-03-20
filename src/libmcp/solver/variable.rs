@@ -17,7 +17,7 @@ use solver::event::*;
 
 pub trait Variable {
   type Domain;
-  type Event: EventIndex + MonotonicEvent<Self::Domain>;
+  type Event: EventIndex;
 
   fn new(id: u32, dom: Self::Domain) -> Self;
 }

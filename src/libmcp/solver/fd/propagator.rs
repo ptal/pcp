@@ -22,7 +22,7 @@ use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
 use std::collections::HashMap;
 
-pub type SharedFDVar = Rc<RefCell<FDVar>>;
+pub type SharedFDVar = Rc<RefCell<FDVar<Interval<i32>>>>;
 
 fn deep_var_clone(v: &SharedFDVar, from: &Vec<SharedFDVar>) -> SharedFDVar
 {
@@ -584,7 +584,7 @@ mod test {
     assert_eq!(prop.status(), after);
   }
 
-  fn make_var(var: FDVar) -> SharedFDVar {
+  fn make_var(var: FDVar<Interval<i32>>) -> SharedFDVar {
     Rc::new(RefCell::new(var))
   }
 
@@ -707,7 +707,7 @@ mod test {
 
   #[test]
   fn distinct_test() {
-    let mut vars: Vec<FDVar> = range(0, 3)
+    let mut vars: Vec<FDVar<Interval<i32>>> = range(0, 3)
       .map(|v| Variable::new(v, Interval::singleton(v as i32)))
       .collect();
     vars.push(Variable::new(3, (0,3).to_interval()));

@@ -16,7 +16,7 @@ use solver::merge::Merge;
 use solver::event::*;
 use solver::fd::event::FDEvent::*;
 use interval::ncollections::ops::*;
-use std::cmp::{Eq, min};
+use std::cmp::min;
 
 // Failure or Nothing events are absents on purpose because there are not events that propagator
 // should subscribe to. If a failure occurs, it's over. If nothing occurs, we don't care.
@@ -45,14 +45,14 @@ impl EventIndex for FDEvent {
 }
 
 impl<Domain> MonotonicEvent<Domain> for FDEvent
-where Domain: Subset + Cardinality + Bounded + Eq
+where Domain: Subset + Cardinality + Bounded
 {
   fn new(little: &Domain, big: &Domain) -> Option<Self>
   {
     assert!(little.is_subset(big),
       "Events are computed on the difference between `little` and `big`.\
        So `little` must be a subset of `big`.");
-    if little != big {
+    if little.size() != big.size() {
       let ev =
         if little.is_singleton() { Assignment }
         else if little.lower() != big.lower() ||

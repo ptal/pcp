@@ -187,7 +187,7 @@ mod test {
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
 
-  type FDSolver = Solver<FDVar, VarEventDepsVector, RelaxedFifoAgenda>;
+  type FDSolver = Solver<FDVar<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
 
   #[test]
   fn basic_test() {
