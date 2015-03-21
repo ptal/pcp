@@ -141,17 +141,13 @@ impl Propagator for XEqualY {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XEqualY as Propagator>::Event)>> {
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    let mut events = vec![];
-    if x.deref_mut().event_intersection(y.deref_mut(), &mut events) {
-      Some(events)
-    }
-    else { None }
+    x.deref_mut().event_intersection(y.deref_mut(), events)
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
   }
 
@@ -205,24 +201,23 @@ impl Propagator for XLessThanYPlusC {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XLessThanYPlusC as Propagator>::Event)>> {
-    let mut events = vec![];
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     if x.ub() >= y.ub() + self.c {
-      if !x.update_ub(y.ub() - 1 + self.c, &mut events) {
-        return None;
+      if !x.update_ub(y.ub() - 1 + self.c, events) {
+        return false;
       }
     }
     if x.lb() >= y.lb() + self.c {
-      if !y.update_lb(x.lb() + 1 - self.c, &mut events) {
-        return None;
+      if !y.update_lb(x.lb() + 1 - self.c, events) {
+        return false;
       }
     }
-    Some(events)
+    true
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XLessThanYPlusC as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Bound), (self.y.borrow().id(), Bound)]
   }
 
@@ -275,16 +270,17 @@ impl Propagator for XGreaterEqThanC {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XGreaterEqThanC as Propagator>::Event)>> {
-    let mut events = vec![];
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
-    if x.lb() < self.c && !x.update_lb(self.c, &mut events) {
-      return None;
+    if x.lb() < self.c {
+      x.update_lb(self.c, events)
     }
-    Some(events)
+    else {
+      true
+    }
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XGreaterEqThanC as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Bound)]
   }
 
@@ -336,16 +332,17 @@ impl Propagator for XLessEqThanC {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XLessEqThanC as Propagator>::Event)>> {
-    let mut events = vec![];
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
-    if x.ub() > self.c && !x.update_ub(self.c, &mut events) {
-      return None;
+    if x.ub() > self.c {
+      x.update_ub(self.c, events)
     }
-    Some(events)
+    else {
+      true
+    }
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XLessEqThanC as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Bound)]
   }
 
@@ -387,17 +384,11 @@ impl Propagator for XNotEqualC {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualC as Propagator>::Event)>> {
-    let mut events = vec![];
-    if self.x.borrow_mut().event_remove(self.c, &mut events) {
-      Some(events)
-    }
-    else {
-      None
-    }
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+    self.x.borrow_mut().event_remove(self.c, events)
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XNotEqualC as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Inner)]
   }
 
@@ -451,24 +442,21 @@ impl Propagator for XNotEqualYPlusC {
     }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)>> {
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    let mut events = vec![];
     if x.lb() == x.ub() {
-      if !y.event_remove(x.lb() - self.c, &mut events) {
-        return None
-      }
+      y.event_remove(x.lb() - self.c, events)
     }
     else if y.lb() == y.ub() {
-      if !x.event_remove(y.lb() + self.c, &mut events) {
-        return None
-      }
+      x.event_remove(y.lb() + self.c, events)
     }
-    Some(events)
+    else {
+      true
+    }
   }
 
-  fn dependencies(&self) -> Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
   }
 
@@ -528,22 +516,25 @@ impl Propagator for Distinct {
     else { Unknown }
   }
 
-  fn propagate(&mut self) -> Option<Vec<(u32, <Distinct as Propagator>::Event)>> {
-    let mut events = HashMap::new();
+  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+    let mut unique_events = HashMap::new();
     for p in self.props.iter_mut() {
-      match p.propagate() {
-        None => return None,
-        Some(prop_events) => {
-          for (var_id, ev) in prop_events.into_iter() {
-            Distinct::merge_keys(var_id, ev, &mut events);
-          }
+      let mut events = vec![];
+      if p.propagate(&mut events) {
+        for (var_id, ev) in events.into_iter() {
+          Distinct::merge_keys(var_id, ev, &mut unique_events);
         }
+      } else {
+        return false;
       }
     }
-    Some(events.into_iter().collect())
+    for id_ev in unique_events.into_iter() {
+      events.push(id_ev);
+    }
+    true
   }
 
-  fn dependencies(&self) -> Vec<(u32, <Distinct as Propagator>::Event)> {
+  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
     self.vars.iter().map(|x| (x.borrow().id(), Inner)).collect()
   }
 
@@ -580,13 +571,13 @@ mod test {
 
   fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(u32, FDEvent)>>)
    where P: Propagator<SharedVar=SharedFDVar, Event=FDEvent> {
-    let events = prop.propagate();
-    if events != None && expected != None {
-      let events = make_vec_map(events.unwrap());
+    let mut events = vec![];
+    if prop.propagate(&mut events) && expected != None {
+      let events = make_vec_map(events);
       let expected = make_vec_map(expected.unwrap());
       assert_eq!(events, expected);
     } else {
-      assert_eq!(events, expected);
+      assert!(expected.is_none(), "The propagator returned `false`, it failed.");
     }
   }
 

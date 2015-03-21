@@ -33,8 +33,9 @@ pub trait Propagator where <Self as Propagator>::SharedVar: Sized
   // should be handled at the return of propagate.
   fn status(&self) -> Status;
 
-  // The propagator is stable when the returned vector is empty.
-  fn propagate(&mut self) -> Option<Vec<(u32, Self::Event)>>;
+  // The propagator is stable if no event are added into `events`.
+  // Returns `false` if the propagator is failed.
+  fn propagate(&mut self, events: &mut Vec<(u32, Self::Event)>) -> bool;
 
   // Each event on a variable that can change the result of
   // the `status` method should be listed here.

@@ -124,10 +124,11 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn propagate_one(&mut self, p_idx: usize) -> bool {
-    let (events, status) = {
+    let mut events = vec![];
+    let status = {
       let mut prop = &mut self.propagators[p_idx];
-      if let Some(events) = prop.propagate() {
-        (events, prop.status())
+      if prop.propagate(&mut events) {
+        prop.status()
       } else {
         return false
       }
