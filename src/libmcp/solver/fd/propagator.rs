@@ -145,7 +145,7 @@ impl Propagator for XEqualY {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     let mut events = vec![];
-    if x.deref_mut().var_intersection(y.deref_mut(), &mut events) {
+    if x.deref_mut().event_intersection(y.deref_mut(), &mut events) {
       Some(events)
     }
     else { None }
@@ -388,7 +388,13 @@ impl Propagator for XNotEqualC {
   }
 
   fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualC as Propagator>::Event)>> {
-    self.x.borrow_mut().remove_value(self.c)
+    let mut events = vec![];
+    if self.x.borrow_mut().event_remove(self.c, &mut events) {
+      Some(events)
+    }
+    else {
+      None
+    }
   }
 
   fn dependencies(&self) -> Vec<(u32, <XNotEqualC as Propagator>::Event)> {
@@ -448,15 +454,18 @@ impl Propagator for XNotEqualYPlusC {
   fn propagate(&mut self) -> Option<Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)>> {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
+    let mut events = vec![];
     if x.lb() == x.ub() {
-      y.remove_value(x.lb() - self.c)
+      if !y.event_remove(x.lb() - self.c, &mut events) {
+        return None
+      }
     }
     else if y.lb() == y.ub() {
-      x.remove_value(y.lb() + self.c)
+      if !x.event_remove(y.lb() + self.c, &mut events) {
+        return None
+      }
     }
-    else {
-      Some(vec![])
-    }
+    Some(events)
   }
 
   fn dependencies(&self) -> Vec<(u32, <XNotEqualYPlusC as Propagator>::Event)> {

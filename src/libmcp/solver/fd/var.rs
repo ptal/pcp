@@ -16,10 +16,10 @@ pub use interval::interval::*;
 pub use solver::fd::event::*;
 use solver::event::*;
 use solver::variable::Variable;
-
-use std::fmt::{Formatter, Display, Error};
 use interval::ncollections::ops::*;
 use interval::ops::*;
+
+use std::fmt::{Formatter, Display, Error};
 
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct FDVar<Domain> {
@@ -97,15 +97,6 @@ impl<Domain: VarDomain> FDVar<Domain>
 
   pub fn is_failed(&self) -> bool { self.dom.is_empty() }
 
-  pub fn remove_value(&mut self, x: Domain::Bound) -> Option<Vec<(u32, FDEvent)>> {
-    let mut events = vec![];
-    let new = self.dom.clone().difference(Domain::singleton(x));
-    if self.update(new, &mut events) {
-      Some(events)
-    }
-    else { None }
-  }
-
   pub fn is_disjoint(v1: &FDVar<Domain>, v2: &FDVar<Domain>) -> bool {
     v1.dom.is_disjoint(&v2.dom)
   }
@@ -115,15 +106,31 @@ impl<Domain: VarDomain> FDVar<Domain>
   }
 }
 
-pub trait VarIntersection {
-  fn var_intersection(&mut self, other: &mut Self,
+pub trait EventRemove<Item> {
+  fn event_remove(&mut self, value: Item,
     events: &mut Vec<(u32, FDEvent)>) -> bool;
 }
 
-impl<Domain> VarIntersection for FDVar<Domain> where
+impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
+  Domain: VarDomain + Difference<<Domain as Bounded>::Bound, Output=Domain> + Clone
+{
+  fn event_remove(&mut self, value: Domain::Bound,
+    events: &mut Vec<(u32, FDEvent)>) -> bool
+  {
+    let new = self.dom.clone().difference(value);
+    self.update(new, events)
+  }
+}
+
+pub trait EventIntersection<RHS = Self> {
+  fn event_intersection(&mut self, other: &mut RHS,
+    events: &mut Vec<(u32, FDEvent)>) -> bool;
+}
+
+impl<Domain> EventIntersection for FDVar<Domain> where
   Domain: VarDomain + Intersection<Output=Domain> + Clone
 {
-  fn var_intersection(&mut self, other: &mut FDVar<Domain>,
+  fn event_intersection(&mut self, other: &mut FDVar<Domain>,
     events: &mut Vec<(u32, FDEvent)>) -> bool
   {
     let new = self.dom.clone().intersection(other.dom.clone());
@@ -224,7 +231,7 @@ mod test {
   fn var_intersection_test_one(mut v1: FDVar<Interval<i32>>, mut v2: FDVar<Interval<i32>>, events: Option<Vec<(u32, FDEvent)>>) {
     let mut ev = vec![];
     let res =
-      if v1.var_intersection(&mut v2, &mut ev) {
+      if v1.event_intersection(&mut v2, &mut ev) {
         Some(ev)
       }
       else {
