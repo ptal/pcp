@@ -144,7 +144,11 @@ impl Propagator for XEqualY {
   fn propagate(&mut self) -> Option<Vec<(u32, <XEqualY as Propagator>::Event)>> {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    FDVar::intersection(x.deref_mut(), y.deref_mut())
+    let mut events = vec![];
+    if x.deref_mut().var_intersection(y.deref_mut(), &mut events) {
+      Some(events)
+    }
+    else { None }
   }
 
   fn dependencies(&self) -> Vec<(u32, <XEqualY as Propagator>::Event)> {

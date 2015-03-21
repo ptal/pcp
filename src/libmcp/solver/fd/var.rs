@@ -33,8 +33,8 @@ impl<Domain: Display> Display for FDVar<Domain> {
   }
 }
 
-impl<Domain> Variable for FDVar<Domain>
-where Domain: Cardinality
+impl<Domain> Variable for FDVar<Domain> where
+  Domain: Cardinality
 {
   type Domain = Domain;
   type Event = FDEvent;
@@ -50,26 +50,19 @@ where Domain: Cardinality
 
 trait VarDomain :
   Bounded + Cardinality + Subset +
-  Difference + Intersection +
   Singleton<<Self as Bounded>::Bound> +
   Disjoint + Clone +
   Range<<Self as Bounded>::Bound> +
-  Difference<Output=Self> +
-  Intersection<Output=Self>
-// where
-  // <Self as Bounded>::Bound : Ord
+  Difference<Output=Self>
 {}
 
 impl<R> VarDomain for R where
   R:
     Bounded + Cardinality + Subset +
-    Difference + Intersection +
     Singleton<<R as Bounded>::Bound> +
     Disjoint + Clone +
     Range<<R as Bounded>::Bound> +
-    Difference<Output=R> +
-    Intersection<Output=R> //,
-  // <R as Bounded>::Bound: Ord
+    Difference<Output=R>
 {}
 
 impl<Domain: VarDomain> FDVar<Domain>
@@ -113,23 +106,29 @@ impl<Domain: VarDomain> FDVar<Domain>
     else { None }
   }
 
-  pub fn intersection(v1: &mut FDVar<Domain>, v2: &mut FDVar<Domain>) -> Option<Vec<(u32, FDEvent)>> {
-    let mut events = vec![];
-    let new = v1.dom.clone().intersection(v2.dom.clone());
-    if v1.update(new.clone(), &mut events) {
-      if v2.update(new, &mut events) {
-        return Some(events);
-      }
-    }
-    None
-  }
-
   pub fn is_disjoint(v1: &FDVar<Domain>, v2: &FDVar<Domain>) -> bool {
     v1.dom.is_disjoint(&v2.dom)
   }
 
   pub fn is_disjoint_value(&self, x: Domain::Bound) -> bool {
     self.dom.is_disjoint(&Domain::singleton(x))
+  }
+}
+
+pub trait VarIntersection {
+  fn var_intersection(&mut self, other: &mut Self,
+    events: &mut Vec<(u32, FDEvent)>) -> bool;
+}
+
+impl<Domain> VarIntersection for FDVar<Domain> where
+  Domain: VarDomain + Intersection<Output=Domain> + Clone
+{
+  fn var_intersection(&mut self, other: &mut FDVar<Domain>,
+    events: &mut Vec<(u32, FDEvent)>) -> bool
+  {
+    let new = self.dom.clone().intersection(other.dom.clone());
+    self.update(new.clone(), events) &&
+    other.update(new, events)
   }
 }
 
@@ -158,8 +157,7 @@ mod test {
     var_update_test_one(var0_10, dom1_9, vec![Bound], true);
   }
 
-  fn var_update_test_one(var: FDVar<Interval<i32>>, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
-    let mut var = var;
+  fn var_update_test_one(mut var: FDVar<Interval<i32>>, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
     let mut events = vec![];
     assert_eq!(var.update(dom, &mut events), expect_success);
     if expect_success {
@@ -190,8 +188,7 @@ mod test {
     var_update_ub_test_one(var0_10, -1, vec![], false);
   }
 
-  fn var_update_lb_test_one(var: FDVar<Interval<i32>>, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
-    let mut var = var;
+  fn var_update_lb_test_one(mut var: FDVar<Interval<i32>>, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let ub = var.ub();
     let mut events = vec![];
     assert_eq!(var.update_lb(lb, &mut events), expect_success);
@@ -201,8 +198,7 @@ mod test {
     }
   }
 
-  fn var_update_ub_test_one(var: FDVar<Interval<i32>>, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
-    let mut var = var;
+  fn var_update_ub_test_one(mut var: FDVar<Interval<i32>>, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let lb = var.lb();
     let mut events = vec![];
     assert_eq!(var.update_ub(ub, &mut events), expect_success);
@@ -226,9 +222,15 @@ mod test {
   }
 
   fn var_intersection_test_one(mut v1: FDVar<Interval<i32>>, mut v2: FDVar<Interval<i32>>, events: Option<Vec<(u32, FDEvent)>>) {
-    let v1 = &mut v1;
-    let v2 = &mut v2;
-    assert_eq!(FDVar::intersection(v1, v2), events);
+    let mut ev = vec![];
+    let res =
+      if v1.var_intersection(&mut v2, &mut ev) {
+        Some(ev)
+      }
+      else {
+        None
+      };
+    assert_eq!(res, events);
   }
 
   #[test]
