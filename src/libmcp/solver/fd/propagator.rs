@@ -205,12 +205,12 @@ impl Propagator for XLessThanYPlusC {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     if x.ub() >= y.ub() + self.c {
-      if !x.update_ub(y.ub() - 1 + self.c, events) {
+      if !x.event_shrink_right(y.ub() - 1 + self.c, events) {
         return false;
       }
     }
     if x.lb() >= y.lb() + self.c {
-      if !y.update_lb(x.lb() + 1 - self.c, events) {
+      if !y.event_shrink_left(x.lb() + 1 - self.c, events) {
         return false;
       }
     }
@@ -273,7 +273,7 @@ impl Propagator for XGreaterEqThanC {
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     if x.lb() < self.c {
-      x.update_lb(self.c, events)
+      x.event_shrink_left(self.c, events)
     }
     else {
       true
@@ -335,7 +335,7 @@ impl Propagator for XLessEqThanC {
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     if x.ub() > self.c {
-      x.update_ub(self.c, events)
+      x.event_shrink_right(self.c, events)
     }
     else {
       true

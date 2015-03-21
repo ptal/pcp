@@ -82,16 +82,6 @@ impl<Domain: VarDomain> FDVar<Domain>
     }
   }
 
-  pub fn update_lb(&mut self, lb: Domain::Bound, events: &mut Vec<(u32, FDEvent)>) -> bool {
-    let ub =  self.dom.upper();
-    self.update(Domain::new(lb, ub), events)
-  }
-
-  pub fn update_ub(&mut self, ub: Domain::Bound, events: &mut Vec<(u32, FDEvent)>) -> bool {
-    let lb = self.dom.lower();
-    self.update(Domain::new(lb, ub), events)
-  }
-
   pub fn lb(&self) -> Domain::Bound { self.dom.lower() }
   pub fn ub(&self) -> Domain::Bound { self.dom.upper() }
 
@@ -106,7 +96,42 @@ impl<Domain: VarDomain> FDVar<Domain>
   }
 }
 
-pub trait EventRemove<Item> {
+pub trait EventShrinkLeft<Bound>
+{
+  fn event_shrink_left(&mut self, lb: Bound,
+    events: &mut Vec<(u32, FDEvent)>) -> bool;
+}
+
+impl<Domain> EventShrinkLeft<Domain::Bound> for FDVar<Domain> where
+  Domain: VarDomain + ShrinkLeft<<Domain as Bounded>::Bound> + Clone
+{
+  fn event_shrink_left(&mut self, lb: Domain::Bound,
+    events: &mut Vec<(u32, FDEvent)>) -> bool
+  {
+    let new = self.dom.clone().shrink_left(lb);
+    self.update(new, events)
+  }
+}
+
+pub trait EventShrinkRight<Bound>
+{
+  fn event_shrink_right(&mut self, ub: Bound,
+    events: &mut Vec<(u32, FDEvent)>) -> bool;
+}
+
+impl<Domain> EventShrinkRight<Domain::Bound> for FDVar<Domain> where
+  Domain: VarDomain + ShrinkRight<<Domain as Bounded>::Bound> + Clone
+{
+  fn event_shrink_right(&mut self, ub: Domain::Bound,
+    events: &mut Vec<(u32, FDEvent)>) -> bool
+  {
+    let new = self.dom.clone().shrink_right(ub);
+    self.update(new, events)
+  }
+}
+
+pub trait EventRemove<Item>
+{
   fn event_remove(&mut self, value: Item,
     events: &mut Vec<(u32, FDEvent)>) -> bool;
 }
@@ -122,7 +147,8 @@ impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
   }
 }
 
-pub trait EventIntersection<RHS = Self> {
+pub trait EventIntersection<RHS = Self>
+{
   fn event_intersection(&mut self, other: &mut RHS,
     events: &mut Vec<(u32, FDEvent)>) -> bool;
 }
@@ -198,7 +224,7 @@ mod test {
   fn var_update_lb_test_one(mut var: FDVar<Interval<i32>>, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let ub = var.ub();
     let mut events = vec![];
-    assert_eq!(var.update_lb(lb, &mut events), expect_success);
+    assert_eq!(var.event_shrink_left(lb, &mut events), expect_success);
     if expect_success {
       assert_eq_events(events, expect);
       assert_eq!(var.dom, (lb,ub).to_interval());
@@ -208,7 +234,7 @@ mod test {
   fn var_update_ub_test_one(mut var: FDVar<Interval<i32>>, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
     let lb = var.lb();
     let mut events = vec![];
-    assert_eq!(var.update_ub(ub, &mut events), expect_success);
+    assert_eq!(var.event_shrink_right(ub, &mut events), expect_success);
     if expect_success {
       assert_eq_events(events, expect);
       assert_eq!(var.dom, (lb,ub).to_interval());
@@ -238,24 +264,6 @@ mod test {
         None
       };
     assert_eq!(res, events);
-  }
-
-  #[test]
-  #[should_panic]
-  fn var_non_monotonic_update_lb() {
-    let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
-
-    var0_10.update_lb(-1, &mut vec![]);
-  }
-
-  #[test]
-  #[should_panic]
-  fn var_non_monotonic_update_ub() {
-    let dom0_10 = (0,10).to_interval();
-    let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
-
-    var0_10.update_ub(11, &mut vec![]);
   }
 
   #[test]
