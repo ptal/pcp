@@ -27,7 +27,7 @@ pub type SharedFDVar = Rc<RefCell<FDVar<Interval<i32>>>>;
 
 fn deep_var_clone(v: &SharedFDVar, from: &Vec<SharedFDVar>) -> SharedFDVar
 {
-  from[v.borrow().id() as usize].clone()
+  from[v.borrow().index() as usize].clone()
 }
 
 // x < y
@@ -142,14 +142,14 @@ impl Propagator for XEqualY {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     x.deref_mut().event_intersection(y.deref_mut(), events)
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -202,7 +202,7 @@ impl Propagator for XLessThanYPlusC {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     if x.upper() >= y.upper() + self.c {
@@ -218,8 +218,8 @@ impl Propagator for XLessThanYPlusC {
     true
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Bound), (self.y.borrow().id(), Bound)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Bound), (self.y.borrow().index(), Bound)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) ->  Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -271,7 +271,7 @@ impl Propagator for XGreaterEqThanC {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     if x.lower() < self.c {
       x.event_shrink_left(self.c, events)
@@ -281,8 +281,8 @@ impl Propagator for XGreaterEqThanC {
     }
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Bound)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Bound)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>  {
@@ -333,7 +333,7 @@ impl Propagator for XLessEqThanC {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     if x.upper() > self.c {
       x.event_shrink_right(self.c, events)
@@ -343,8 +343,8 @@ impl Propagator for XLessEqThanC {
     }
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Bound)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Bound)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -385,12 +385,12 @@ impl Propagator for XNotEqualC {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_remove(self.c, events)
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Inner)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Inner)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -443,7 +443,7 @@ impl Propagator for XNotEqualYPlusC {
     }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
     if x.lower() == x.upper() {
@@ -457,8 +457,8 @@ impl Propagator for XNotEqualYPlusC {
     }
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    vec![(self.x.borrow().id(), Inner), (self.y.borrow().id(), Inner)]
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -489,7 +489,7 @@ impl Distinct {
     Distinct { vars: vars, props: props }
   }
 
-  fn merge_keys(key: u32, value: FDEvent, vars_events: &mut HashMap<u32, FDEvent>) {
+  fn merge_keys(key: usize, value: FDEvent, vars_events: &mut HashMap<usize, FDEvent>) {
     let old = vars_events.insert(key, value);
     match old {
       None => (),
@@ -517,7 +517,7 @@ impl Propagator for Distinct {
     else { Unknown }
   }
 
-  fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut unique_events = HashMap::new();
     for p in self.props.iter_mut() {
       let mut events = vec![];
@@ -535,8 +535,8 @@ impl Propagator for Distinct {
     true
   }
 
-  fn dependencies(&self) -> Vec<(u32, FDEvent)> {
-    self.vars.iter().map(|x| (x.borrow().id(), Inner)).collect()
+  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
+    self.vars.iter().map(|x| (x.borrow().index(), Inner)).collect()
   }
 
   fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
@@ -561,7 +561,7 @@ mod test {
   use std::iter::range;
   use std::collections::VecMap;
 
-  fn make_vec_map(events: Vec<(u32, FDEvent)>) -> VecMap<FDEvent> {
+  fn make_vec_map(events: Vec<(usize, FDEvent)>) -> VecMap<FDEvent> {
     let mut new_events = VecMap::new();
     for (id, ev) in events.into_iter() {
       let old = new_events.insert(id as usize, ev);
@@ -570,7 +570,7 @@ mod test {
     new_events
   }
 
-  fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(u32, FDEvent)>>)
+  fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(usize, FDEvent)>>)
    where P: Propagator<SharedVar=SharedFDVar, Event=FDEvent> {
     let mut events = vec![];
     if prop.propagate(&mut events) && expected != None {
@@ -582,7 +582,7 @@ mod test {
     }
   }
 
-  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>)
+  fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>)
    where P: Propagator<SharedVar=SharedFDVar, Event=FDEvent> {
     assert_eq!(prop.status(), before);
     propagate_only_test(&mut prop, expected);
@@ -608,7 +608,7 @@ mod test {
     xequaly_propagate_test_one(make_var(var0_10), make_var(var11_20), Disentailed, Disentailed, None);
   }
 
-  fn xequaly_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+  fn xequaly_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XEqualY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
@@ -631,7 +631,7 @@ mod test {
     xlessy_propagate_test_one(make_var(var1_1), make_var(var0_10), Unknown, Entailed, Some(vec![(1, Bound)]));
   }
 
-  fn xlessy_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+  fn xlessy_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XLessThanY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
@@ -653,7 +653,7 @@ mod test {
     xlessyplusc_propagate_test_one(make_var(var1_1), make_var(var5_15), -5, Unknown, Entailed, Some(vec![(3, Bound)]));
   }
 
-  fn xlessyplusc_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+  fn xlessyplusc_propagate_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XLessThanYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
   }
@@ -705,7 +705,7 @@ mod test {
     x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 0, Disentailed, Disentailed, None);
   }
 
-  fn x_neq_y_plus_c_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+  fn x_neq_y_plus_c_test_one(v1: SharedFDVar, v2: SharedFDVar, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XNotEqualYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
   }
@@ -732,7 +732,7 @@ mod test {
     distinct_test_one(vec![make_var(vars[3])], Entailed, Entailed, Some(vec![]));
   }
 
-  fn distinct_test_one(vars: Vec<SharedFDVar>, before: Status, after: Status, expected: Option<Vec<(u32, FDEvent)>>) {
+  fn distinct_test_one(vars: Vec<SharedFDVar>, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = Distinct::new(vars);
     propagate_test_one(propagator, before, after, expected);
   }

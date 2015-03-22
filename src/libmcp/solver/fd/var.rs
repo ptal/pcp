@@ -23,13 +23,13 @@ use std::fmt::{Formatter, Display, Error};
 
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct FDVar<Domain> {
-  id: u32,
+  idx: usize,
   dom: Domain
 }
 
 impl<Domain: Display> Display for FDVar<Domain> {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("({}, {})", self.id, self.dom))
+    formatter.write_fmt(format_args!("({}, {})", self.idx, self.dom))
   }
 }
 
@@ -39,39 +39,44 @@ impl<Domain> Variable for FDVar<Domain> where
   type Domain = Domain;
   type Event = FDEvent;
 
-  fn new(id: u32, dom: Domain) -> FDVar<Domain> {
+  fn new(idx: usize, dom: Domain) -> FDVar<Domain> {
     assert!(!dom.is_empty());
     FDVar {
-      id: id,
+      idx: idx,
       dom: dom
     }
   }
 }
 
+pub trait VarIndex {
+  fn index(&self) -> usize;
+}
+
+impl<Domain> VarIndex for FDVar<Domain>
+{
+  fn index(&self) -> usize {
+    self.idx
+  }
+}
+
 trait VarDomain :
-  Bounded + Cardinality + Subset +
-  Singleton<<Self as Bounded>::Bound> + Clone +
-  Range<<Self as Bounded>::Bound>
+  Bounded + Cardinality + Subset + Clone
 {}
 
 impl<R> VarDomain for R where
   R:
-    Bounded + Cardinality + Subset +
-    Singleton<<R as Bounded>::Bound> + Clone +
-    Range<<R as Bounded>::Bound>
+    Bounded + Cardinality + Subset + Clone
 {}
 
 impl<Domain: VarDomain> FDVar<Domain>
 {
-  pub fn id(&self) -> u32 { self.id }
-
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  fn update(&mut self, dom: Domain, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn update(&mut self, dom: Domain, events: &mut Vec<(usize, FDEvent)>) -> bool {
     assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
       if let Some(event) = FDEvent::new(&dom, &self.dom) {
-        events.push((self.id, event));
+        events.push((self.idx, event));
         self.dom = dom;
       }
       true
@@ -114,14 +119,14 @@ impl<Domain> Contains<Domain::Bound> for FDVar<Domain> where
 pub trait EventShrinkLeft<Bound>
 {
   fn event_shrink_left(&mut self, lb: Bound,
-    events: &mut Vec<(u32, FDEvent)>) -> bool;
+    events: &mut Vec<(usize, FDEvent)>) -> bool;
 }
 
 impl<Domain> EventShrinkLeft<Domain::Bound> for FDVar<Domain> where
   Domain: VarDomain + ShrinkLeft<<Domain as Bounded>::Bound> + Clone
 {
   fn event_shrink_left(&mut self, lb: Domain::Bound,
-    events: &mut Vec<(u32, FDEvent)>) -> bool
+    events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().shrink_left(lb);
     self.update(new, events)
@@ -131,14 +136,14 @@ impl<Domain> EventShrinkLeft<Domain::Bound> for FDVar<Domain> where
 pub trait EventShrinkRight<Bound>
 {
   fn event_shrink_right(&mut self, ub: Bound,
-    events: &mut Vec<(u32, FDEvent)>) -> bool;
+    events: &mut Vec<(usize, FDEvent)>) -> bool;
 }
 
 impl<Domain> EventShrinkRight<Domain::Bound> for FDVar<Domain> where
   Domain: VarDomain + ShrinkRight<<Domain as Bounded>::Bound> + Clone
 {
   fn event_shrink_right(&mut self, ub: Domain::Bound,
-    events: &mut Vec<(u32, FDEvent)>) -> bool
+    events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().shrink_right(ub);
     self.update(new, events)
@@ -148,14 +153,14 @@ impl<Domain> EventShrinkRight<Domain::Bound> for FDVar<Domain> where
 pub trait EventRemove<Item>
 {
   fn event_remove(&mut self, value: Item,
-    events: &mut Vec<(u32, FDEvent)>) -> bool;
+    events: &mut Vec<(usize, FDEvent)>) -> bool;
 }
 
 impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
   Domain: VarDomain + Difference<<Domain as Bounded>::Bound, Output=Domain> + Clone
 {
   fn event_remove(&mut self, value: Domain::Bound,
-    events: &mut Vec<(u32, FDEvent)>) -> bool
+    events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().difference(value);
     self.update(new, events)
@@ -165,14 +170,14 @@ impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
 pub trait EventIntersection<RHS = Self>
 {
   fn event_intersection(&mut self, other: &mut RHS,
-    events: &mut Vec<(u32, FDEvent)>) -> bool;
+    events: &mut Vec<(usize, FDEvent)>) -> bool;
 }
 
 impl<Domain> EventIntersection for FDVar<Domain> where
   Domain: VarDomain + Intersection<Output=Domain> + Clone
 {
   fn event_intersection(&mut self, other: &mut FDVar<Domain>,
-    events: &mut Vec<(u32, FDEvent)>) -> bool
+    events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().intersection(other.dom.clone());
     self.update(new.clone(), events) &&
@@ -214,7 +219,7 @@ mod test {
     }
   }
 
-  fn assert_eq_events(events: Vec<(u32, FDEvent)>, expect: Vec<FDEvent>) {
+  fn assert_eq_events(events: Vec<(usize, FDEvent)>, expect: Vec<FDEvent>) {
     for ((_,ev), expect) in events.into_iter().zip(expect.into_iter()) {
       assert_eq!(ev, expect);
     }
@@ -269,7 +274,7 @@ mod test {
     var_intersection_test_one(var0_10, var11_20, None);
   }
 
-  fn var_intersection_test_one(mut v1: FDVar<Interval<i32>>, mut v2: FDVar<Interval<i32>>, events: Option<Vec<(u32, FDEvent)>>) {
+  fn var_intersection_test_one(mut v1: FDVar<Interval<i32>>, mut v2: FDVar<Interval<i32>>, events: Option<Vec<(usize, FDEvent)>>) {
     let mut ev = vec![];
     let res =
       if v1.event_intersection(&mut v2, &mut ev) {

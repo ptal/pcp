@@ -19,5 +19,5 @@ pub trait Variable {
   type Domain;
   type Event: EventIndex;
 
-  fn new(id: u32, dom: Self::Domain) -> Self;
+  fn new(id: usize, dom: Self::Domain) -> Self;
 }

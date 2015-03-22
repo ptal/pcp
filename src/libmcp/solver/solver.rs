@@ -45,7 +45,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
   fn newvar(&mut self, dom: <Solver<V, D, A> as Space>::Domain) ->
    <Solver<V, D, A> as Space>::Variable {
     let var_idx = self.variables.len();
-    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx as u32, dom))));
+    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx, dom))));
     self.variables[var_idx].clone()
   }
 
@@ -97,7 +97,7 @@ impl<V, D, A> Solver<V, D, A> where
   fn init_deps(&mut self) {
     self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as EventIndex>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
-      let p_deps: Vec<(u32, _)> = p.dependencies();
+      let p_deps = p.dependencies();
       for (v, ev) in p_deps.into_iter() {
         self.deps.subscribe(v as usize, ev, p_idx);
       }
@@ -142,15 +142,15 @@ impl<V, D, A> Solver<V, D, A> where
     true
   }
 
-  fn reschedule_prop(&mut self, events: &Vec<(u32, <V as Variable>::Event)>, p_idx: usize) {
+  fn reschedule_prop(&mut self, events: &Vec<(usize, <V as Variable>::Event)>, p_idx: usize) {
     if !events.is_empty() {
       self.agenda.schedule(p_idx);
     }
   }
 
-  fn react(&mut self, events: Vec<(u32, <V as Variable>::Event)>) {
+  fn react(&mut self, events: Vec<(usize, <V as Variable>::Event)>) {
     for (v, ev) in events.into_iter() {
-      let reactions = self.deps.react(v as usize, ev);
+      let reactions = self.deps.react(v, ev);
       for p in reactions.into_iter() {
         self.agenda.schedule(p);
       }
@@ -159,9 +159,9 @@ impl<V, D, A> Solver<V, D, A> where
 
   fn unlink_prop(&mut self, p_idx: usize) {
     self.agenda.unschedule(p_idx);
-    let deps: Vec<(u32, _)> = self.propagators[p_idx].dependencies();
+    let deps = self.propagators[p_idx].dependencies();
     for &(var, ev) in deps.iter() {
-      self.deps.unsubscribe(var as usize, ev, p_idx)
+      self.deps.unsubscribe(var, ev, p_idx)
     }
   }
 }

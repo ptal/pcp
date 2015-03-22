@@ -35,11 +35,11 @@ pub trait Propagator where <Self as Propagator>::SharedVar: Sized
 
   // The propagator is stable if no event are added into `events`.
   // Returns `false` if the propagator is failed.
-  fn propagate(&mut self, events: &mut Vec<(u32, Self::Event)>) -> bool;
+  fn propagate(&mut self, events: &mut Vec<(usize, Self::Event)>) -> bool;
 
   // Each event on a variable that can change the result of
   // the `status` method should be listed here.
-  fn dependencies(&self) -> Vec<(u32, Self::Event)>;
+  fn dependencies(&self) -> Vec<(usize, Self::Event)>;
 
   fn deep_clone(&self, cloned_vars: &Vec<Self::SharedVar>) -> Box<Propagator<Event=Self::Event, SharedVar=Self::SharedVar>>;
 }
