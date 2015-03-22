@@ -78,10 +78,21 @@ impl<Domain: VarDomain> FDVar<Domain>
     }
   }
 
-  pub fn lb(&self) -> Domain::Bound { self.dom.lower() }
-  pub fn ub(&self) -> Domain::Bound { self.dom.upper() }
-
   pub fn is_failed(&self) -> bool { self.dom.is_empty() }
+}
+
+impl<Domain> Bounded for FDVar<Domain> where
+  Domain: Bounded
+{
+  type Bound = Domain::Bound;
+
+  fn lower(&self) -> Domain::Bound {
+    self.dom.lower()
+  }
+
+  fn upper(&self) -> Domain::Bound {
+    self.dom.upper()
+  }
 }
 
 impl<Domain> Disjoint for FDVar<Domain> where
@@ -226,7 +237,7 @@ mod test {
   }
 
   fn var_update_lb_test_one(mut var: FDVar<Interval<i32>>, lb: i32, expect: Vec<FDEvent>, expect_success: bool) {
-    let ub = var.ub();
+    let ub = var.upper();
     let mut events = vec![];
     assert_eq!(var.event_shrink_left(lb, &mut events), expect_success);
     if expect_success {
@@ -236,7 +247,7 @@ mod test {
   }
 
   fn var_update_ub_test_one(mut var: FDVar<Interval<i32>>, ub: i32, expect: Vec<FDEvent>, expect_success: bool) {
-    let lb = var.lb();
+    let lb = var.lower();
     let mut events = vec![];
     assert_eq!(var.event_shrink_right(ub, &mut events), expect_success);
     if expect_success {

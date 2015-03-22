@@ -134,7 +134,7 @@ impl Propagator for XEqualY {
     if x.is_disjoint(y.deref()) {
       Disentailed
     }
-    else if x.lb() == y.ub() && x.ub() == y.lb() {
+    else if x.lower() == y.upper() && x.upper() == y.lower() {
       Entailed
     }
     else {
@@ -191,10 +191,10 @@ impl Propagator for XLessThanYPlusC {
     let x = self.x.borrow();
     let y = self.y.borrow();
 
-    if x.lb() > y.ub() + self.c {
+    if x.lower() > y.upper() + self.c {
       Disentailed
     }
-    else if x.ub() < y.lb() + self.c {
+    else if x.upper() < y.lower() + self.c {
       Entailed
     }
     else {
@@ -205,13 +205,13 @@ impl Propagator for XLessThanYPlusC {
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    if x.ub() >= y.ub() + self.c {
-      if !x.event_shrink_right(y.ub() - 1 + self.c, events) {
+    if x.upper() >= y.upper() + self.c {
+      if !x.event_shrink_right(y.upper() - 1 + self.c, events) {
         return false;
       }
     }
-    if x.lb() >= y.lb() + self.c {
-      if !y.event_shrink_left(x.lb() + 1 - self.c, events) {
+    if x.lower() >= y.lower() + self.c {
+      if !y.event_shrink_left(x.lower() + 1 - self.c, events) {
         return false;
       }
     }
@@ -260,10 +260,10 @@ impl Propagator for XGreaterEqThanC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
-    if x.ub() < self.c {
+    if x.upper() < self.c {
       Disentailed
     }
-    else if x.lb() >= self.c {
+    else if x.lower() >= self.c {
       Entailed
     }
     else {
@@ -273,7 +273,7 @@ impl Propagator for XGreaterEqThanC {
 
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
-    if x.lb() < self.c {
+    if x.lower() < self.c {
       x.event_shrink_left(self.c, events)
     }
     else {
@@ -322,10 +322,10 @@ impl Propagator for XLessEqThanC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
-    if x.lb() > self.c {
+    if x.lower() > self.c {
       Disentailed
     }
-    else if x.ub() <= self.c {
+    else if x.upper() <= self.c {
       Entailed
     }
     else {
@@ -335,7 +335,7 @@ impl Propagator for XLessEqThanC {
 
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
-    if x.ub() > self.c {
+    if x.upper() > self.c {
       x.event_shrink_right(self.c, events)
     }
     else {
@@ -374,7 +374,7 @@ impl Propagator for XNotEqualC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
-    if x.lb() == self.c && x.ub() == self.c {
+    if x.lower() == self.c && x.upper() == self.c {
       Disentailed
     }
     else if !x.contains(&self.c) {
@@ -432,10 +432,10 @@ impl Propagator for XNotEqualYPlusC {
     let x = self.x.borrow();
     let y = self.y.borrow();
 
-    if x.lb() == y.ub() + self.c && x.ub() == y.lb() + self.c {
+    if x.lower() == y.upper() + self.c && x.upper() == y.lower() + self.c {
       Disentailed
     }
-    else if x.lb() > y.ub() + self.c || x.ub() < y.lb() + self.c {
+    else if x.lower() > y.upper() + self.c || x.upper() < y.lower() + self.c {
       Entailed
     }
     else {
@@ -446,11 +446,11 @@ impl Propagator for XNotEqualYPlusC {
   fn propagate(&mut self, events: &mut Vec<(u32, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    if x.lb() == x.ub() {
-      y.event_remove(x.lb() - self.c, events)
+    if x.lower() == x.upper() {
+      y.event_remove(x.lower() - self.c, events)
     }
-    else if y.lb() == y.ub() {
-      x.event_remove(y.lb() + self.c, events)
+    else if y.lower() == y.upper() {
+      x.event_remove(y.lower() + self.c, events)
     }
     else {
       true
