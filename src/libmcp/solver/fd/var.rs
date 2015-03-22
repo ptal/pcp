@@ -48,7 +48,8 @@ impl<Domain> Variable for FDVar<Domain> where
   }
 }
 
-pub trait VarIndex {
+pub trait VarIndex
+{
   fn index(&self) -> usize;
 }
 
@@ -59,7 +60,8 @@ impl<Domain> VarIndex for FDVar<Domain>
   }
 }
 
-pub trait Failure {
+pub trait Failure
+{
   fn is_failed(&self) -> bool;
 }
 
@@ -78,10 +80,16 @@ impl<R> VarDomain for R where
   R: Bounded + Cardinality + Subset
 {}
 
-impl<Domain: VarDomain> FDVar<Domain>
+pub trait EventUpdate<Item>
 {
-  // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  fn update(&mut self, dom: Domain, events: &mut Vec<(usize, FDEvent)>) -> bool {
+  fn event_update(&mut self, value: Item,
+    events: &mut Vec<(usize, FDEvent)>) -> bool;
+}
+
+impl<Domain> EventUpdate<Domain> for FDVar<Domain> where
+  Domain: VarDomain
+{
+  fn event_update(&mut self, dom: Domain, events: &mut Vec<(usize, FDEvent)>) -> bool {
     assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
@@ -137,7 +145,7 @@ impl<Domain> EventShrinkLeft<Domain::Bound> for FDVar<Domain> where
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().shrink_left(lb);
-    self.update(new, events)
+    self.event_update(new, events)
   }
 }
 
@@ -154,7 +162,7 @@ impl<Domain> EventShrinkRight<Domain::Bound> for FDVar<Domain> where
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().shrink_right(ub);
-    self.update(new, events)
+    self.event_update(new, events)
   }
 }
 
@@ -171,7 +179,7 @@ impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().difference(value);
-    self.update(new, events)
+    self.event_update(new, events)
   }
 }
 
@@ -188,8 +196,8 @@ impl<Domain> EventIntersection for FDVar<Domain> where
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
     let new = self.dom.clone().intersection(other.dom.clone());
-    self.update(new.clone(), events) &&
-    other.update(new, events)
+    self.event_update(new.clone(), events) &&
+    other.event_update(new, events)
   }
 }
 
@@ -220,7 +228,7 @@ mod test {
 
   fn var_update_test_one(mut var: FDVar<Interval<i32>>, dom: Interval<i32>, expect: Vec<FDEvent>, expect_success: bool) {
     let mut events = vec![];
-    assert_eq!(var.update(dom, &mut events), expect_success);
+    assert_eq!(var.event_update(dom, &mut events), expect_success);
     if expect_success {
       assert_eq_events(events, expect);
       assert_eq!(var.dom, dom);
@@ -301,7 +309,7 @@ mod test {
     let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
     let dom11_11 = 11.to_interval();
 
-    var0_10.update(dom11_11, &mut vec![]);
+    var0_10.event_update(dom11_11, &mut vec![]);
   }
 
   #[test]
@@ -311,6 +319,6 @@ mod test {
     let mut var0_10: FDVar<Interval<i32>> = Variable::new(0, dom0_10);
     let domm5_15 = (-5, 15).to_interval();
 
-    var0_10.update(domm5_15, &mut vec![]);
+    var0_10.event_update(domm5_15, &mut vec![]);
   }
 }
