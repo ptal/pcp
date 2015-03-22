@@ -59,13 +59,23 @@ impl<Domain> VarIndex for FDVar<Domain>
   }
 }
 
-trait VarDomain :
-  Bounded + Cardinality + Subset + Clone
+pub trait Failure {
+  fn is_failed(&self) -> bool;
+}
+
+impl<Domain> Failure for FDVar<Domain> where
+  Domain: Cardinality
+{
+  fn is_failed(&self) -> bool {
+    self.dom.is_empty()
+  }
+}
+
+trait VarDomain: Bounded + Cardinality + Subset
 {}
 
 impl<R> VarDomain for R where
-  R:
-    Bounded + Cardinality + Subset + Clone
+  R: Bounded + Cardinality + Subset
 {}
 
 impl<Domain: VarDomain> FDVar<Domain>
@@ -82,8 +92,6 @@ impl<Domain: VarDomain> FDVar<Domain>
       true
     }
   }
-
-  pub fn is_failed(&self) -> bool { self.dom.is_empty() }
 }
 
 impl<Domain> Bounded for FDVar<Domain> where
