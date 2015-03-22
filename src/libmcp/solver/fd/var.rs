@@ -50,19 +50,15 @@ impl<Domain> Variable for FDVar<Domain> where
 
 trait VarDomain :
   Bounded + Cardinality + Subset +
-  Singleton<<Self as Bounded>::Bound> +
-  Disjoint + Clone +
-  Range<<Self as Bounded>::Bound> +
-  Difference<Output=Self>
+  Singleton<<Self as Bounded>::Bound> + Clone +
+  Range<<Self as Bounded>::Bound>
 {}
 
 impl<R> VarDomain for R where
   R:
     Bounded + Cardinality + Subset +
-    Singleton<<R as Bounded>::Bound> +
-    Disjoint + Clone +
-    Range<<R as Bounded>::Bound> +
-    Difference<Output=R>
+    Singleton<<R as Bounded>::Bound> + Clone +
+    Range<<R as Bounded>::Bound>
 {}
 
 impl<Domain: VarDomain> FDVar<Domain>
@@ -70,7 +66,7 @@ impl<Domain: VarDomain> FDVar<Domain>
   pub fn id(&self) -> u32 { self.id }
 
   // Precondition: Accept only monotonic updates. `dom` must be a subset of self.dom.
-  pub fn update(&mut self, dom: Domain, events: &mut Vec<(u32, FDEvent)>) -> bool {
+  fn update(&mut self, dom: Domain, events: &mut Vec<(u32, FDEvent)>) -> bool {
     assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
@@ -86,13 +82,21 @@ impl<Domain: VarDomain> FDVar<Domain>
   pub fn ub(&self) -> Domain::Bound { self.dom.upper() }
 
   pub fn is_failed(&self) -> bool { self.dom.is_empty() }
+}
 
-  pub fn is_disjoint(v1: &FDVar<Domain>, v2: &FDVar<Domain>) -> bool {
-    v1.dom.is_disjoint(&v2.dom)
+impl<Domain> Disjoint for FDVar<Domain> where
+  Domain: Disjoint
+{
+  fn is_disjoint(&self, other: &FDVar<Domain>) -> bool {
+    self.dom.is_disjoint(&other.dom)
   }
+}
 
-  pub fn is_disjoint_value(&self, x: Domain::Bound) -> bool {
-    self.dom.is_disjoint(&Domain::singleton(x))
+impl<Domain> Contains<Domain::Bound> for FDVar<Domain> where
+  Domain: Bounded + Contains<<Domain as Bounded>::Bound>
+{
+  fn contains(&self, value: &Domain::Bound) -> bool {
+    self.dom.contains(value)
   }
 }
 

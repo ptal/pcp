@@ -17,6 +17,7 @@ use solver::fd::var::FDEvent::*;
 use solver::propagator::*;
 use solver::propagator::Status::*;
 use solver::merge::Merge;
+use interval::ncollections::ops::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
@@ -130,7 +131,7 @@ impl Propagator for XEqualY {
     let x = self.x.borrow();
     let y = self.y.borrow();
 
-    if FDVar::is_disjoint(x.deref(), y.deref()) {
+    if x.is_disjoint(y.deref()) {
       Disentailed
     }
     else if x.lb() == y.ub() && x.ub() == y.lb() {
@@ -376,7 +377,7 @@ impl Propagator for XNotEqualC {
     if x.lb() == self.c && x.ub() == self.c {
       Disentailed
     }
-    else if x.is_disjoint_value(self.c) {
+    else if !x.contains(&self.c) {
       Entailed
     }
     else {
