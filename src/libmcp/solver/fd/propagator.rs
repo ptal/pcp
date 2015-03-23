@@ -13,10 +13,12 @@
 // limitations under the License.
 
 use solver::fd::var::*;
-use solver::fd::var::FDEvent::*;
+use solver::fd::event::*;
+use solver::fd::event::FDEvent::*;
 use solver::propagator::*;
 use solver::propagator::Status::*;
 use solver::merge::Merge;
+use interval::interval::*;
 use interval::ncollections::ops::*;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -479,8 +481,8 @@ pub struct Distinct {
 impl Distinct {
   pub fn new(vars: Vec<SharedFDVar>) -> Distinct {
     let mut props = vec![];
-    for i in range(0, vars.len()-1) {
-      for j in range(i+1, vars.len()) {
+    for i in 0..vars.len()-1 {
+      for j in i+1..vars.len() {
         let i_neq_j = Box::new(XNotEqualY::new(vars[i].clone(), vars[j].clone()))
           as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>;
         props.push(i_neq_j);
@@ -551,14 +553,15 @@ impl Propagator for Distinct {
 mod test {
   use super::*;
   use solver::fd::var::*;
-  use solver::fd::var::FDEvent::*;
+  use solver::fd::event::*;
+  use solver::fd::event::FDEvent::*;
   use solver::propagator::Status::*;
   use solver::variable::Variable;
   use solver::propagator::*;
+  use interval::interval::*;
   use interval::ncollections::ops::*;
   use std::rc::Rc;
   use std::cell::RefCell;
-  use std::iter::range;
   use std::collections::VecMap;
 
   fn make_vec_map(events: Vec<(usize, FDEvent)>) -> VecMap<FDEvent> {
@@ -712,7 +715,7 @@ mod test {
 
   #[test]
   fn distinct_test() {
-    let mut vars: Vec<FDVar<Interval<i32>>> = range(0, 3)
+    let mut vars: Vec<FDVar<Interval<i32>>> = (0..3)
       .map(|v| Variable::new(v, Interval::singleton(v as i32)))
       .collect();
     vars.push(Variable::new(3, (0,3).to_interval()));

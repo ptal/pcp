@@ -23,7 +23,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
-use std::iter::range;
 
 pub struct Solver<V: Variable, D, A> {
   propagators: Vec<Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>>,
@@ -107,7 +106,7 @@ impl<V, D, A> Solver<V, D, A> where
   fn init_agenda(&mut self) {
     let num_props = self.propagators.len();
     self.agenda = Agenda::new(num_props);
-    for p_idx in range(0, num_props) {
+    for p_idx in 0..num_props {
       self.agenda.schedule(p_idx);
     }
   }
@@ -181,6 +180,7 @@ impl<V, D, A> Display for Solver<V, D, A> where
 #[cfg(test)]
 mod test {
   use super::*;
+  use interval::interval::*;
   use interval::ops::*;
   use solver::fd::var::*;
   use solver::space::*;
@@ -214,10 +214,10 @@ mod test {
 
     let mut solver: FDSolver = Solver::new();
     let mut vars = vec![];
-    for _ in range(0,n) {
+    for _ in 0..n {
       vars.push(solver.newvar(Interval::new(1,10)));
     }
-    for i in range(0,n-1) {
+    for i in 0..n-1 {
       solver.add(Box::new(XLessThanY::new(vars[i].clone(), vars[i+1].clone())));
     }
     assert_eq!(solver.solve(), expect);
@@ -245,11 +245,11 @@ mod test {
     let mut solver: FDSolver = Solver::new();
     let mut queens = vec![];
     // 2 queens can't share the same line.
-    for _ in range(0,n) {
+    for _ in 0..n {
       queens.push(solver.newvar((1, n as i32).to_interval()));
     }
-    for i in range(0usize,n-1) {
-      for j in range(i + 1, n) {
+    for i in 0..n-1 {
+      for j in i + 1..n {
         // 2 queens can't share the same diagonal.
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;

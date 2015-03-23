@@ -44,8 +44,8 @@ impl EventIndex for FDEvent {
   }
 }
 
-impl<Domain> MonotonicEvent<Domain> for FDEvent
-where Domain: Subset + Cardinality + Bounded
+impl<Domain> MonotonicEvent<Domain> for FDEvent where
+  Domain: Subset + Cardinality + Bounded
 {
   fn new(little: &Domain, big: &Domain) -> Option<Self>
   {

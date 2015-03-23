@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use interval::interval::*;
-pub use solver::fd::event::*;
+use solver::fd::event::*;
 use solver::event::*;
 use solver::variable::Variable;
 use interval::ncollections::ops::*;
@@ -89,7 +88,9 @@ pub trait EventUpdate<Item>
 impl<Domain> EventUpdate<Domain> for FDVar<Domain> where
   Domain: VarDomain
 {
-  fn event_update(&mut self, dom: Domain, events: &mut Vec<(usize, FDEvent)>) -> bool {
+  fn event_update(&mut self, dom: Domain,
+    events: &mut Vec<(usize, FDEvent)>) -> bool
+  {
     assert!(dom.is_subset(&self.dom), "Domain update must be monotonic.");
     if dom.is_empty() { false } // Failure
     else {
@@ -204,8 +205,10 @@ impl<Domain> EventIntersection for FDVar<Domain> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use super::FDEvent::*;
+  use solver::fd::event::*;
+  use solver::fd::event::FDEvent::*;
   use solver::variable::Variable;
+  use interval::interval::*;
   use interval::ncollections::ops::*;
 
   #[test]

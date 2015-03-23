@@ -22,7 +22,7 @@ pub enum Status
   Unknown
 }
 
-pub trait Propagator where <Self as Propagator>::SharedVar: Sized
+pub trait Propagator
 {
   type Event: EventIndex;
   type SharedVar;
