@@ -140,12 +140,12 @@ pub trait EventShrinkLeft<Bound>
 }
 
 impl<Domain> EventShrinkLeft<Domain::Bound> for FDVar<Domain> where
-  Domain: VarDomain + ShrinkLeft<<Domain as Bounded>::Bound> + Clone
+  Domain: VarDomain + ShrinkLeft<<Domain as Bounded>::Bound>
 {
   fn event_shrink_left(&mut self, lb: Domain::Bound,
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
-    let new = self.dom.clone().shrink_left(lb);
+    let new = self.dom.shrink_left(lb);
     self.event_update(new, events)
   }
 }
@@ -157,12 +157,12 @@ pub trait EventShrinkRight<Bound>
 }
 
 impl<Domain> EventShrinkRight<Domain::Bound> for FDVar<Domain> where
-  Domain: VarDomain + ShrinkRight<<Domain as Bounded>::Bound> + Clone
+  Domain: VarDomain + ShrinkRight<<Domain as Bounded>::Bound>
 {
   fn event_shrink_right(&mut self, ub: Domain::Bound,
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
-    let new = self.dom.clone().shrink_right(ub);
+    let new = self.dom.shrink_right(ub);
     self.event_update(new, events)
   }
 }
@@ -174,12 +174,12 @@ pub trait EventRemove<Item>
 }
 
 impl<Domain> EventRemove<Domain::Bound> for FDVar<Domain> where
-  Domain: VarDomain + Difference<<Domain as Bounded>::Bound, Output=Domain> + Clone
+  Domain: VarDomain + Difference<<Domain as Bounded>::Bound, Output=Domain>
 {
   fn event_remove(&mut self, value: Domain::Bound,
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
-    let new = self.dom.clone().difference(value);
+    let new = self.dom.difference(&value);
     self.event_update(new, events)
   }
 }
@@ -196,7 +196,7 @@ impl<Domain> EventIntersection for FDVar<Domain> where
   fn event_intersection(&mut self, other: &mut FDVar<Domain>,
     events: &mut Vec<(usize, FDEvent)>) -> bool
   {
-    let new = self.dom.clone().intersection(other.dom.clone());
+    let new = self.dom.intersection(&other.dom);
     self.event_update(new.clone(), events) &&
     other.event_update(new, events)
   }
