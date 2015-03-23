@@ -207,17 +207,8 @@ impl Propagator for XLessThanYPlusC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
-    if x.upper() >= y.upper() + self.c {
-      if !x.event_shrink_right(y.upper() - 1 + self.c, events) {
-        return false;
-      }
-    }
-    if x.lower() >= y.lower() + self.c {
-      if !y.event_shrink_left(x.lower() + 1 - self.c, events) {
-        return false;
-      }
-    }
-    true
+    x.event_shrink_right(y.upper() - 1 + self.c, events) &&
+    y.event_shrink_left(x.lower() + 1 - self.c, events)
   }
 
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
@@ -274,13 +265,7 @@ impl Propagator for XGreaterEqThanC {
   }
 
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
-    let mut x = self.x.borrow_mut();
-    if x.lower() < self.c {
-      x.event_shrink_left(self.c, events)
-    }
-    else {
-      true
-    }
+    self.x.borrow_mut().event_shrink_left(self.c, events)
   }
 
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
@@ -336,13 +321,7 @@ impl Propagator for XLessEqThanC {
   }
 
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
-    let mut x = self.x.borrow_mut();
-    if x.upper() > self.c {
-      x.event_shrink_right(self.c, events)
-    }
-    else {
-      true
-    }
+    self.x.borrow_mut().event_shrink_right(self.c, events)
   }
 
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
