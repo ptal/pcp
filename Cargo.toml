@@ -10,6 +10,6 @@ name = "mcp"
 path = "src/libmcp/lib.rs"
 crate_type = ["dylib"]
 
-[dependencies.interval]
+[dependencies]
 
-git = "https://github.com/ptal/Rust.Interval"
+intervallum = "0.1.0"
