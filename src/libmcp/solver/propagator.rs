@@ -13,8 +13,11 @@
 // limitations under the License.
 
 use solver::event::EventIndex;
+use solver::variable::{Variable, VarIndex};
+use std::rc::Rc;
+use std::cell::RefCell;
 
-#[derive(Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Status
 {
   Entailed,
@@ -22,11 +25,8 @@ pub enum Status
   Unknown
 }
 
-pub trait Propagator
+pub trait Propagator<Event: EventIndex>
 {
-  type Event: EventIndex;
-  type SharedVar;
-
   // If the result is Entailed or Disentailed, it must not
   // change after a propagate call.
   // Also no need to check if the variables are failed, this
@@ -35,11 +35,49 @@ pub trait Propagator
 
   // The propagator is stable if no event are added into `events`.
   // Returns `false` if the propagator is failed.
-  fn propagate(&mut self, events: &mut Vec<(usize, Self::Event)>) -> bool;
+  fn propagate(&mut self, events: &mut Vec<(usize, Event)>) -> bool;
 
   // Each event on a variable that can change the result of
   // the `status` method should be listed here.
-  fn dependencies(&self) -> Vec<(usize, Self::Event)>;
-
-  fn deep_clone(&self, cloned_vars: &Vec<Self::SharedVar>) -> Box<Propagator<Event=Self::Event, SharedVar=Self::SharedVar>>;
+  fn dependencies(&self) -> Vec<(usize, Event)>;
 }
+
+pub trait DeepClone<State>
+{
+  fn deep_clone(&self, state: &State) -> Self;
+}
+
+impl<Var> DeepClone<Vec<Rc<RefCell<Var>>>> for Rc<RefCell<Var>> where
+  Var: VarIndex+Clone
+{
+  fn deep_clone(&self, state: &Vec<Rc<RefCell<Var>>>) -> Rc<RefCell<Var>> {
+    state[self.borrow().index()].clone()
+  }
+}
+
+pub trait BoxedDeepClone<V: Variable>
+{
+  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>>;
+}
+
+impl<R, V> BoxedDeepClone<V> for R where
+  R: DeepClone<Vec<Rc<RefCell<V>>>>,
+  R: Propagator<<V as Variable>::Event>,
+  R: 'static,
+  V: Variable
+{
+  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>> {
+    Box::new(self.deep_clone(state))
+  }
+}
+
+pub trait PropagatorErasure<V: Variable>:
+    Propagator<<V as Variable>::Event>
+  + BoxedDeepClone<V>
+{}
+
+impl<
+  V: Variable,
+  R: Propagator<<V as Variable>::Event>
+   + BoxedDeepClone<V>
+> PropagatorErasure<V> for R {}

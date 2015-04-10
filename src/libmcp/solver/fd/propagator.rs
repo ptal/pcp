@@ -15,6 +15,7 @@
 use solver::fd::var::*;
 use solver::fd::event::*;
 use solver::fd::event::FDEvent::*;
+use solver::variable::VarIndex;
 use solver::propagator::*;
 use solver::propagator::Status::*;
 use solver::merge::Merge;
@@ -27,13 +28,7 @@ use std::collections::HashMap;
 
 pub type SharedFDVar = Rc<RefCell<FDVar<Interval<i32>>>>;
 
-fn deep_var_clone(v: &SharedFDVar, from: &Vec<SharedFDVar>) -> SharedFDVar
-{
-  from[v.borrow().index() as usize].clone()
-}
-
 // x < y
-#[derive(Copy)]
 pub struct XLessThanY;
 
 impl XLessThanY {
@@ -43,7 +38,6 @@ impl XLessThanY {
 }
 
 // x <= y
-#[derive(Copy)]
 pub struct XLessEqThanY;
 
 impl XLessEqThanY {
@@ -53,7 +47,6 @@ impl XLessEqThanY {
 }
 
 // x <= y + c
-#[derive(Copy)]
 pub struct XLessEqThanYPlusC;
 
 impl XLessEqThanYPlusC {
@@ -63,7 +56,6 @@ impl XLessEqThanYPlusC {
 }
 
 // x > y
-#[derive(Copy)]
 pub struct XGreaterThanY;
 
 impl XGreaterThanY {
@@ -73,7 +65,6 @@ impl XGreaterThanY {
 }
 
 // x >= y
-#[derive(Copy)]
 pub struct XGreaterEqThanY;
 
 impl XGreaterEqThanY {
@@ -83,7 +74,6 @@ impl XGreaterEqThanY {
 }
 
 // x > y + c
-#[derive(Copy)]
 pub struct XGreaterThanYPlusC;
 
 impl XGreaterThanYPlusC {
@@ -93,7 +83,6 @@ impl XGreaterThanYPlusC {
 }
 
 // x >= y + c
-#[derive(Copy)]
 pub struct XGreaterEqThanYPlusC;
 
 impl XGreaterEqThanYPlusC {
@@ -115,10 +104,7 @@ impl XEqualY {
   }
 }
 
-impl Propagator for XEqualY {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XEqualY {
   fn status(&self) -> Status {
     // Disentailed:
     // |--|
@@ -153,11 +139,14 @@ impl Propagator for XEqualY {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(XEqualY::new(
-      deep_var_clone(&self.x, from),
-      deep_var_clone(&self.y, from))) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XEqualY
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XEqualY {
+    XEqualY::new(
+      self.x.deep_clone(state),
+      self.y.deep_clone(state))
   }
 }
 
@@ -175,10 +164,7 @@ impl XLessThanYPlusC {
   }
 }
 
-impl Propagator for XLessThanYPlusC {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XLessThanYPlusC {
   fn status(&self) -> Status {
     // Disentailed:
     //     |--|
@@ -214,17 +200,19 @@ impl Propagator for XLessThanYPlusC {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound), (self.y.borrow().index(), Bound)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) ->  Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(XLessThanYPlusC::new(
-      deep_var_clone(&self.x, from),
-      deep_var_clone(&self.y, from),
-      self.c)) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XLessThanYPlusC
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XLessThanYPlusC {
+    XLessThanYPlusC::new(
+      self.x.deep_clone(state),
+      self.y.deep_clone(state),
+      self.c)
   }
 }
 
 // x > c
-#[derive(Copy)]
 pub struct XGreaterThanC;
 
 impl XGreaterThanC {
@@ -246,10 +234,7 @@ impl XGreaterEqThanC {
   }
 }
 
-impl Propagator for XGreaterEqThanC {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XGreaterEqThanC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
@@ -271,16 +256,18 @@ impl Propagator for XGreaterEqThanC {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>  {
-    Box::new(XGreaterEqThanC::new(
-      deep_var_clone(&self.x, from),
-      self.c)) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XGreaterEqThanC
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XGreaterEqThanC {
+    XGreaterEqThanC::new(
+      self.x.deep_clone(state),
+      self.c)
   }
 }
 
 // x < c
-#[derive(Copy)]
 pub struct XLessThanC;
 
 impl XLessThanC {
@@ -302,10 +289,7 @@ impl XLessEqThanC {
   }
 }
 
-impl Propagator for XLessEqThanC {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XLessEqThanC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
@@ -327,11 +311,14 @@ impl Propagator for XLessEqThanC {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(XLessEqThanC::new(
-      deep_var_clone(&self.x, from),
-      self.c)) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XLessEqThanC
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XLessEqThanC {
+    XLessEqThanC::new(
+      self.x.deep_clone(state),
+      self.c)
   }
 }
 
@@ -348,10 +335,7 @@ impl XNotEqualC {
   }
 }
 
-impl Propagator for XNotEqualC {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XNotEqualC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
 
@@ -373,16 +357,19 @@ impl Propagator for XNotEqualC {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(XNotEqualC::new(
-      deep_var_clone(&self.x, from),
-      self.c)) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XNotEqualC
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XNotEqualC {
+    XNotEqualC::new(
+      self.x.deep_clone(state),
+      self.c)
   }
 }
 
 // x != y
-#[derive(Copy, Debug)]
+#[derive(Debug)]
 pub struct XNotEqualY;
 
 impl XNotEqualY {
@@ -405,10 +392,7 @@ impl XNotEqualYPlusC {
   }
 }
 
-impl Propagator for XNotEqualYPlusC {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for XNotEqualYPlusC {
   fn status(&self) -> Status {
     let x = self.x.borrow();
     let y = self.y.borrow();
@@ -441,12 +425,15 @@ impl Propagator for XNotEqualYPlusC {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(XNotEqualYPlusC::new(
-      deep_var_clone(&self.x, from),
-      deep_var_clone(&self.y, from),
-      self.c)) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for XNotEqualYPlusC
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> XNotEqualYPlusC {
+    XNotEqualYPlusC::new(
+      self.x.deep_clone(state),
+      self.y.deep_clone(state),
+      self.c)
   }
 }
 
@@ -454,7 +441,7 @@ impl Propagator for XNotEqualYPlusC {
 // #[derive(Debug)]
 pub struct Distinct {
   vars: Vec<SharedFDVar>,
-  props: Vec<Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>>
+  props: Vec<XNotEqualYPlusC>
 }
 
 impl Distinct {
@@ -462,8 +449,7 @@ impl Distinct {
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
-        let i_neq_j = Box::new(XNotEqualY::new(vars[i].clone(), vars[j].clone()))
-          as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>;
+        let i_neq_j = XNotEqualY::new(vars[i].clone(), vars[j].clone());
         props.push(i_neq_j);
       }
     }
@@ -481,10 +467,7 @@ impl Distinct {
   }
 }
 
-impl Propagator for Distinct {
-  type Event = FDEvent;
-  type SharedVar = SharedFDVar;
-
+impl Propagator<FDEvent> for Distinct {
   fn status(&self) -> Status {
     let mut all_entailed = true;
     for p in self.props.iter() {
@@ -519,12 +502,15 @@ impl Propagator for Distinct {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     self.vars.iter().map(|x| (x.borrow().index(), Inner)).collect()
   }
+}
 
-  fn deep_clone(&self, from: &Vec<SharedFDVar>) -> Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>> {
-    Box::new(Distinct {
-      vars: self.vars.iter().map(|v| deep_var_clone(v, from)).collect(),
-      props: self.props.iter().map(|p| p.deep_clone(from)).collect()
-    }) as Box<Propagator<Event=FDEvent, SharedVar=SharedFDVar>>
+impl DeepClone<Vec<SharedFDVar>> for Distinct
+{
+  fn deep_clone(&self, state: &Vec<SharedFDVar>) -> Distinct {
+    Distinct {
+      vars: self.vars.iter().map(|v| v.deep_clone(state)).collect(),
+      props: self.props.iter().map(|p| p.deep_clone(state)).collect()
+    }
   }
 }
 
@@ -553,7 +539,7 @@ mod test {
   }
 
   fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(usize, FDEvent)>>)
-   where P: Propagator<SharedVar=SharedFDVar, Event=FDEvent> {
+   where P: Propagator<FDEvent> {
     let mut events = vec![];
     if prop.propagate(&mut events) && expected != None {
       let events = make_vec_map(events);
@@ -565,7 +551,7 @@ mod test {
   }
 
   fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>)
-   where P: Propagator<SharedVar=SharedFDVar, Event=FDEvent> {
+   where P: Propagator<FDEvent> {
     assert_eq!(prop.status(), before);
     propagate_only_test(&mut prop, expected);
     assert_eq!(prop.status(), after);

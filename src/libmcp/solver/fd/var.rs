@@ -14,7 +14,7 @@
 
 use solver::fd::event::*;
 use solver::event::*;
-use solver::variable::Variable;
+use solver::variable::*;
 use interval::ncollections::ops::*;
 use interval::ops::*;
 
@@ -45,11 +45,6 @@ impl<Domain> Variable for FDVar<Domain> where
       dom: dom
     }
   }
-}
-
-pub trait VarIndex
-{
-  fn index(&self) -> usize;
 }
 
 impl<Domain> VarIndex for FDVar<Domain>

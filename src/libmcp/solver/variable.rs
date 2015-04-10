@@ -15,9 +15,15 @@
 use solver::event::*;
 
 
-pub trait Variable {
+pub trait Variable
+{
   type Domain;
   type Event: EventIndex;
 
   fn new(id: usize, dom: Self::Domain) -> Self;
+}
+
+pub trait VarIndex
+{
+  fn index(&self) -> usize;
 }

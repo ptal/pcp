@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::propagator::Propagator;
+use solver::propagator::{BoxedDeepClone, Propagator, PropagatorErasure};
 use solver::propagator::Status as PStatus;
 use solver::variable::Variable;
 use solver::dependencies::VarEventDependencies;
@@ -25,7 +25,7 @@ use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
 pub struct Solver<V: Variable, D, A> {
-  propagators: Vec<Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>>,
+  propagators: Vec<Box<PropagatorErasure<V> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
@@ -36,7 +36,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
  D: VarEventDependencies,
  A: Agenda
 {
-  type Constraint = Box<Propagator<SharedVar=Rc<RefCell<V>>, Event=<V as Variable>::Event> + 'static>;
+  type Constraint = Box<PropagatorErasure<V> + 'static>;
   type Variable = Rc<RefCell<V>>;
   type Domain = <V as Variable>::Domain;
   type Label = Solver<V, D, A>;
@@ -63,7 +63,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
       .collect();
     solver.propagators = self.propagators.iter()
-      .map(|p| p.deep_clone(&solver.variables))
+      .map(|p| p.boxed_deep_clone(&solver.variables))
       .collect();
     solver
   }
