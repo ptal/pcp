@@ -14,7 +14,7 @@
 
 use solver::propagator::{BoxedDeepClone, Propagator, PropagatorErasure};
 use solver::propagator::Status as PStatus;
-use solver::variable::Variable;
+use solver::variable::VariableT;
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
 use solver::event::EventIndex;
@@ -24,7 +24,7 @@ use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
-pub struct Solver<V: Variable, D, A> {
+pub struct Solver<V: VariableT, D, A> {
   propagators: Vec<Box<PropagatorErasure<V> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
@@ -32,19 +32,19 @@ pub struct Solver<V: Variable, D, A> {
 }
 
 impl<V, D, A> Space for Solver<V, D, A> where
- V: Variable+Clone,
+ V: VariableT+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
   type Constraint = Box<PropagatorErasure<V> + 'static>;
   type Variable = Rc<RefCell<V>>;
-  type Domain = <V as Variable>::Domain;
+  type Domain = <V as VariableT>::Domain;
   type Label = Solver<V, D, A>;
 
   fn newvar(&mut self, dom: <Solver<V, D, A> as Space>::Domain) ->
    <Solver<V, D, A> as Space>::Variable {
     let var_idx = self.variables.len();
-    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx, dom))));
+    self.variables.push(Rc::new(RefCell::new(VariableT::new(var_idx, dom))));
     self.variables[var_idx].clone()
   }
 
@@ -75,7 +75,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
 }
 
 impl<V, D, A> Solver<V, D, A> where
- V: Variable+Clone,
+ V: VariableT+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
@@ -94,7 +94,7 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn init_deps(&mut self) {
-    self.deps = VarEventDependencies::new(self.variables.len(), <<V as Variable>::Event as EventIndex>::size());
+    self.deps = VarEventDependencies::new(self.variables.len(), <<V as VariableT>::Event as EventIndex>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
       let p_deps = p.dependencies();
       for (v, ev) in p_deps.into_iter() {
@@ -141,13 +141,13 @@ impl<V, D, A> Solver<V, D, A> where
     true
   }
 
-  fn reschedule_prop(&mut self, events: &Vec<(usize, <V as Variable>::Event)>, p_idx: usize) {
+  fn reschedule_prop(&mut self, events: &Vec<(usize, <V as VariableT>::Event)>, p_idx: usize) {
     if !events.is_empty() {
       self.agenda.schedule(p_idx);
     }
   }
 
-  fn react(&mut self, events: Vec<(usize, <V as Variable>::Event)>) {
+  fn react(&mut self, events: Vec<(usize, <V as VariableT>::Event)>) {
     for (v, ev) in events.into_iter() {
       let reactions = self.deps.react(v, ev);
       for p in reactions.into_iter() {
@@ -166,7 +166,7 @@ impl<V, D, A> Solver<V, D, A> where
 }
 
 impl<V, D, A> Display for Solver<V, D, A> where
- V: Variable+Display
+ V: VariableT+Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let format_vars =
@@ -188,7 +188,7 @@ mod test {
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
 
-  type FDSolver = Solver<FDVar<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type FDSolver = Solver<Variable<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
 
   #[test]
   fn basic_test() {

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use solver::event::EventIndex;
-use solver::variable::{Variable, VarIndex};
+use solver::variable::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -55,29 +55,29 @@ impl<Var> DeepClone<Vec<Rc<RefCell<Var>>>> for Rc<RefCell<Var>> where
   }
 }
 
-pub trait BoxedDeepClone<V: Variable>
+pub trait BoxedDeepClone<V: VariableT>
 {
   fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>>;
 }
 
 impl<R, V> BoxedDeepClone<V> for R where
   R: DeepClone<Vec<Rc<RefCell<V>>>>,
-  R: Propagator<<V as Variable>::Event>,
+  R: Propagator<<V as VariableT>::Event>,
   R: 'static,
-  V: Variable
+  V: VariableT
 {
   fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>> {
     Box::new(self.deep_clone(state))
   }
 }
 
-pub trait PropagatorErasure<V: Variable>:
-    Propagator<<V as Variable>::Event>
+pub trait PropagatorErasure<V: VariableT>:
+    Propagator<<V as VariableT>::Event>
   + BoxedDeepClone<V>
 {}
 
 impl<
-  V: Variable,
-  R: Propagator<<V as Variable>::Event>
+  V: VariableT,
+  R: Propagator<<V as VariableT>::Event>
    + BoxedDeepClone<V>
 > PropagatorErasure<V> for R {}
