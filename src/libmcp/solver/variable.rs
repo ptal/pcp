@@ -15,17 +15,11 @@
 use solver::event::*;
 use interval::ncollections::ops::*;
 use interval::ops::*;
-
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 
-// type SharedVar<Domain> = Rc<RefCell<Variable<Domain>>>;
-
-pub trait VariableT
-{
-  type Domain;
-
-  fn new(id: usize, dom: Self::Domain) -> Self;
-}
+pub type SharedVar<Domain> = Rc<RefCell<Variable<Domain>>>;
 
 pub trait VarIndex
 {
@@ -44,12 +38,10 @@ impl<Domain: Display> Display for Variable<Domain> {
   }
 }
 
-impl<Domain> VariableT for Variable<Domain> where
+impl<Domain> Variable<Domain> where
   Domain: Cardinality
 {
-  type Domain = Domain;
-
-  fn new(idx: usize, dom: Domain) -> Variable<Domain> {
+  pub fn new(idx: usize, dom: Domain) -> Variable<Domain> {
     assert!(!dom.is_empty());
     Variable {
       idx: idx,
@@ -244,7 +236,7 @@ mod test {
     let dom1_9 = (1,9).to_interval();
     let dom0_0 = (0,0).to_interval();
     let empty = Interval::empty();
-    let var0_10 = VariableT::new(0, dom0_10);
+    let var0_10 = Variable::new(0, dom0_10);
 
     var_update_test_one(var0_10, dom0_10, vec![], true);
     var_update_test_one(var0_10, empty, vec![], false);
@@ -272,7 +264,7 @@ mod test {
   #[test]
   fn var_update_bound() {
     let dom0_10 = (0,10).to_interval();
-    let var0_10 = VariableT::new(0, dom0_10);
+    let var0_10 = Variable::new(0, dom0_10);
 
     var_update_lb_test_one(var0_10, 0, vec![], true);
     var_update_lb_test_one(var0_10, 10, vec![Assignment], true);
@@ -307,10 +299,10 @@ mod test {
 
   #[test]
   fn var_intersection_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var10_20 = VariableT::new(2, (10,20).to_interval());
-    let var11_20 = VariableT::new(3, (11,20).to_interval());
-    let var1_9 = VariableT::new(4, (1,9).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var11_20 = Variable::new(3, (11,20).to_interval());
+    let var1_9 = Variable::new(4, (1,9).to_interval());
 
     var_intersection_test_one(var0_10, var10_20, Some(vec![(1, Assignment), (2, Assignment)]));
     var_intersection_test_one(var0_10, var1_9, Some(vec![(1, Bound)]));
@@ -334,7 +326,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_singleton() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: Variable<Interval<i32>> = VariableT::new(0, dom0_10);
+    let mut var0_10: Variable<Interval<i32>> = Variable::new(0, dom0_10);
     let dom11_11 = 11.to_interval();
 
     var0_10.event_update::<FDEvent>(dom11_11, &mut vec![]);
@@ -344,7 +336,7 @@ mod test {
   #[should_panic]
   fn var_non_monotonic_update_widen() {
     let dom0_10 = (0,10).to_interval();
-    let mut var0_10: Variable<Interval<i32>> = VariableT::new(0, dom0_10);
+    let mut var0_10: Variable<Interval<i32>> = Variable::new(0, dom0_10);
     let domm5_15 = (-5, 15).to_interval();
 
     var0_10.event_update::<FDEvent>(domm5_15, &mut vec![]);

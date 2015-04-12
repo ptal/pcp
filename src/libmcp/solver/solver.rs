@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use interval::ncollections::ops::*;
 use solver::propagator::{BoxedDeepClone, Propagator, PropagatorErasure};
 use solver::propagator::Status as PStatus;
-use solver::variable::VariableT;
+use solver::variable::{Variable, SharedVar};
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
 use solver::event::EventIndex;
@@ -24,32 +25,31 @@ use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
-pub struct Solver<E: EventIndex, V: VariableT, D, A> {
-  propagators: Vec<Box<PropagatorErasure<E, V> + 'static>>,
-  variables: Vec<Rc<RefCell<V>>>,
-  deps: D,
+pub struct Solver<E: EventIndex, Dom, Deps, A> {
+  propagators: Vec<Box<PropagatorErasure<E, Dom> + 'static>>,
+  variables: Vec<SharedVar<Dom>>,
+  deps: Deps,
   agenda: A
 }
 
-impl<E, V, D, A> Space for Solver<E, V, D, A> where
+impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
+ Dom: Cardinality+Clone,
  E: EventIndex,
- V: VariableT+Clone,
- D: VarEventDependencies,
+ Deps: VarEventDependencies,
  A: Agenda
 {
-  type Constraint = Box<PropagatorErasure<E, V> + 'static>;
-  type Variable = Rc<RefCell<V>>;
-  type Domain = <V as VariableT>::Domain;
-  type Label = Solver<E, V, D, A>;
+  type Constraint = Box<PropagatorErasure<E, Dom> + 'static>;
+  type Variable = SharedVar<Dom>;
+  type Domain = Dom;
+  type Label = Solver<E, Dom, Deps, A>;
 
-  fn newvar(&mut self, dom: <Solver<E, V, D, A> as Space>::Domain) ->
-   <Solver<E, V, D, A> as Space>::Variable {
+  fn newvar(&mut self, dom: Dom) -> SharedVar<Dom> {
     let var_idx = self.variables.len();
-    self.variables.push(Rc::new(RefCell::new(VariableT::new(var_idx, dom))));
+    self.variables.push(Rc::new(RefCell::new(Variable::new(var_idx, dom))));
     self.variables[var_idx].clone()
   }
 
-  fn add(&mut self, p: <Solver<E, V, D, A> as Space>::Constraint) {
+  fn add(&mut self, p: <Solver<E, Dom, Deps, A> as Space>::Constraint) {
     self.propagators.push(p);
   }
 
@@ -58,7 +58,7 @@ impl<E, V, D, A> Space for Solver<E, V, D, A> where
     self.propagation_loop()
   }
 
-  fn mark(&self) -> <Solver<E, V, D, A> as Space>::Label {
+  fn mark(&self) -> Solver<E, Dom, Deps, A> {
     let mut solver = Solver::new();
     solver.variables = self.variables.iter()
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
@@ -69,19 +69,18 @@ impl<E, V, D, A> Space for Solver<E, V, D, A> where
     solver
   }
 
-  fn goto(&self, label: <Solver<E, V, D, A> as Space>::Label) -> Self
+  fn goto(&self, label: Solver<E, Dom, Deps, A>) -> Self
   {
     label
   }
 }
 
-impl<E, V, D, A> Solver<E, V, D, A> where
+impl<E, Dom, Deps, A> Solver<E, Dom, Deps, A> where
  E: EventIndex,
- V: VariableT+Clone,
- D: VarEventDependencies,
+ Deps: VarEventDependencies,
  A: Agenda
 {
-  pub fn new() -> Solver<E, V, D, A> {
+  pub fn new() -> Solver<E, Dom, Deps, A> {
     Solver {
       propagators: vec![],
       variables: vec![],
@@ -167,9 +166,9 @@ impl<E, V, D, A> Solver<E, V, D, A> where
   }
 }
 
-impl<E, V, D, A> Display for Solver<E, V, D, A> where
+impl<E, Dom, Deps, A> Display for Solver<E, Dom, Deps, A> where
  E: EventIndex,
- V: VariableT+Display
+ Dom: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let format_vars =
@@ -185,14 +184,13 @@ mod test {
   use super::*;
   use interval::interval::*;
   use interval::ops::*;
-  use solver::variable::*;
   use solver::space::*;
   use solver::fd::event::*;
   use solver::fd::propagator::*;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
 
-  type FDSolver = Solver<FDEvent, Variable<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
 
   #[test]
   fn basic_test() {

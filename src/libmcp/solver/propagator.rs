@@ -14,8 +14,6 @@
 
 use solver::event::EventIndex;
 use solver::variable::*;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Status
@@ -47,39 +45,37 @@ pub trait DeepClone<State>
   fn deep_clone(&self, state: &State) -> Self;
 }
 
-impl<Var> DeepClone<Vec<Rc<RefCell<Var>>>> for Rc<RefCell<Var>> where
-  Var: VarIndex+Clone
+impl<D> DeepClone<Vec<SharedVar<D>>> for SharedVar<D>
 {
-  fn deep_clone(&self, state: &Vec<Rc<RefCell<Var>>>) -> Rc<RefCell<Var>> {
+  fn deep_clone(&self, state: &Vec<SharedVar<D>>) -> SharedVar<D> {
     state[self.borrow().index()].clone()
   }
 }
 
-pub trait BoxedDeepClone<E: EventIndex, V: VariableT>
+pub trait BoxedDeepClone<E: EventIndex, D>
 {
-  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<E, V>>;
+  fn boxed_deep_clone(&self, state: &Vec<SharedVar<D>>) -> Box<PropagatorErasure<E, D>>;
 }
 
-impl<E, R, V> BoxedDeepClone<E, V> for R where
+impl<E, R, D> BoxedDeepClone<E, D> for R where
   E: EventIndex,
-  R: DeepClone<Vec<Rc<RefCell<V>>>>,
+  R: DeepClone<Vec<SharedVar<D>>>,
   R: Propagator<E>,
-  R: 'static,
-  V: VariableT
+  R: 'static
 {
-  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<E, V>> {
+  fn boxed_deep_clone(&self, state: &Vec<SharedVar<D>>) -> Box<PropagatorErasure<E, D>> {
     Box::new(self.deep_clone(state))
   }
 }
 
-pub trait PropagatorErasure<E: EventIndex, V: VariableT>:
+pub trait PropagatorErasure<E: EventIndex, D>:
     Propagator<E>
-  + BoxedDeepClone<E, V>
+  + BoxedDeepClone<E, D>
 {}
 
 impl<
+  D,
   E: EventIndex,
-  V: VariableT,
   R: Propagator<E>
-   + BoxedDeepClone<E, V>
-> PropagatorErasure<E, V> for R {}
+   + BoxedDeepClone<E, D>
+> PropagatorErasure<E, D> for R {}

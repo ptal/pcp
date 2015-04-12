@@ -20,18 +20,16 @@ use solver::propagator::Status::*;
 use solver::merge::Merge;
 use interval::interval::*;
 use interval::ncollections::ops::*;
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::ops::{Deref, DerefMut};
 use std::collections::HashMap;
 
-pub type SharedVar = Rc<RefCell<Variable<Interval<i32>>>>;
+pub type SharedVarI32 = SharedVar<Interval<i32>>;
 
 // x < y
 pub struct XLessThanY;
 
 impl XLessThanY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(x, y, 0)
   }
 }
@@ -40,7 +38,7 @@ impl XLessThanY {
 pub struct XLessEqThanY;
 
 impl XLessEqThanY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(x, y, 1)
   }
 }
@@ -49,7 +47,7 @@ impl XLessEqThanY {
 pub struct XLessEqThanYPlusC;
 
 impl XLessEqThanYPlusC {
-  pub fn new(x: SharedVar, y: SharedVar, c: i32) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32, c: i32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(x, y, c + 1)
   }
 }
@@ -58,7 +56,7 @@ impl XLessEqThanYPlusC {
 pub struct XGreaterThanY;
 
 impl XGreaterThanY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XLessThanYPlusC {
     XLessThanY::new(y, x)
   }
 }
@@ -67,7 +65,7 @@ impl XGreaterThanY {
 pub struct XGreaterEqThanY;
 
 impl XGreaterEqThanY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XLessThanYPlusC {
     XLessEqThanY::new(y, x)
   }
 }
@@ -76,7 +74,7 @@ impl XGreaterEqThanY {
 pub struct XGreaterThanYPlusC;
 
 impl XGreaterThanYPlusC {
-  pub fn new(x: SharedVar, y: SharedVar, c: i32) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32, c: i32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(y, x, -c)
   }
 }
@@ -85,7 +83,7 @@ impl XGreaterThanYPlusC {
 pub struct XGreaterEqThanYPlusC;
 
 impl XGreaterEqThanYPlusC {
-  pub fn new(x: SharedVar, y: SharedVar, c: i32) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32, c: i32) -> XLessThanYPlusC {
     XLessThanYPlusC::new(y, x, 1 - c)
   }
 }
@@ -93,12 +91,12 @@ impl XGreaterEqThanYPlusC {
 // x = y
 #[derive(Debug)]
 pub struct XEqualY {
-  x: SharedVar,
-  y: SharedVar
+  x: SharedVarI32,
+  y: SharedVarI32
 }
 
 impl XEqualY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XEqualY {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XEqualY {
     XEqualY { x: x, y: y }
   }
 }
@@ -140,9 +138,9 @@ impl Propagator<FDEvent> for XEqualY {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XEqualY
+impl DeepClone<Vec<SharedVarI32>> for XEqualY
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XEqualY {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XEqualY {
     XEqualY::new(
       self.x.deep_clone(state),
       self.y.deep_clone(state))
@@ -152,13 +150,13 @@ impl DeepClone<Vec<SharedVar>> for XEqualY
 // x < y + c
 #[derive(Debug)]
 pub struct XLessThanYPlusC {
-  x: SharedVar,
-  y: SharedVar,
+  x: SharedVarI32,
+  y: SharedVarI32,
   c: i32
 }
 
 impl XLessThanYPlusC {
-  pub fn new(x: SharedVar, y: SharedVar, c: i32) -> XLessThanYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32, c: i32) -> XLessThanYPlusC {
     XLessThanYPlusC { x: x, y: y, c: c }
   }
 }
@@ -201,9 +199,9 @@ impl Propagator<FDEvent> for XLessThanYPlusC {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XLessThanYPlusC
+impl DeepClone<Vec<SharedVarI32>> for XLessThanYPlusC
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XLessThanYPlusC {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XLessThanYPlusC {
     XLessThanYPlusC::new(
       self.x.deep_clone(state),
       self.y.deep_clone(state),
@@ -215,7 +213,7 @@ impl DeepClone<Vec<SharedVar>> for XLessThanYPlusC
 pub struct XGreaterThanC;
 
 impl XGreaterThanC {
-  pub fn new(x: SharedVar, c: i32) -> XGreaterEqThanC {
+  pub fn new(x: SharedVarI32, c: i32) -> XGreaterEqThanC {
     XGreaterEqThanC::new(x, c + 1)
   }
 }
@@ -223,12 +221,12 @@ impl XGreaterThanC {
 // x >= c
 #[derive(Debug)]
 pub struct XGreaterEqThanC {
-  x: SharedVar,
+  x: SharedVarI32,
   c: i32
 }
 
 impl XGreaterEqThanC {
-  pub fn new(x: SharedVar, c: i32) -> XGreaterEqThanC {
+  pub fn new(x: SharedVarI32, c: i32) -> XGreaterEqThanC {
     XGreaterEqThanC { x: x, c: c }
   }
 }
@@ -257,9 +255,9 @@ impl Propagator<FDEvent> for XGreaterEqThanC {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XGreaterEqThanC
+impl DeepClone<Vec<SharedVarI32>> for XGreaterEqThanC
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XGreaterEqThanC {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XGreaterEqThanC {
     XGreaterEqThanC::new(
       self.x.deep_clone(state),
       self.c)
@@ -270,7 +268,7 @@ impl DeepClone<Vec<SharedVar>> for XGreaterEqThanC
 pub struct XLessThanC;
 
 impl XLessThanC {
-  pub fn new(x: SharedVar, c: i32) -> XLessEqThanC {
+  pub fn new(x: SharedVarI32, c: i32) -> XLessEqThanC {
     XLessEqThanC::new(x, c - 1)
   }
 }
@@ -278,12 +276,12 @@ impl XLessThanC {
 // x <= c
 #[derive(Debug)]
 pub struct XLessEqThanC {
-  x: SharedVar,
+  x: SharedVarI32,
   c: i32
 }
 
 impl XLessEqThanC {
-  pub fn new(x: SharedVar, c: i32) -> XLessEqThanC {
+  pub fn new(x: SharedVarI32, c: i32) -> XLessEqThanC {
     XLessEqThanC { x: x, c: c }
   }
 }
@@ -312,9 +310,9 @@ impl Propagator<FDEvent> for XLessEqThanC {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XLessEqThanC
+impl DeepClone<Vec<SharedVarI32>> for XLessEqThanC
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XLessEqThanC {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XLessEqThanC {
     XLessEqThanC::new(
       self.x.deep_clone(state),
       self.c)
@@ -324,12 +322,12 @@ impl DeepClone<Vec<SharedVar>> for XLessEqThanC
 // x != c
 #[derive(Debug)]
 pub struct XNotEqualC {
-  x: SharedVar,
+  x: SharedVarI32,
   c: i32
 }
 
 impl XNotEqualC {
-  pub fn new(x: SharedVar, c: i32) -> XNotEqualC {
+  pub fn new(x: SharedVarI32, c: i32) -> XNotEqualC {
     XNotEqualC { x: x, c: c }
   }
 }
@@ -358,9 +356,9 @@ impl Propagator<FDEvent> for XNotEqualC {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XNotEqualC
+impl DeepClone<Vec<SharedVarI32>> for XNotEqualC
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XNotEqualC {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XNotEqualC {
     XNotEqualC::new(
       self.x.deep_clone(state),
       self.c)
@@ -372,7 +370,7 @@ impl DeepClone<Vec<SharedVar>> for XNotEqualC
 pub struct XNotEqualY;
 
 impl XNotEqualY {
-  pub fn new(x: SharedVar, y: SharedVar) -> XNotEqualYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32) -> XNotEqualYPlusC {
     XNotEqualYPlusC { x: x, y: y, c: 0 }
   }
 }
@@ -380,13 +378,13 @@ impl XNotEqualY {
 // x != y + c
 #[derive(Debug)]
 pub struct XNotEqualYPlusC {
-  x: SharedVar,
-  y: SharedVar,
+  x: SharedVarI32,
+  y: SharedVarI32,
   c: i32
 }
 
 impl XNotEqualYPlusC {
-  pub fn new(x: SharedVar, y: SharedVar, c: i32) -> XNotEqualYPlusC {
+  pub fn new(x: SharedVarI32, y: SharedVarI32, c: i32) -> XNotEqualYPlusC {
     XNotEqualYPlusC { x: x, y: y, c: c }
   }
 }
@@ -426,9 +424,9 @@ impl Propagator<FDEvent> for XNotEqualYPlusC {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for XNotEqualYPlusC
+impl DeepClone<Vec<SharedVarI32>> for XNotEqualYPlusC
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> XNotEqualYPlusC {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> XNotEqualYPlusC {
     XNotEqualYPlusC::new(
       self.x.deep_clone(state),
       self.y.deep_clone(state),
@@ -439,12 +437,12 @@ impl DeepClone<Vec<SharedVar>> for XNotEqualYPlusC
 // distinct(x1,..,xN)
 // #[derive(Debug)]
 pub struct Distinct {
-  vars: Vec<SharedVar>,
+  vars: Vec<SharedVarI32>,
   props: Vec<XNotEqualYPlusC>
 }
 
 impl Distinct {
-  pub fn new(vars: Vec<SharedVar>) -> Distinct {
+  pub fn new(vars: Vec<SharedVarI32>) -> Distinct {
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
@@ -503,9 +501,9 @@ impl Propagator<FDEvent> for Distinct {
   }
 }
 
-impl DeepClone<Vec<SharedVar>> for Distinct
+impl DeepClone<Vec<SharedVarI32>> for Distinct
 {
-  fn deep_clone(&self, state: &Vec<SharedVar>) -> Distinct {
+  fn deep_clone(&self, state: &Vec<SharedVarI32>) -> Distinct {
     Distinct {
       vars: self.vars.iter().map(|v| v.deep_clone(state)).collect(),
       props: self.props.iter().map(|p| p.deep_clone(state)).collect()
@@ -555,17 +553,17 @@ mod test {
     assert_eq!(prop.status(), after);
   }
 
-  fn make_var(var: Variable<Interval<i32>>) -> SharedVar {
+  fn make_var(var: Variable<Interval<i32>>) -> SharedVarI32 {
     Rc::new(RefCell::new(var))
   }
 
   #[test]
   fn equalxy_propagate_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var10_20 = VariableT::new(2, (10,20).to_interval());
-    let var5_15 = VariableT::new(3, (5,15).to_interval());
-    let var11_20 = VariableT::new(4, (11,20).to_interval());
-    let var1_1 = VariableT::new(5, (1,1).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var11_20 = Variable::new(4, (11,20).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
 
     xequaly_propagate_test_one(make_var(var0_10), make_var(var10_20), Unknown, Entailed, Some(vec![(1, Assignment), (2, Assignment)]));
     xequaly_propagate_test_one(make_var(var5_15), make_var(var10_20), Unknown, Unknown, Some(vec![(3, Bound), (2, Bound)]));
@@ -574,19 +572,19 @@ mod test {
     xequaly_propagate_test_one(make_var(var0_10), make_var(var11_20), Disentailed, Disentailed, None);
   }
 
-  fn xequaly_propagate_test_one(v1: SharedVar, v2: SharedVar, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
+  fn xequaly_propagate_test_one(v1: SharedVarI32, v2: SharedVarI32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XEqualY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
 
   #[test]
   fn xlessy_propagate_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var0_10_ = VariableT::new(12, (0,10).to_interval());
-    let var10_20 = VariableT::new(2, (10,20).to_interval());
-    let var5_15 = VariableT::new(3, (5,15).to_interval());
-    let var11_20 = VariableT::new(4, (11,20).to_interval());
-    let var1_1 = VariableT::new(5, (1,1).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var0_10_ = Variable::new(12, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var11_20 = Variable::new(4, (11,20).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
 
     xlessy_propagate_test_one(make_var(var0_10), make_var(var0_10_), Unknown, Unknown, Some(vec![(1, Bound), (12, Bound)]));
     xlessy_propagate_test_one(make_var(var0_10), make_var(var10_20), Unknown, Unknown, Some(vec![]));
@@ -597,17 +595,17 @@ mod test {
     xlessy_propagate_test_one(make_var(var1_1), make_var(var0_10), Unknown, Entailed, Some(vec![(1, Bound)]));
   }
 
-  fn xlessy_propagate_test_one(v1: SharedVar, v2: SharedVar, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
+  fn xlessy_propagate_test_one(v1: SharedVarI32, v2: SharedVarI32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XLessThanY::new(v1, v2);
     propagate_test_one(propagator, before, after, expected);
   }
 
   #[test]
   fn xlessyplusc_propagate_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var10_20 = VariableT::new(2, (10,20).to_interval());
-    let var5_15 = VariableT::new(3, (5,15).to_interval());
-    let var1_1 = VariableT::new(5, (1,1).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var5_15 = Variable::new(3, (5,15).to_interval());
+    let var1_1 = Variable::new(5, (1,1).to_interval());
 
     // Same test as x < y but we shift y.
     xlessyplusc_propagate_test_one(make_var(var0_10), make_var(var5_15), -5, Unknown, Unknown, Some(vec![(1, Bound), (3, Bound)]));
@@ -619,15 +617,15 @@ mod test {
     xlessyplusc_propagate_test_one(make_var(var1_1), make_var(var5_15), -5, Unknown, Entailed, Some(vec![(3, Bound)]));
   }
 
-  fn xlessyplusc_propagate_test_one(v1: SharedVar, v2: SharedVar, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
+  fn xlessyplusc_propagate_test_one(v1: SharedVarI32, v2: SharedVarI32, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XLessThanYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
   }
 
   #[test]
   fn unary_propagator_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var0_0 = VariableT::new(2, (0,0).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var0_0 = Variable::new(2, (0,0).to_interval());
     let make_xlessc = |c| XLessThanC::new(make_var(var0_10), c);
     propagate_test_one(make_xlessc(0), Disentailed, Disentailed, None);
     propagate_test_one(make_xlessc(11), Entailed, Entailed, Some(vec![]));
@@ -657,9 +655,9 @@ mod test {
 
   #[test]
   fn x_neq_y_plus_c_test() {
-    let var0_10 = VariableT::new(1, (0,10).to_interval());
-    let var10_20 = VariableT::new(2, (10,20).to_interval());
-    let var0_0 = VariableT::new(5, (0,0).to_interval());
+    let var0_10 = Variable::new(1, (0,10).to_interval());
+    let var10_20 = Variable::new(2, (10,20).to_interval());
+    let var0_0 = Variable::new(5, (0,0).to_interval());
 
     x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_10), 0, Unknown, Unknown, Some(vec![]));
     x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var10_20), 0, Unknown, Unknown, Some(vec![]));
@@ -671,7 +669,7 @@ mod test {
     x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 0, Disentailed, Disentailed, None);
   }
 
-  fn x_neq_y_plus_c_test_one(v1: SharedVar, v2: SharedVar, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
+  fn x_neq_y_plus_c_test_one(v1: SharedVarI32, v2: SharedVarI32, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = XNotEqualYPlusC::new(v1, v2, c);
     propagate_test_one(propagator, before, after, expected);
   }
@@ -679,11 +677,11 @@ mod test {
   #[test]
   fn distinct_test() {
     let mut vars: Vec<Variable<Interval<i32>>> = (0..3)
-      .map(|v| VariableT::new(v, Interval::singleton(v as i32)))
+      .map(|v| Variable::new(v, Interval::singleton(v as i32)))
       .collect();
-    vars.push(VariableT::new(3, (0,3).to_interval()));
-    vars.push(VariableT::new(4, (0,1).to_interval()));
-    vars.push(VariableT::new(5, (0,3).to_interval()));
+    vars.push(Variable::new(3, (0,3).to_interval()));
+    vars.push(Variable::new(4, (0,1).to_interval()));
+    vars.push(Variable::new(5, (0,3).to_interval()));
 
     distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[2])],
       Entailed, Entailed, Some(vec![]));
@@ -698,7 +696,7 @@ mod test {
     distinct_test_one(vec![make_var(vars[3])], Entailed, Entailed, Some(vec![]));
   }
 
-  fn distinct_test_one(vars: Vec<SharedVar>, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
+  fn distinct_test_one(vars: Vec<SharedVarI32>, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
     let propagator = Distinct::new(vars);
     propagate_test_one(propagator, before, after, expected);
   }
