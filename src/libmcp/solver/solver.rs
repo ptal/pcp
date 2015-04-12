@@ -24,31 +24,32 @@ use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
-pub struct Solver<V: VariableT, D, A> {
-  propagators: Vec<Box<PropagatorErasure<V> + 'static>>,
+pub struct Solver<E: EventIndex, V: VariableT, D, A> {
+  propagators: Vec<Box<PropagatorErasure<E, V> + 'static>>,
   variables: Vec<Rc<RefCell<V>>>,
   deps: D,
   agenda: A
 }
 
-impl<V, D, A> Space for Solver<V, D, A> where
+impl<E, V, D, A> Space for Solver<E, V, D, A> where
+ E: EventIndex,
  V: VariableT+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
-  type Constraint = Box<PropagatorErasure<V> + 'static>;
+  type Constraint = Box<PropagatorErasure<E, V> + 'static>;
   type Variable = Rc<RefCell<V>>;
   type Domain = <V as VariableT>::Domain;
-  type Label = Solver<V, D, A>;
+  type Label = Solver<E, V, D, A>;
 
-  fn newvar(&mut self, dom: <Solver<V, D, A> as Space>::Domain) ->
-   <Solver<V, D, A> as Space>::Variable {
+  fn newvar(&mut self, dom: <Solver<E, V, D, A> as Space>::Domain) ->
+   <Solver<E, V, D, A> as Space>::Variable {
     let var_idx = self.variables.len();
     self.variables.push(Rc::new(RefCell::new(VariableT::new(var_idx, dom))));
     self.variables[var_idx].clone()
   }
 
-  fn add(&mut self, p: <Solver<V, D, A> as Space>::Constraint) {
+  fn add(&mut self, p: <Solver<E, V, D, A> as Space>::Constraint) {
     self.propagators.push(p);
   }
 
@@ -57,7 +58,7 @@ impl<V, D, A> Space for Solver<V, D, A> where
     self.propagation_loop()
   }
 
-  fn mark(&self) -> <Solver<V, D, A> as Space>::Label {
+  fn mark(&self) -> <Solver<E, V, D, A> as Space>::Label {
     let mut solver = Solver::new();
     solver.variables = self.variables.iter()
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
@@ -68,18 +69,19 @@ impl<V, D, A> Space for Solver<V, D, A> where
     solver
   }
 
-  fn goto(&self, label: <Solver<V, D, A> as Space>::Label) -> Self
+  fn goto(&self, label: <Solver<E, V, D, A> as Space>::Label) -> Self
   {
     label
   }
 }
 
-impl<V, D, A> Solver<V, D, A> where
+impl<E, V, D, A> Solver<E, V, D, A> where
+ E: EventIndex,
  V: VariableT+Clone,
  D: VarEventDependencies,
  A: Agenda
 {
-  pub fn new() -> Solver<V, D, A> {
+  pub fn new() -> Solver<E, V, D, A> {
     Solver {
       propagators: vec![],
       variables: vec![],
@@ -94,7 +96,7 @@ impl<V, D, A> Solver<V, D, A> where
   }
 
   fn init_deps(&mut self) {
-    self.deps = VarEventDependencies::new(self.variables.len(), <<V as VariableT>::Event as EventIndex>::size());
+    self.deps = VarEventDependencies::new(self.variables.len(), <E as EventIndex>::size());
     for (p_idx, p) in self.propagators.iter().enumerate() {
       let p_deps = p.dependencies();
       for (v, ev) in p_deps.into_iter() {
@@ -141,13 +143,13 @@ impl<V, D, A> Solver<V, D, A> where
     true
   }
 
-  fn reschedule_prop(&mut self, events: &Vec<(usize, <V as VariableT>::Event)>, p_idx: usize) {
+  fn reschedule_prop(&mut self, events: &Vec<(usize, E)>, p_idx: usize) {
     if !events.is_empty() {
       self.agenda.schedule(p_idx);
     }
   }
 
-  fn react(&mut self, events: Vec<(usize, <V as VariableT>::Event)>) {
+  fn react(&mut self, events: Vec<(usize, E)>) {
     for (v, ev) in events.into_iter() {
       let reactions = self.deps.react(v, ev);
       for p in reactions.into_iter() {
@@ -165,7 +167,8 @@ impl<V, D, A> Solver<V, D, A> where
   }
 }
 
-impl<V, D, A> Display for Solver<V, D, A> where
+impl<E, V, D, A> Display for Solver<E, V, D, A> where
+ E: EventIndex,
  V: VariableT+Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -184,11 +187,12 @@ mod test {
   use interval::ops::*;
   use solver::variable::*;
   use solver::space::*;
+  use solver::fd::event::*;
   use solver::fd::propagator::*;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
 
-  type FDSolver = Solver<Variable<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type FDSolver = Solver<FDEvent, Variable<Interval<i32>>, VarEventDepsVector, RelaxedFifoAgenda>;
 
   #[test]
   fn basic_test() {

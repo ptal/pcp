@@ -13,11 +13,8 @@
 // limitations under the License.
 
 use solver::event::*;
-use solver::fd::event::*;
 use interval::ncollections::ops::*;
 use interval::ops::*;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use std::fmt::{Formatter, Display, Error};
 
@@ -26,7 +23,6 @@ use std::fmt::{Formatter, Display, Error};
 pub trait VariableT
 {
   type Domain;
-  type Event: EventIndex;
 
   fn new(id: usize, dom: Self::Domain) -> Self;
 }
@@ -52,7 +48,6 @@ impl<Domain> VariableT for Variable<Domain> where
   Domain: Cardinality
 {
   type Domain = Domain;
-  type Event = FDEvent;
 
   fn new(idx: usize, dom: Domain) -> Variable<Domain> {
     assert!(!dom.is_empty());

@@ -55,29 +55,31 @@ impl<Var> DeepClone<Vec<Rc<RefCell<Var>>>> for Rc<RefCell<Var>> where
   }
 }
 
-pub trait BoxedDeepClone<V: VariableT>
+pub trait BoxedDeepClone<E: EventIndex, V: VariableT>
 {
-  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>>;
+  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<E, V>>;
 }
 
-impl<R, V> BoxedDeepClone<V> for R where
+impl<E, R, V> BoxedDeepClone<E, V> for R where
+  E: EventIndex,
   R: DeepClone<Vec<Rc<RefCell<V>>>>,
-  R: Propagator<<V as VariableT>::Event>,
+  R: Propagator<E>,
   R: 'static,
   V: VariableT
 {
-  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<V>> {
+  fn boxed_deep_clone(&self, state: &Vec<Rc<RefCell<V>>>) -> Box<PropagatorErasure<E, V>> {
     Box::new(self.deep_clone(state))
   }
 }
 
-pub trait PropagatorErasure<V: VariableT>:
-    Propagator<<V as VariableT>::Event>
-  + BoxedDeepClone<V>
+pub trait PropagatorErasure<E: EventIndex, V: VariableT>:
+    Propagator<E>
+  + BoxedDeepClone<E, V>
 {}
 
 impl<
+  E: EventIndex,
   V: VariableT,
-  R: Propagator<<V as VariableT>::Event>
-   + BoxedDeepClone<V>
-> PropagatorErasure<V> for R {}
+  R: Propagator<E>
+   + BoxedDeepClone<E, V>
+> PropagatorErasure<E, V> for R {}
