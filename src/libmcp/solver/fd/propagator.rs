@@ -159,7 +159,10 @@ impl<D> Propagator<FDEvent> for XEqualY<D> where
     let mut y = self.y.borrow_mut();
     x.deref_mut().event_intersection(y.deref_mut(), events)
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XEqualY<D>
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
@@ -232,7 +235,11 @@ impl<D> Propagator<FDEvent> for XLessThanYPlusC<D> where
     x.event_shrink_right(y.upper() - One::one() + self.c.clone(), events) &&
     y.event_shrink_left(x.lower() + One::one() - self.c.clone(), events)
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XLessThanYPlusC<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound), (self.y.borrow().index(), Bound)]
   }
@@ -304,7 +311,11 @@ impl<D> Propagator<FDEvent> for XGreaterEqThanC<D> where
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_shrink_left(self.c.clone(), events)
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XGreaterEqThanC<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound)]
   }
@@ -375,7 +386,11 @@ impl<D> Propagator<FDEvent> for XLessEqThanC<D> where
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_shrink_right(self.c.clone(), events)
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XLessEqThanC<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Bound)]
   }
@@ -434,7 +449,11 @@ impl<D> Propagator<FDEvent> for XNotEqualC<D> where
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_remove(self.c.clone(), events)
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XNotEqualC<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner)]
   }
@@ -522,7 +541,11 @@ impl<D> Propagator<FDEvent> for XNotEqualYPlusC<D> where
       true
     }
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for XNotEqualYPlusC<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     vec![(self.x.borrow().index(), Inner), (self.y.borrow().index(), Inner)]
   }
@@ -614,7 +637,11 @@ impl<D> Propagator<FDEvent> for Distinct<D> where
     }
     true
   }
+}
 
+impl<D> PropagatorDependencies<FDEvent> for Distinct<D> where
+ D: Bounded
+{
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     self.vars.iter().map(|x| (x.borrow().index(), Inner)).collect()
   }
