@@ -21,6 +21,7 @@
 #![feature(collections)]
 
 extern crate interval;
+extern crate num;
 
 pub mod solver;
 // pub mod search;
