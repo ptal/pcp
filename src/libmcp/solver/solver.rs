@@ -182,7 +182,7 @@ mod test {
   use super::*;
   use interval::interval::*;
   use interval::ops::*;
-  use solver::fd::var::*;
+  use solver::variable::*;
   use solver::space::*;
   use solver::fd::propagator::*;
   use solver::agenda::RelaxedFifoAgenda;

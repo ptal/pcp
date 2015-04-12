@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::fd::var::*;
+use solver::variable::*;
 use solver::fd::event::*;
 use solver::fd::event::FDEvent::*;
-use solver::variable::VarIndex;
 use solver::propagator::*;
 use solver::propagator::Status::*;
 use solver::merge::Merge;
@@ -517,11 +516,10 @@ impl DeepClone<Vec<SharedFDVar>> for Distinct
 #[cfg(test)]
 mod test {
   use super::*;
-  use solver::fd::var::*;
+  use solver::variable::*;
   use solver::fd::event::*;
   use solver::fd::event::FDEvent::*;
   use solver::propagator::Status::*;
-  use solver::variable::Variable;
   use solver::propagator::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
