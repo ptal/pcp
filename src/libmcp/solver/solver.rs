@@ -14,7 +14,8 @@
 
 use interval::ncollections::ops::*;
 use solver::propagator::{BoxedDeepClone, Propagator, PropagatorErasure};
-use solver::propagator::Status as PStatus;
+use solver::entailment::Status as EStatus;
+use solver::entailment::Entailment;
 use solver::variable::{Variable, SharedVar};
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
@@ -128,15 +129,15 @@ impl<E, Dom, Deps, A> Solver<E, Dom, Deps, A> where
     let status = {
       let mut prop = &mut self.propagators[p_idx];
       if prop.propagate(&mut events) {
-        prop.status()
+        prop.is_entailed()
       } else {
         return false
       }
     };
     match status {
-      PStatus::Disentailed => return false,
-      PStatus::Entailed => self.unlink_prop(p_idx),
-      PStatus::Unknown => self.reschedule_prop(&events, p_idx)
+      EStatus::Disentailed => return false,
+      EStatus::Entailed => self.unlink_prop(p_idx),
+      EStatus::Unknown => self.reschedule_prop(&events, p_idx)
     };
     self.react(events);
     true

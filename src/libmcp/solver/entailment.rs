@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod fd;
-pub mod event;
-pub mod entailment;
-pub mod propagator;
-pub mod variable;
-pub mod agenda;
-pub mod dependencies;
-pub mod solver;
-pub mod space;
-pub mod merge;
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Status
+{
+  Entailed,
+  Disentailed,
+  Unknown
+}
+
+pub trait Entailment
+{
+  // If the result is Entailed or Disentailed, it must not
+  // further change.
+  // Also no need to check if the variables are failed, this
+  // should be handled at the return of propagate.
+  fn is_entailed(&self) -> Status;
+}

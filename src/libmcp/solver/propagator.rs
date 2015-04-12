@@ -14,23 +14,10 @@
 
 use solver::event::EventIndex;
 use solver::variable::*;
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Status
-{
-  Entailed,
-  Disentailed,
-  Unknown
-}
+use solver::entailment::*;
 
 pub trait Propagator<Event: EventIndex>
 {
-  // If the result is Entailed or Disentailed, it must not
-  // change after a propagate call.
-  // Also no need to check if the variables are failed, this
-  // should be handled at the return of propagate.
-  fn status(&self) -> Status;
-
   // The propagator is stable if no event are added into `events`.
   // Returns `false` if the propagator is failed.
   fn propagate(&mut self, events: &mut Vec<(usize, Event)>) -> bool;
@@ -61,6 +48,7 @@ impl<E, R, D> BoxedDeepClone<E, D> for R where
   E: EventIndex,
   R: DeepClone<Vec<SharedVar<D>>>,
   R: Propagator<E>,
+  R: Entailment,
   R: 'static
 {
   fn boxed_deep_clone(&self, state: &Vec<SharedVar<D>>) -> Box<PropagatorErasure<E, D>> {
@@ -70,6 +58,7 @@ impl<E, R, D> BoxedDeepClone<E, D> for R where
 
 pub trait PropagatorErasure<E: EventIndex, D>:
     Propagator<E>
+  + Entailment
   + BoxedDeepClone<E, D>
 {}
 
@@ -77,5 +66,6 @@ impl<
   D,
   E: EventIndex,
   R: Propagator<E>
+   + Entailment
    + BoxedDeepClone<E, D>
 > PropagatorErasure<E, D> for R {}

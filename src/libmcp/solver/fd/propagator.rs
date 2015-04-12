@@ -16,7 +16,8 @@ use solver::variable::*;
 use solver::fd::event::*;
 use solver::fd::event::FDEvent::*;
 use solver::propagator::*;
-use solver::propagator::Status::*;
+use solver::entailment::*;
+use solver::entailment::Status::*;
 use solver::merge::Merge;
 use interval::interval::*;
 use interval::ncollections::ops::*;
@@ -101,8 +102,8 @@ impl XEqualY {
   }
 }
 
-impl Propagator<FDEvent> for XEqualY {
-  fn status(&self) -> Status {
+impl Entailment for XEqualY {
+  fn is_entailed(&self) -> Status {
     // Disentailed:
     // |--|
     //     |--|
@@ -126,7 +127,9 @@ impl Propagator<FDEvent> for XEqualY {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XEqualY {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
@@ -161,8 +164,8 @@ impl XLessThanYPlusC {
   }
 }
 
-impl Propagator<FDEvent> for XLessThanYPlusC {
-  fn status(&self) -> Status {
+impl Entailment for XLessThanYPlusC {
+  fn is_entailed(&self) -> Status {
     // Disentailed:
     //     |--|
     // |--|
@@ -186,7 +189,9 @@ impl Propagator<FDEvent> for XLessThanYPlusC {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XLessThanYPlusC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
@@ -231,8 +236,8 @@ impl XGreaterEqThanC {
   }
 }
 
-impl Propagator<FDEvent> for XGreaterEqThanC {
-  fn status(&self) -> Status {
+impl Entailment for XGreaterEqThanC {
+  fn is_entailed(&self) -> Status {
     let x = self.x.borrow();
 
     if x.upper() < self.c {
@@ -245,7 +250,9 @@ impl Propagator<FDEvent> for XGreaterEqThanC {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XGreaterEqThanC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_shrink_left(self.c, events)
   }
@@ -286,8 +293,8 @@ impl XLessEqThanC {
   }
 }
 
-impl Propagator<FDEvent> for XLessEqThanC {
-  fn status(&self) -> Status {
+impl Entailment for XLessEqThanC {
+  fn is_entailed(&self) -> Status {
     let x = self.x.borrow();
 
     if x.lower() > self.c {
@@ -300,7 +307,9 @@ impl Propagator<FDEvent> for XLessEqThanC {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XLessEqThanC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_shrink_right(self.c, events)
   }
@@ -332,8 +341,8 @@ impl XNotEqualC {
   }
 }
 
-impl Propagator<FDEvent> for XNotEqualC {
-  fn status(&self) -> Status {
+impl Entailment for XNotEqualC {
+  fn is_entailed(&self) -> Status {
     let x = self.x.borrow();
 
     if x.lower() == self.c && x.upper() == self.c {
@@ -346,7 +355,9 @@ impl Propagator<FDEvent> for XNotEqualC {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XNotEqualC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     self.x.borrow_mut().event_remove(self.c, events)
   }
@@ -389,8 +400,8 @@ impl XNotEqualYPlusC {
   }
 }
 
-impl Propagator<FDEvent> for XNotEqualYPlusC {
-  fn status(&self) -> Status {
+impl Entailment for XNotEqualYPlusC {
+  fn is_entailed(&self) -> Status {
     let x = self.x.borrow();
     let y = self.y.borrow();
 
@@ -404,7 +415,9 @@ impl Propagator<FDEvent> for XNotEqualYPlusC {
       Unknown
     }
   }
+}
 
+impl Propagator<FDEvent> for XNotEqualYPlusC {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut x = self.x.borrow_mut();
     let mut y = self.y.borrow_mut();
@@ -464,11 +477,11 @@ impl Distinct {
   }
 }
 
-impl Propagator<FDEvent> for Distinct {
-  fn status(&self) -> Status {
+impl Entailment for Distinct {
+  fn is_entailed(&self) -> Status {
     let mut all_entailed = true;
     for p in self.props.iter() {
-      match p.status() {
+      match p.is_entailed() {
         Disentailed => return Disentailed,
         Unknown => all_entailed = false,
         _ => ()
@@ -477,7 +490,9 @@ impl Propagator<FDEvent> for Distinct {
     if all_entailed { Entailed }
     else { Unknown }
   }
+}
 
+impl Propagator<FDEvent> for Distinct {
   fn propagate(&mut self, events: &mut Vec<(usize, FDEvent)>) -> bool {
     let mut unique_events = HashMap::new();
     for p in self.props.iter_mut() {
@@ -517,7 +532,8 @@ mod test {
   use solver::variable::*;
   use solver::fd::event::*;
   use solver::fd::event::FDEvent::*;
-  use solver::propagator::Status::*;
+  use solver::entailment::*;
+  use solver::entailment::Status::*;
   use solver::propagator::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
@@ -535,7 +551,7 @@ mod test {
   }
 
   fn propagate_only_test<P>(prop: &mut P, expected: Option<Vec<(usize, FDEvent)>>)
-   where P: Propagator<FDEvent> {
+   where P: Propagator<FDEvent> + Entailment {
     let mut events = vec![];
     if prop.propagate(&mut events) && expected != None {
       let events = make_vec_map(events);
@@ -547,10 +563,10 @@ mod test {
   }
 
   fn propagate_test_one<P>(mut prop: P, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>)
-   where P: Propagator<FDEvent> {
-    assert_eq!(prop.status(), before);
+   where P: Propagator<FDEvent> + Entailment {
+    assert_eq!(prop.is_entailed(), before);
     propagate_only_test(&mut prop, expected);
-    assert_eq!(prop.status(), after);
+    assert_eq!(prop.is_entailed(), after);
   }
 
   fn make_var(var: Variable<Interval<i32>>) -> SharedVarI32 {
