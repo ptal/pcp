@@ -26,7 +26,7 @@ use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
-pub struct Solver<E: EventIndex, Dom, Deps, A> {
+pub struct Solver<E, Dom, Deps, A> {
   propagators: Vec<Box<PropagatorErasure<E, Dom> + 'static>>,
   variables: Vec<SharedVar<Dom>>,
   deps: Deps,

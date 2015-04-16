@@ -18,6 +18,7 @@ use interval::ops::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
+use std::ops::Deref;
 
 pub type SharedVar<Domain> = Rc<RefCell<Variable<Domain>>>;
 
@@ -30,6 +31,14 @@ pub trait VarIndex
 pub struct Variable<Domain> {
   idx: usize,
   dom: Domain
+}
+
+impl<Domain> Deref for Variable<Domain> {
+  type Target = Domain;
+
+  fn deref<'a>(&'a self) -> &'a Domain {
+    &self.dom
+  }
 }
 
 impl<Domain: Display> Display for Variable<Domain> {
@@ -102,36 +111,6 @@ impl<Domain> EventUpdate<Domain> for Variable<Domain> where
       }
       true
     }
-  }
-}
-
-impl<Domain> Bounded for Variable<Domain> where
-  Domain: Bounded
-{
-  type Bound = Domain::Bound;
-
-  fn lower(&self) -> Domain::Bound {
-    self.dom.lower()
-  }
-
-  fn upper(&self) -> Domain::Bound {
-    self.dom.upper()
-  }
-}
-
-impl<Domain> Disjoint for Variable<Domain> where
-  Domain: Disjoint
-{
-  fn is_disjoint(&self, other: &Variable<Domain>) -> bool {
-    self.dom.is_disjoint(&other.dom)
-  }
-}
-
-impl<Domain> Contains<Domain::Bound> for Variable<Domain> where
-  Domain: Bounded + Contains<<Domain as Bounded>::Bound>
-{
-  fn contains(&self, value: &Domain::Bound) -> bool {
-    self.dom.contains(value)
   }
 }
 
