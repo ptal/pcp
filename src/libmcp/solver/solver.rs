@@ -21,16 +21,27 @@ use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
 use solver::event::EventIndex;
 use solver::space::*;
+use solver::iterator::*;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
+use std::slice;
 
 pub struct Solver<E, Dom, Deps, A> {
   propagators: Vec<Box<PropagatorErasure<E, Dom> + 'static>>,
   variables: Vec<SharedVar<Dom>>,
   deps: Deps,
   agenda: A
+}
+
+impl<E, Dom, Deps, A> VariableIterator for Solver<E, Dom, Deps, A>
+{
+  type Domain = Dom;
+
+  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, SharedVar<Dom>> {
+    self.variables.iter()
+  }
 }
 
 impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where

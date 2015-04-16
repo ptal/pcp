@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod fd;
-pub mod event;
-pub mod entailment;
-pub mod propagator;
-pub mod variable;
-pub mod agenda;
-pub mod dependencies;
-pub mod solver;
-pub mod space;
-pub mod merge;
-pub mod iterator;
+use solver::variable::*;
+use std::slice;
+
+pub trait VariableIterator {
+  type Domain;
+
+  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, SharedVar<Self::Domain>>;
+}
