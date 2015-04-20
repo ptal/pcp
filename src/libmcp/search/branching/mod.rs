@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod branch;
+pub mod first_smallest_var;
+pub mod binary_split;
 
-#![crate_name = "mcp"]
-#![unstable]
-#![crate_type = "dylib"]
+use search::branching::branch::*;
 
-#![feature(core, collections, alloc,unboxed_closures)]
+pub trait VarSelection<S> {
+  // Precondition: `space` must have variables not assigned.
+  // Returns the index of the variable selected in `space`.
+  fn select(&mut self, space: &S) -> usize;
+}
 
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod solver;
-pub mod search;
+pub trait Distributor<S> {
+  // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
+  fn distribute(&mut self, space: &S, var_idx: usize) -> Vec<Branch<S>>;
+}

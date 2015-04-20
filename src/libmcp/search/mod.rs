@@ -12,16 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#![crate_name = "mcp"]
-#![unstable]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc,unboxed_closures)]
-
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod solver;
-pub mod search;
+pub mod branching;
