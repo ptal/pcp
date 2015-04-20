@@ -23,7 +23,7 @@ pub trait Space {
   type Constraint;
   type Variable : Clone;
   type Domain;
-  type Label;
+  type Label : Clone;
 
   fn newvar(&mut self, dom: Self::Domain) -> Self::Variable;
   fn add(&mut self, c: Self::Constraint);

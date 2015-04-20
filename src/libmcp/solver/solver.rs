@@ -22,7 +22,7 @@ use solver::agenda::Agenda;
 use solver::event::EventIndex;
 use solver::space::*;
 use solver::iterator::*;
-use std::rc::Rc;
+use std::rc::{try_unwrap, Rc};
 use std::cell::RefCell;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
@@ -53,7 +53,7 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
   type Constraint = Box<PropagatorErasure<E, Dom> + 'static>;
   type Variable = SharedVar<Dom>;
   type Domain = Dom;
-  type Label = Solver<E, Dom, Deps, A>;
+  type Label = Rc<Solver<E, Dom, Deps, A>>;
 
   fn newvar(&mut self, dom: Dom) -> SharedVar<Dom> {
     let var_idx = self.variables.len();
@@ -70,7 +70,22 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
     self.propagation_loop()
   }
 
-  fn mark(&self) -> Solver<E, Dom, Deps, A> {
+  fn mark(&self) -> Rc<Solver<E, Dom, Deps, A>> {
+    Rc::new(self.deep_clone())
+  }
+
+  fn goto(&self, label: Rc<Solver<E, Dom, Deps, A>>) -> Self {
+    try_unwrap(label).unwrap_or_else(|l| l.deep_clone())
+  }
+}
+
+impl<E, Dom, Deps, A> Solver<E, Dom, Deps, A> where
+ Dom: Clone,
+ E: EventIndex,
+ Deps: VarEventDependencies,
+ A: Agenda
+{
+  fn deep_clone(&self) -> Self {
     let mut solver = Solver::new();
     solver.variables = self.variables.iter()
       .map(|v| Rc::new(RefCell::new(v.borrow().clone())))
@@ -79,11 +94,6 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
       .map(|p| p.boxed_deep_clone(&solver.variables))
       .collect();
     solver
-  }
-
-  fn goto(&self, label: Solver<E, Dom, Deps, A>) -> Self
-  {
-    label
   }
 }
 
