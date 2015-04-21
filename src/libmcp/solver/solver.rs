@@ -74,7 +74,7 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
     Rc::new(self.deep_clone())
   }
 
-  fn goto(&self, label: Rc<Solver<E, Dom, Deps, A>>) -> Self {
+  fn goto(self, label: Rc<Solver<E, Dom, Deps, A>>) -> Self {
     try_unwrap(label).unwrap_or_else(|l| l.deep_clone())
   }
 }

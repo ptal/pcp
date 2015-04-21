@@ -15,10 +15,6 @@
 use solver::space::Space;
 use search::branching::branch::*;
 
-// This is inspired by the paper:
-//   Search Combinators
-//   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
-
 pub enum Status<S: Space> {
   Satisfiable,
   Unsatisfiable,
@@ -28,5 +24,5 @@ pub enum Status<S: Space> {
 
 pub trait SearchTreeVisitor<S: Space> {
   fn start(&mut self, _root: &S) {}
-  fn enter(&mut self, current: &mut S) -> Status<S>;
+  fn enter(&mut self, current: S) -> (S, Status<S>);
 }

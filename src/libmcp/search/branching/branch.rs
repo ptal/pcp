@@ -38,7 +38,7 @@ impl<S: Space> Branch<S> {
     ).collect()
   }
 
-  pub fn commit(self, space_from: &S) -> S {
+  pub fn commit(self, space_from: S) -> S {
     let mut new = space_from.goto(self.mark);
     self.alternative.call_once((&mut new,));
     new

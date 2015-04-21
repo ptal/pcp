@@ -37,9 +37,9 @@ impl<S,V,D> SearchTreeVisitor<S> for Brancher<V,D> where
   D: Distributor<S>,
   S: Space
 {
-  fn enter(&mut self, current: &mut S) -> Status<S> {
-    let var_idx = self.selector.select(current);
-    let branches = self.distributor.distribute(current, var_idx);
-    Status::Unknown(branches)
+  fn enter(&mut self, current: S) -> (S, Status<S>) {
+    let var_idx = self.selector.select(&current);
+    let branches = self.distributor.distribute(&current, var_idx);
+    (current, Status::Unknown(branches))
   }
 }

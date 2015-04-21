@@ -24,14 +24,16 @@ impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
   S: Space,
   C: SearchTreeVisitor<S>
 {
-  fn enter(&mut self, current: &mut S) -> Status<S> {
+  fn start(&mut self, root: &S) {
+    self.child.start(root);
+  }
+
+  fn enter(&mut self, mut current: S) -> (S, Status<S>) {
     let status = current.solve();
     match status {
-      SpaceStatus::Satisfiable => Status::Satisfiable,
-      SpaceStatus::Unsatisfiable => Status::Unsatisfiable,
-      SpaceStatus::Unknown => {
-        self.child.enter(current)
-      }
+      SpaceStatus::Satisfiable => (current, Status::Satisfiable),
+      SpaceStatus::Unsatisfiable => (current, Status::Unsatisfiable),
+      SpaceStatus::Unknown => self.child.enter(current)
     }
   }
 }

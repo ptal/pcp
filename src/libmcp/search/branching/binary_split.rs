@@ -90,15 +90,14 @@ mod test {
 
     assert_eq!(branches.len(), 2);
 
-    let mut spaces: Vec<FDSolver> = branches.into_iter().map(|b| b.commit(&space)).collect();
-
-    assert_eq!(spaces[0].solve(), Status::Satisfiable);
-    assert_eq!(spaces[1].solve(), Status::Satisfiable);
+    let expected_dom = vec![Interval::new(2,3), Interval::new(4,4)];
     let var_idx = var.borrow().index();
-    let space1_var = nth_var(&spaces[0], var_idx);
-    let space2_var = nth_var(&spaces[1], var_idx);
-    assert_eq!(space1_var.borrow().deref().deref(), &Interval::new(2,3));
-    assert_eq!(space2_var.borrow().deref().deref(), &Interval::new(4,4));
+    for (branch, expected) in branches.into_iter().zip(expected_dom.iter()) {
+      space = branch.commit(space);
+      assert_eq!(space.solve(), Status::Satisfiable);
+      let space_var = nth_var(&space, var_idx);
+      assert_eq!(space_var.borrow().deref().deref(), expected);
+    }
   }
 
   #[test]

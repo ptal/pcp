@@ -29,5 +29,5 @@ pub trait Space {
   fn add(&mut self, c: Self::Constraint);
   fn solve(&mut self) -> Status;
   fn mark(&self) -> Self::Label;
-  fn goto(&self, label: Self::Label) -> Self;
+  fn goto(self, label: Self::Label) -> Self;
 }
