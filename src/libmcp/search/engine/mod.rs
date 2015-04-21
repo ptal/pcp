@@ -12,11 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The combinators for search, implemented with the trait `SearchTreeVisitor` comes from the following article:
-//   Search Combinators
-//   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
-
-pub mod branching;
-pub mod search_tree_visitor;
-pub mod propagation;
+pub mod queue;
 pub mod engine;

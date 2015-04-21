@@ -12,11 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The combinators for search, implemented with the trait `SearchTreeVisitor` comes from the following article:
-//   Search Combinators
-//   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
+pub trait Queue<T> {
+  fn empty() -> Self;
+  fn is_empty(&self) -> bool;
+  fn pop(&mut self) -> Option<T>;
+  fn push(&mut self, value: T);
+}
 
-pub mod branching;
-pub mod search_tree_visitor;
-pub mod propagation;
-pub mod engine;
+impl<T> Queue<T> for Vec<T> {
+  fn empty() -> Vec<T> {
+    vec![]
+  }
+
+  fn is_empty(&self) -> bool {
+    self.is_empty()
+  }
+
+  fn pop(&mut self) -> Option<T> {
+    self.pop()
+  }
+
+  fn push(&mut self, value: T) {
+    self.push(value)
+  }
+}
