@@ -28,5 +28,5 @@ pub enum Status<S: Space> {
 
 pub trait SearchTreeVisitor<S: Space> {
   fn start(&mut self, _root: &S) {}
-  fn enter(&mut self, current: &S) -> Status<S>;
+  fn enter(&mut self, current: &mut S) -> Status<S>;
 }

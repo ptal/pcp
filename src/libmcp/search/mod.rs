@@ -14,3 +14,4 @@
 
 pub mod branching;
 pub mod search_tree_visitor;
+pub mod propagation;

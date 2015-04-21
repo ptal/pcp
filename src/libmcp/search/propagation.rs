@@ -12,34 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::branching::*;
 use search::search_tree_visitor::*;
 use solver::space::Space;
+use solver::space::Status as SpaceStatus;
 
-pub struct Brancher<V,D>
-{
-  selector: V,
-  distributor: D
+pub struct Propagation<C> {
+  child: C
 }
 
-impl<V,D> Brancher<V,D>
-{
-  pub fn new(selector: V, distributor: D) -> Brancher<V,D> {
-    Brancher {
-      selector: selector,
-      distributor: distributor
-    }
-  }
-}
-
-impl<S,V,D> SearchTreeVisitor<S> for Brancher<V,D> where
-  V: VarSelection<S>,
-  D: Distributor<S>,
-  S: Space
+impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
+  S: Space,
+  C: SearchTreeVisitor<S>
 {
   fn enter(&mut self, current: &mut S) -> Status<S> {
-    let var_idx = self.selector.select(current);
-    let branches = self.distributor.distribute(current, var_idx);
-    Status::Unknown(branches)
+    let status = current.solve();
+    match status {
+      SpaceStatus::Satisfiable => Status::Satisfiable,
+      SpaceStatus::Unsatisfiable => Status::Unsatisfiable,
+      SpaceStatus::Unknown => {
+        self.child.enter(current)
+      }
+    }
   }
 }
