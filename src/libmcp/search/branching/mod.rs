@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod branch;
+pub mod brancher;
 pub mod first_smallest_var;
 pub mod binary_split;
 

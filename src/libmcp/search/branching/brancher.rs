@@ -12,21 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use search::branching::*;
+use search::search_tree_visitor::*;
 use solver::space::Space;
-use search::branching::branch::*;
 
-// This is inspired by the paper:
-//   Search Combinators
-//   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
-
-pub enum Status<S: Space> {
-  Satisfiable,
-  Unsatisfiable,
-  Unknown(Vec<Branch<S>>),
-  Pruned
+pub struct Brancher<V,D>
+{
+  selector: V,
+  distributor: D
 }
 
-pub trait SearchTreeVisitor<S: Space> {
-  fn start(&mut self, _root: &S) {}
-  fn enter(&mut self, current: &S) -> Status<S>;
+impl<V,D> Brancher<V,D>
+{
+  pub fn new(selector: V, distributor: D) -> Brancher<V,D> {
+    Brancher {
+      selector: selector,
+      distributor: distributor
+    }
+  }
+}
+
+impl<S,V,D> SearchTreeVisitor<S> for Brancher<V,D> where
+  V: VarSelection<S>,
+  D: Distributor<S>,
+  S: Space
+{
+  fn enter(&mut self, current: &S) -> Status<S> {
+    let var_idx = self.selector.select(current);
+    let branches = self.distributor.distribute(current, var_idx);
+    Status::Unknown(branches)
+  }
 }

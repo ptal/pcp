@@ -13,3 +13,4 @@
 // limitations under the License.
 
 pub mod branching;
+pub mod search_tree_visitor;
