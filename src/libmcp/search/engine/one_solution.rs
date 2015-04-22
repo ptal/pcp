@@ -16,21 +16,24 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use search::engine::queue::*;
+use search::engine::PartialExploration;
 use solver::space::Space;
 
-pub struct Engine<Q, C> {
+pub struct OneSolution<Q, C> {
   queue: Q,
   child: C
 }
 
-impl<Q, C> Engine<Q, C>
+impl<Q,C> PartialExploration for OneSolution<Q,C> {}
+
+impl<Q, C> OneSolution<Q, C>
 {
-  pub fn new<S>(child: C) -> Engine<Q, C> where
+  pub fn new<S>(child: C) -> OneSolution<Q, C> where
     S: Space,
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
-    Engine {
+    OneSolution {
       queue: Q::empty(),
       child: child
     }
@@ -45,20 +48,36 @@ impl<Q, C> Engine<Q, C>
     }
   }
 
-  fn enter_child<S>(&mut self, current: S) -> S where
+  fn enter_child<S>(&mut self, current: S, status: &mut Status<S>) -> S where
     S: Space,
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
-    let (current, status) = self.child.enter(current);
-    if let Unknown(branches) = status {
-      self.push_branches(branches);
+    let (current, child_status) = self.child.enter(current);
+    match child_status {
+      Unknown(branches) => self.push_branches(branches),
+      Satisfiable => *status = Satisfiable,
+      Pruned => *status = Pruned,
+      _ => ()
     }
     current
   }
+
+  // Only visit the root if we didn't visit it before (based on the queue emptiness).
+  fn enter_root<S>(&mut self, root: S, status: &mut Status<S>) -> S where
+    S: Space,
+    Q: Queue<Branch<S>>,
+    C: SearchTreeVisitor<S>
+  {
+    if self.queue.is_empty() {
+      self.enter_child(root, status)
+    } else {
+      root
+    }
+  }
 }
 
-impl<S, Q, C> SearchTreeVisitor<S> for Engine<Q, C> where
+impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
  S: Space,
  Q: Queue<Branch<S>>,
  C: SearchTreeVisitor<S>
@@ -69,11 +88,13 @@ impl<S, Q, C> SearchTreeVisitor<S> for Engine<Q, C> where
   }
 
   fn enter(&mut self, root: S) -> (S, Status<S>) {
-    let mut current = self.enter_child(root);
-    while let Some(branch) = self.queue.pop() {
-      current = branch.commit(current);
-      current = self.enter_child(current);
+    let mut status = Unsatisfiable;
+    let mut current = self.enter_root(root, &mut status);
+    while !status.is_satisfiable() && !self.queue.is_empty() {
+      let branch = self.queue.pop().unwrap();
+      let child = branch.commit(current);
+      current = self.enter_child(child, &mut status);
     }
-    (current, Pruned)
+    (current, status)
   }
 }

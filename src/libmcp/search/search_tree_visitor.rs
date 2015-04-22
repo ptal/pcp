@@ -22,6 +22,15 @@ pub enum Status<S: Space> {
   Pruned
 }
 
+impl<S: Space> Status<S> {
+  pub fn is_satisfiable(&self) -> bool {
+    match self {
+      &Status::Satisfiable => true,
+      _ => false
+    }
+  }
+}
+
 pub trait SearchTreeVisitor<S: Space> {
   fn start(&mut self, _root: &S) {}
   fn enter(&mut self, current: S) -> (S, Status<S>);
