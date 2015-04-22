@@ -13,20 +13,30 @@
 // limitations under the License.
 
 use solver::space::Space;
+use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 
 pub enum Status<S: Space> {
   Satisfiable,
+  Pruned,
   Unsatisfiable,
-  Unknown(Vec<Branch<S>>),
-  Pruned
+  Unknown(Vec<Branch<S>>)
 }
 
 impl<S: Space> Status<S> {
   pub fn is_satisfiable(&self) -> bool {
     match self {
-      &Status::Satisfiable => true,
+      &Satisfiable => true,
       _ => false
+    }
+  }
+
+  // Promote the self to `Pruned` or `Satisfiable` depending on `status`.
+  pub fn or(self, status: &Status<S>) -> Self {
+    match (self, status) {
+      (_, &Satisfiable) => Satisfiable,
+      (Unsatisfiable, &Pruned) => Pruned,
+      (s, _) => s,
     }
   }
 }

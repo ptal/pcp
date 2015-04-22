@@ -14,5 +14,6 @@
 
 pub mod queue;
 pub mod one_solution;
+pub mod all_solution;
 
 pub trait PartialExploration {}

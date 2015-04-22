@@ -21,7 +21,8 @@ use solver::space::Space;
 
 pub struct OneSolution<Q, C> {
   queue: Q,
-  child: C
+  child: C,
+  exploring: bool
 }
 
 impl<Q,C> PartialExploration for OneSolution<Q,C> {}
@@ -35,7 +36,8 @@ impl<Q, C> OneSolution<Q, C>
   {
     OneSolution {
       queue: Q::empty(),
-      child: child
+      child: child,
+      exploring: false
     }
   }
 
@@ -69,7 +71,8 @@ impl<Q, C> OneSolution<Q, C>
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
-    if self.queue.is_empty() {
+    if self.queue.is_empty() && !self.exploring {
+      self.exploring = true;
       self.enter_child(root, status)
     } else {
       root
@@ -84,6 +87,7 @@ impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
 {
   fn start(&mut self, root: &S) {
     self.queue = Q::empty();
+    self.exploring = false;
     self.child.start(root);
   }
 
