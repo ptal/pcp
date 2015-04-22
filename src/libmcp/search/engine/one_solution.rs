@@ -94,11 +94,67 @@ impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
   fn enter(&mut self, root: S) -> (S, Status<S>) {
     let mut status = Unsatisfiable;
     let mut current = self.enter_root(root, &mut status);
-    while !status.is_satisfiable() && !self.queue.is_empty() {
+    while status != Satisfiable && !self.queue.is_empty() {
       let branch = self.queue.pop().unwrap();
       let child = branch.commit(current);
       current = self.enter_child(child, &mut status);
     }
     (current, status)
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use interval::interval::*;
+  use interval::ops::*;
+  use solver::solver::*;
+  use solver::space::Space;
+  use solver::fd::event::*;
+  use solver::fd::propagator::*;
+  use solver::agenda::RelaxedFifoAgenda;
+  use solver::dependencies::VarEventDepsVector;
+  use search::search_tree_visitor::*;
+  use search::search_tree_visitor::Status::*;
+  use search::branching::binary_split::*;
+  use search::branching::brancher::*;
+  use search::branching::first_smallest_var::*;
+  use search::engine::one_solution::*;
+  use search::propagation::*;
+
+  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
+
+  #[test]
+  fn example_nqueens() {
+    nqueens(1, Satisfiable);
+    nqueens(2, Unsatisfiable);
+    nqueens(3, Unsatisfiable);
+    nqueens(4, Satisfiable);
+  }
+
+  fn nqueens(n: usize, expect: Status<FDSolver>) {
+    let mut solver: FDSolver = Solver::new();
+    let mut queens = vec![];
+    // 2 queens can't share the same line.
+    for _ in 0..n {
+      queens.push(solver.newvar((1, n as i32).to_interval()));
+    }
+    for i in 0..n-1 {
+      for j in i + 1..n {
+        // 2 queens can't share the same diagonal.
+        let q1 = (i + 1) as i32;
+        let q2 = (j + 1) as i32;
+        // Xi + i != Xj + j
+        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), q2 - q1)));
+        // Xi - i != Xj - j
+        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), -q2 + q1)));
+      }
+    }
+    // 2 queens can't share the same column.
+    solver.add(Box::new(Distinct::new(queens)));
+
+    let mut search: OneSolution<Vec<_>, _> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    search.start(&solver);
+    let (_, status) = search.enter(solver);
+    assert_eq!(status, expect);
   }
 }

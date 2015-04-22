@@ -45,7 +45,7 @@ impl<S, C> SearchTreeVisitor<S> for AllSolution<C> where
     let mut status_sum = Unsatisfiable;
     let mut status = Satisfiable;
     let mut current = root;
-    while status.is_satisfiable() {
+    while status == Satisfiable {
       let child = self.child.enter(current);
       current = child.0;
       status = child.1;

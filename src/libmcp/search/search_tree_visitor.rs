@@ -15,6 +15,8 @@
 use solver::space::Space;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
+use std::cmp::PartialEq;
+use std::fmt::{Debug, Formatter, Error};
 
 pub enum Status<S: Space> {
   Satisfiable,
@@ -23,14 +25,31 @@ pub enum Status<S: Space> {
   Unknown(Vec<Branch<S>>)
 }
 
-impl<S: Space> Status<S> {
-  pub fn is_satisfiable(&self) -> bool {
-    match self {
-      &Satisfiable => true,
-      _ => false
+impl<S: Space> Debug for Status<S> {
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    let name = match self {
+      &Satisfiable => "Satisfiable",
+      &Unsatisfiable => "Unsatisfiable",
+      &Pruned => "Pruned",
+      &Unknown(_) => "Unknown"
+    };
+    formatter.write_str(name)
+  }
+}
+
+impl<S: Space> PartialEq for Status<S> {
+  fn eq(&self, other: &Status<S>) -> bool {
+    match (self, other) {
+      (&Satisfiable, &Satisfiable) => true,
+      (&Unsatisfiable, &Unsatisfiable) => true,
+      (&Pruned, &Pruned) => true,
+      (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
+      (_, _) => false,
     }
   }
+}
 
+impl<S: Space> Status<S> {
   // Promote the self to `Pruned` or `Satisfiable` depending on `status`.
   pub fn or(self, status: &Status<S>) -> Self {
     match (self, status) {

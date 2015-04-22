@@ -20,6 +20,14 @@ pub struct Propagation<C> {
   child: C
 }
 
+impl<C> Propagation<C> {
+  pub fn new(child: C) -> Propagation<C> {
+    Propagation {
+      child: child
+    }
+  }
+}
+
 impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
   S: Space,
   C: SearchTreeVisitor<S>
