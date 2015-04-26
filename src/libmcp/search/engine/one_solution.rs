@@ -128,7 +128,9 @@ mod test {
     nqueens(1, Satisfiable);
     nqueens(2, Unsatisfiable);
     nqueens(3, Unsatisfiable);
-    nqueens(4, Satisfiable);
+    for i in 4..20 {
+      nqueens(i, Satisfiable);
+    }
   }
 
   fn nqueens(n: usize, expect: Status<FDSolver>) {

@@ -14,7 +14,6 @@
 
 
 #![crate_name = "mcp"]
-#![unstable]
 #![crate_type = "dylib"]
 
 #![feature(core, collections, alloc,unboxed_closures)]

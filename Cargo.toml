@@ -12,5 +12,5 @@ crate_type = ["dylib"]
 
 [dependencies]
 
-intervallum = "0.2.0"
+intervallum = "^0.3.0"
 num = "^0.1.22"

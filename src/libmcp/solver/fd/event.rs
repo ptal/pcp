@@ -21,7 +21,7 @@ use std::cmp::min;
 // Failure or Nothing events are absents on purpose because there are not events that propagator
 // should subscribe to. If a failure occurs, it's over. If nothing occurs, we don't care.
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FDEvent {
   Assignment,
   Bound,
