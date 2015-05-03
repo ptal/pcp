@@ -2,8 +2,7 @@ PCP Constraint Programming library will make you feel NP like P.
 
 Or maybe this is just an experimental constraint solving library. It is first designed to elegantly solve the *entailment problem* in a generic framework.
 
-References
-==========
+### References
 
 Existing library are an invaluable source of inspiration:
 
@@ -19,14 +18,16 @@ Most of this work has its roots in the following research works:
 
 ___
 
-> Four types arguments? [Laughing Out Loud]. Do you try to beat GeCode?
->
-> --Extract of an interview from <cite>Solver magazine</cite>
+> *Four types arguments? [Laughing Out Loud]. Do you try to beat GeCode?*
 
-> I was so dependent that I restlessly waited for any little events.
->
-> -- <cite>A nymphomaniac constraint</cite>
+&#8213; Extract of an interview from *Solver magazine*
 
-> It propagated me so fast.
->
-> -- <cite>The same constraint</cite>
+
+> *I was so dependent that I restlessly waited for any little events.*
+
+&#8213; *A nymphomaniac constraint*
+
+
+> *It propagated me so fast.*
+
+&#8213; *The same constraint*
