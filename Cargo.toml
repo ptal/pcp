@@ -1,13 +1,13 @@
 [package]
 
-name = "mcp"
+name = "pcp"
 version = "0.1.0"
 authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 
 [lib]
 
-name = "mcp"
-path = "src/libmcp/lib.rs"
+name = "pcp"
+path = "src/libpcp/lib.rs"
 crate_type = ["dylib"]
 
 [dependencies]

@@ -1,7 +1,32 @@
-Rust.MCP wants to be more state-of-the-art than GeCode, to be faster than a SAT solver, and to make you feel NP like P.
+PCP Constraint Programming library will make you feel NP like P.
 
-Or maybe this is just a simple constraint solving library.
+Or maybe this is just an experimental constraint solving library. It is first designed to elegantly solve the *entailment problem* in a generic framework.
 
-* The [csar](https://github.com/soli/csar) Rust library by Sylvain Soliman helped me to get started and propagators equivalences are mostly taken from this library.
-* The thesis of Guido Tack – Constraint Propagation - Models, Techniques, Implementation – and the GeCode library are a huge source of inspiration.
-* The ideas behind search tree and transformers from monadic constraint programming will be used in this library.
+References
+==========
+
+Existing library are an invaluable source of inspiration:
+
+* The [csar](https://github.com/soli/csar) Rust library by Sylvain Soliman helped me to get started.
+* And for a lot of reasons the following libraries are also interesting: [GeCode](http://www.gecode.org/), [Choco](http://choco.sourceforge.net/), [Minion](http://minion.sourceforge.net/),...
+
+Most of this work has its roots in the following research works:
+
+* Guido Tack. *Constraint Propagation - Models, Techniques, Implementation*. Doctoral dissertation, Saarland University, 2009.
+* Tom Schrijvers, Peter Stuckey, and Philip Wadler. Monadic constraint programming. *J. Funct. Program.*, 19(6):663–697, 2009.
+* Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, and Peter J. Stuckey. Search combinators. *Constraints*, 18(2):269–305, 2013.
+* ...
+
+___
+
+> Four types arguments? [Laughing Out Loud]. Do you try to beat GeCode?
+>
+> --Extract of an interview from <cite>Solver magazine</cite>
+
+> I was so dependent that I restlessly waited for any little events.
+>
+> -- <cite>A nymphomaniac constraint</cite>
+
+> It propagated me so fast.
+>
+> -- <cite>The same constraint</cite>

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 
-#![crate_name = "mcp"]
+#![crate_name = "pcp"]
 #![crate_type = "dylib"]
 
-#![feature(core, collections, alloc,unboxed_closures)]
+#![feature(core, collections, alloc, unboxed_closures)]
 
 extern crate interval;
 extern crate num;
