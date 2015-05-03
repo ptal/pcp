@@ -18,7 +18,7 @@ Most of this work has its roots in the following research works:
 
 ___
 
-> *Four types arguments? [Laughing Out Loud]. Do you try to beat GeCode?*
+> *Four type parameters? [Laughing Out Loud]. Do you try to beat GeCode?*
 
 &#8213; Extract of an interview from *Solver magazine*
 
