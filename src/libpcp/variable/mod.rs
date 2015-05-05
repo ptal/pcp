@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use variable::SharedVar;
-use std::slice;
+pub mod variable;
 
-pub trait VariableIterator {
-  type Domain;
-
-  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, SharedVar<Self::Domain>>;
-}
+pub use variable::variable::*;

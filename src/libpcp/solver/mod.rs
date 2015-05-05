@@ -16,7 +16,6 @@ pub mod fd;
 pub mod event;
 pub mod entailment;
 pub mod propagator;
-pub mod variable;
 pub mod agenda;
 pub mod dependencies;
 pub mod solver;

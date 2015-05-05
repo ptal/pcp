@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use solver::iterator::*;
-use solver::variable::VarIndex;
+use variable::VarIndex;
 use search::branching::*;
 use interval::ncollections::ops::*;
 use num::traits::Unsigned;
@@ -44,7 +44,7 @@ mod test {
   use solver::solver::*;
   use solver::space::*;
   use solver::fd::event::*;
-  use solver::variable::VarIndex;
+  use variable::VarIndex;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
 

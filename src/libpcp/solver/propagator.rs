@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::variable::*;
+use variable::*;
 use solver::entailment::*;
 
 pub trait Propagator<Event>

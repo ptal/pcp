@@ -19,7 +19,7 @@ use solver::fd::propagator::*;
 use solver::propagator::*;
 use solver::space::Space;
 use solver::fd::event::*;
-use solver::variable::*;
+use variable::*;
 use interval::ncollections::ops::*;
 use num::traits::Num;
 
@@ -70,7 +70,7 @@ mod test {
   use solver::solver::*;
   use solver::space::*;
   use solver::fd::event::*;
-  use solver::variable::VarIndex;
+  use variable::VarIndex;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
   use std::ops::Deref;

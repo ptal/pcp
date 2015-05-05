@@ -8,7 +8,7 @@ authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 
 name = "pcp"
 path = "src/libpcp/lib.rs"
-crate_type = ["dylib"]
+crate_type = ["rlib", "dylib"]
 
 [dependencies]
 

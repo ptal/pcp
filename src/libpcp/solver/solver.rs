@@ -16,7 +16,7 @@ use interval::ncollections::ops::*;
 use solver::propagator::{BoxedDeepClone, Propagator, PropagatorErasure};
 use solver::entailment::Status as EStatus;
 use solver::entailment::Entailment;
-use solver::variable::{Variable, SharedVar};
+use variable::{Variable, SharedVar};
 use solver::dependencies::VarEventDependencies;
 use solver::agenda::Agenda;
 use solver::event::EventIndex;

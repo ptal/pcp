@@ -17,10 +17,13 @@
 #![crate_type = "dylib"]
 
 #![feature(core, collections, alloc, unboxed_closures)]
+#![feature(test)]
 
+extern crate test;
 extern crate interval;
 extern crate num;
 extern crate alloc;
 
+pub mod variable;
 pub mod solver;
 pub mod search;

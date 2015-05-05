@@ -120,6 +120,7 @@ mod test {
   use search::branching::first_smallest_var::*;
   use search::engine::one_solution::*;
   use search::propagation::*;
+  use test::Bencher;
 
   type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
 
@@ -128,9 +129,16 @@ mod test {
     nqueens(1, Satisfiable);
     nqueens(2, Unsatisfiable);
     nqueens(3, Unsatisfiable);
-    for i in 4..20 {
+    for i in 4..12 {
       nqueens(i, Satisfiable);
     }
+  }
+
+  #[bench]
+  fn bench_nqueens10(b: &mut Bencher) {
+    b.iter(|| {
+        nqueens(10, Satisfiable)
+    });
   }
 
   fn nqueens(n: usize, expect: Status<FDSolver>) {

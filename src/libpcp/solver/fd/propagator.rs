@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::variable::*;
+use variable::*;
 use solver::fd::event::*;
 use solver::fd::event::FDEvent::*;
 use solver::propagator::*;
@@ -662,7 +662,7 @@ impl<D> DeepClone<Vec<SharedVar<D>>> for Distinct<D> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use solver::variable::*;
+  use variable::*;
   use solver::fd::event::*;
   use solver::fd::event::FDEvent::*;
   use solver::entailment::*;
