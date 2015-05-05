@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use solver::event::*;
+use variable::ops::*;
 use interval::ncollections::ops::*;
 use interval::ops::*;
 use std::rc::Rc;
@@ -21,11 +22,6 @@ use std::fmt::{Formatter, Display, Error};
 use std::ops::Deref;
 
 pub type SharedVar<Domain> = Rc<RefCell<Variable<Domain>>>;
-
-pub trait VarIndex
-{
-  fn index(&self) -> usize;
-}
 
 #[derive(Copy, PartialEq, Eq, Debug, Clone)]
 pub struct Variable<Domain> {
@@ -66,32 +62,12 @@ impl<Domain> VarIndex for Variable<Domain>
   }
 }
 
-pub trait Failure
-{
-  fn is_failed(&self) -> bool;
-}
-
 impl<Domain> Failure for Variable<Domain> where
   Domain: Cardinality
 {
   fn is_failed(&self) -> bool {
     self.dom.is_empty()
   }
-}
-
-pub trait VarDomain: Bounded + Cardinality + Subset
-{}
-
-impl<R> VarDomain for R where
-  R: Bounded + Cardinality + Subset
-{}
-
-pub trait EventUpdate<Domain: VarDomain>
-{
-  fn event_update<Event>(&mut self, value: Domain,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
 }
 
 impl<Domain> EventUpdate<Domain> for Variable<Domain> where
@@ -114,14 +90,6 @@ impl<Domain> EventUpdate<Domain> for Variable<Domain> where
   }
 }
 
-pub trait EventShrinkLeft<Domain: VarDomain>
-{
-  fn event_shrink_left<Event>(&mut self, lb: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
-}
-
 impl<Domain> EventShrinkLeft<Domain> for Variable<Domain> where
   Domain: VarDomain + ShrinkLeft<<Domain as Bounded>::Bound>
 {
@@ -133,14 +101,6 @@ impl<Domain> EventShrinkLeft<Domain> for Variable<Domain> where
     let new = self.dom.shrink_left(lb);
     self.event_update(new, events)
   }
-}
-
-pub trait EventShrinkRight<Domain: VarDomain>
-{
-  fn event_shrink_right<Event>(&mut self, ub: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
 }
 
 impl<Domain> EventShrinkRight<Domain> for Variable<Domain> where
@@ -156,14 +116,6 @@ impl<Domain> EventShrinkRight<Domain> for Variable<Domain> where
   }
 }
 
-pub trait EventRemove<Domain: VarDomain>
-{
-  fn event_remove<Event>(&mut self, value: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-  where
-    Event: MonotonicEvent<Domain>;
-}
-
 impl<Domain> EventRemove<Domain> for Variable<Domain> where
   Domain: VarDomain + Difference<<Domain as Bounded>::Bound, Output=Domain>
 {
@@ -175,14 +127,6 @@ impl<Domain> EventRemove<Domain> for Variable<Domain> where
     let new = self.dom.difference(&value);
     self.event_update(new, events)
   }
-}
-
-pub trait EventIntersection<Domain, RHS = Self>
-{
-  fn event_intersection<Event>(&mut self, other: &mut RHS,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
 }
 
 impl<Domain> EventIntersection<Domain> for Variable<Domain> where
@@ -202,6 +146,7 @@ impl<Domain> EventIntersection<Domain> for Variable<Domain> where
 #[cfg(test)]
 mod test {
   use super::*;
+  use variable::ops::*;
   use solver::fd::event::*;
   use solver::fd::event::FDEvent::*;
   use interval::interval::*;

@@ -1,8 +1,6 @@
 PCP Constraint Programming library will make you feel NP like P.
 
-Or maybe this is just an experimental constraint solving library. It is first designed to elegantly solve the *entailment problem* in a generic framework.
-
-This library is highly experimental.
+Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. This library is highly experimental.
 
 ### References
 

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use variable::*;
+use variable::ops::*;
 use solver::fd::event::*;
 use solver::fd::event::FDEvent::*;
 use solver::propagator::*;

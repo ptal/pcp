@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use variable::*;
+use variable::ops::*;
 use solver::entailment::*;
 
 pub trait Propagator<Event>

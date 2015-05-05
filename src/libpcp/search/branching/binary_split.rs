@@ -70,7 +70,7 @@ mod test {
   use solver::solver::*;
   use solver::space::*;
   use solver::fd::event::*;
-  use variable::VarIndex;
+  use variable::ops::VarIndex;
   use solver::agenda::RelaxedFifoAgenda;
   use solver::dependencies::VarEventDepsVector;
   use std::ops::Deref;
