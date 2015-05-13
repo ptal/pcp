@@ -15,5 +15,6 @@
 pub mod variable;
 pub mod ops;
 pub mod store;
+pub mod delta_store;
 
 pub use variable::variable::*;
