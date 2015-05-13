@@ -14,5 +14,6 @@
 
 pub mod variable;
 pub mod ops;
+pub mod store;
 
 pub use variable::variable::*;

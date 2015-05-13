@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use solver::event::*;
 use interval::ncollections::ops::*;
 
@@ -32,6 +31,23 @@ pub trait VarDomain: Bounded + Cardinality + Subset
 impl<R> VarDomain for R where
   R: Bounded + Cardinality + Subset
 {}
+
+pub trait Assign<Value>
+{
+  type Variable;
+  fn assign(&mut self, value: Value) -> Self::Variable;
+}
+
+pub trait MonotonicUpdate<Key, Value>
+{
+  fn update(&mut self, key: Key, value: Value) -> bool;
+}
+
+pub trait Read<Key>
+{
+  type Value;
+  fn read(&self, key: Key) -> Self::Value;
+}
 
 pub trait EventUpdate<Domain: VarDomain>
 {

@@ -23,11 +23,6 @@ ___
 &#8213; Extract of an interview from *Solver magazine*
 
 
-> *I was so dependent that I restlessly waited for any little events.*
-
-&#8213; A nymphomaniac constraint
-
-
 > *It propagated me so fast.*
 
-&#8213; The same constraint
+&#8213; A nymphomaniac constraint

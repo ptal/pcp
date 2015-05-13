@@ -245,24 +245,4 @@ mod test {
       };
     assert_eq!(res, events);
   }
-
-  #[test]
-  #[should_panic]
-  fn var_non_monotonic_update_singleton() {
-    let dom0_10 = (0,10).to_interval();
-    let mut var0_10: Variable<Interval<i32>> = Variable::new(0, dom0_10);
-    let dom11_11 = 11.to_interval();
-
-    var0_10.event_update::<FDEvent>(dom11_11, &mut vec![]);
-  }
-
-  #[test]
-  #[should_panic]
-  fn var_non_monotonic_update_widen() {
-    let dom0_10 = (0,10).to_interval();
-    let mut var0_10: Variable<Interval<i32>> = Variable::new(0, dom0_10);
-    let domm5_15 = (-5, 15).to_interval();
-
-    var0_10.event_update::<FDEvent>(domm5_15, &mut vec![]);
-  }
 }
