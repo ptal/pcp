@@ -53,6 +53,12 @@ impl<Domain, Store> StoreRead<Store> for Identity<Domain> where
   }
 }
 
+impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
+{
+  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
+    vec![(self.index(), event)]
+  }
+}
 
 #[cfg(test)]
 mod test {

@@ -60,6 +60,10 @@ pub trait StoreRead<Store>
   fn read(&self, store: &Store) -> Self::Value;
 }
 
+pub trait ViewDependencies<Event>
+{
+  fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
+}
 
 pub trait EventUpdate<Domain: VarDomain>
 {
