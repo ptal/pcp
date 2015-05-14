@@ -49,6 +49,18 @@ pub trait Read<Key>
   fn read(&self, key: Key) -> Self::Value;
 }
 
+pub trait StoreMonotonicUpdate<Store, Value>
+{
+  fn update(&self, store: &mut Store, value: Value) -> bool;
+}
+
+pub trait StoreRead<Store>
+{
+  type Value;
+  fn read(&self, store: &Store) -> Self::Value;
+}
+
+
 pub trait EventUpdate<Domain: VarDomain>
 {
   fn event_update<Event>(&mut self, value: Domain,
