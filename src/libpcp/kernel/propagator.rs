@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub trait Propagator<Store>
+{
+  // Returns `false` if it failed to propagate (a variable has an empty domain after propagation).
+  fn propagate(&mut self, store: &mut Store) -> bool;
+}
 
-#![crate_name = "pcp"]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc, unboxed_closures)]
-#![feature(test)]
-
-extern crate test;
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod kernel;
-pub mod propagators;
-pub mod variable;
-pub mod solver;
-pub mod search;
+pub trait PropagatorDependencies<Event>
+{
+  // Each event on a variable that can change the result of the `is_subsumed` method should be listed here.
+  fn dependencies(&self) -> Vec<(usize, Event)>;
+}

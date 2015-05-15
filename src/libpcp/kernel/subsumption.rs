@@ -12,20 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::trilean::*;
 
-#![crate_name = "pcp"]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc, unboxed_closures)]
-#![feature(test)]
-
-extern crate test;
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod kernel;
-pub mod propagators;
-pub mod variable;
-pub mod solver;
-pub mod search;
+pub trait Subsumption<Store>
+{
+  fn is_subsumed(&self, store: &Store) -> Trilean;
+}
