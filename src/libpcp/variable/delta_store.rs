@@ -14,6 +14,7 @@
 
 use variable::ops::*;
 use variable::store::*;
+use variable::arithmetics::identity::*;
 use solver::event::*;
 use solver::merge::*;
 use std::collections::vec_map::{Drain, VecMap};
@@ -40,12 +41,12 @@ impl<Event, Domain> DeltaStore<Event, Domain>
 impl<Event, Domain> Assign<Domain> for DeltaStore<Event, Domain> where
   Domain: VarDomain
 {
-  type Variable = usize;
+  type Variable = Identity<Domain>;
 
-  fn assign(&mut self, dom: Domain) -> usize {
-    let var_idx = self.store.assign(dom);
-    self.delta.reserve_len(var_idx);
-    var_idx
+  fn assign(&mut self, dom: Domain) -> Identity<Domain> {
+    let var = self.store.assign(dom);
+    self.delta.reserve_len(var.index());
+    var
   }
 }
 
@@ -83,9 +84,10 @@ impl<Event, Domain> Read<usize> for DeltaStore<Event, Domain> where
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
   use super::*;
   use variable::ops::*;
+  use variable::arithmetics::identity::*;
   use solver::fd::event::*;
   use solver::fd::event::FDEvent::*;
   use interval::interval::*;
@@ -93,46 +95,45 @@ mod test {
 
   type FDStore = DeltaStore<FDEvent, Interval<i32>>;
 
-  fn test_op<Op>(source: Interval<i32>, target: Interval<i32>, delta_expect: Vec<FDEvent>, update_success: bool, op: Op) where
-    Op: FnOnce(&mut FDStore, usize) -> Interval<i32>
+  fn test_op<Op>(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
+    Op: FnOnce(&FDStore, Identity<Interval<i32>>) -> Interval<i32>
   {
     let mut store = DeltaStore::new();
     let var = store.assign(source);
 
-    let new = op(&mut store, var);
-    assert_eq!(store.update(var, new), update_success);
+    let new = op(&store, var);
+    assert_eq!(var.update(&mut store, new), update_success);
     assert_eq!(new, target);
 
     if update_success {
-      let delta_expect = delta_expect.into_iter().map(|d| (var, d)).collect();
-      consume_delta(&mut store, delta_expect);
-      assert_eq!(store.read(var), target);
+      let delta_expected = delta_expected.into_iter().map(|d| (var.index(), d)).collect();
+      consume_delta(&mut store, delta_expected);
+      assert_eq!(var.read(&store), target);
     }
   }
 
-  fn test_binary_op<Op>(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expect: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
-    Op: FnOnce(&mut FDStore, usize, usize) -> Interval<i32>
+  fn test_binary_op<Op>(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expected: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
+    Op: FnOnce(&FDStore, Identity<Interval<i32>>, Identity<Interval<i32>>) -> Interval<i32>
   {
     let mut store = DeltaStore::new();
     let var1 = store.assign(source1);
     let var2 = store.assign(source2);
 
-    let new = op(&mut store, var1, var2);
-    assert_eq!(store.update(var1, new), update_success);
-    assert_eq!(store.update(var2, new), update_success);
+    let new = op(&store, var1, var2);
+    assert_eq!(var1.update(&mut store, new), update_success);
+    assert_eq!(var2.update(&mut store, new), update_success);
     assert_eq!(new, target);
 
     if update_success {
-      consume_delta(&mut store, delta_expect);
-      assert_eq!(store.read(var1), target);
-      assert_eq!(store.read(var2), target);
+      consume_delta(&mut store, delta_expected);
+      assert_eq!(var1.read(&store), target);
+      assert_eq!(var2.read(&store), target);
     }
   }
 
-
-  fn consume_delta(store: &mut DeltaStore<FDEvent, Interval<i32>>, delta_expect: Vec<(usize, FDEvent)>) {
+  pub fn consume_delta(store: &mut DeltaStore<FDEvent, Interval<i32>>, delta_expected: Vec<(usize, FDEvent)>) {
     let res: Vec<(usize, FDEvent)> = store.drain_delta().collect();
-    assert_eq!(res, delta_expect);
+    assert_eq!(res, delta_expected);
     assert!(store.drain_delta().next().is_none());
   }
 
@@ -153,8 +154,8 @@ mod test {
     var_update_test_one(dom0_10, dom1_9, vec![Bound], true);
   }
 
-  fn var_update_test_one(source: Interval<i32>, target: Interval<i32>, delta_expect: Vec<FDEvent>, update_success: bool) {
-    test_op(source, target, delta_expect, update_success, |_,_| target);
+  fn var_update_test_one(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool) {
+    test_op(source, target, delta_expected, update_success, |_,_| target);
   }
 
   #[test]
@@ -172,18 +173,18 @@ mod test {
     var_shrink_ub_test_one(dom0_10, -1, vec![], false);
   }
 
-  fn var_shrink_lb_test_one(source: Interval<i32>, target_lb: i32, delta_expect: Vec<FDEvent>, update_success: bool) {
+  fn var_shrink_lb_test_one(source: Interval<i32>, target_lb: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
     let expected_dom = (target_lb, source.upper()).to_interval();
 
-    test_op(source, expected_dom, delta_expect, update_success,
-      |store, var| store.read(var).shrink_left(target_lb));
+    test_op(source, expected_dom, delta_expected, update_success,
+      |store, var| var.read(store).shrink_left(target_lb));
   }
 
-  fn var_shrink_ub_test_one(source: Interval<i32>, target_ub: i32, delta_expect: Vec<FDEvent>, update_success: bool) {
+  fn var_shrink_ub_test_one(source: Interval<i32>, target_ub: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
     let expected_dom = (source.lower(), target_ub).to_interval();
 
-    test_op(source, expected_dom, delta_expect, update_success,
-      |store, var| store.read(var).shrink_right(target_ub));
+    test_op(source, expected_dom, delta_expected, update_success,
+      |store, var| var.read(store).shrink_right(target_ub));
   }
 
   #[test]
@@ -200,8 +201,8 @@ mod test {
     var_intersection_test_one(dom0_10, dom11_20, Interval::empty(), vec![], false);
   }
 
-  fn var_intersection_test_one(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expect: Vec<(usize, FDEvent)>, update_success: bool) {
-    test_binary_op(source1, source2, target, delta_expect, update_success,
-      |store, v1, v2| store.read(v1).intersection(&store.read(v2)));
+  fn var_intersection_test_one(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expected: Vec<(usize, FDEvent)>, update_success: bool) {
+    test_binary_op(source1, source2, target, delta_expected, update_success,
+      |store, v1, v2| v1.read(store).intersection(&v2.read(store)));
   }
 }

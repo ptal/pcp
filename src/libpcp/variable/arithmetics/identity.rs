@@ -15,6 +15,7 @@
 use variable::ops::*;
 use std::marker::PhantomData;
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>
@@ -62,7 +63,6 @@ impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
 
 #[cfg(test)]
 mod test {
-  use super::*;
   use variable::store::*;
   use variable::ops::*;
   use interval::interval::*;
@@ -72,8 +72,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let dom0_5 = (0,5).to_interval();
     let mut store: Store<Interval<i32>> = Store::new();
-    let x = store.assign(dom0_10);
-    let v: Identity<Interval<i32>> = Identity::new(x);
+    let v = store.assign(dom0_10);
 
     assert_eq!(v.read(&store), dom0_10);
     assert_eq!(v.update(&mut store, dom0_5), true);

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use variable::ops::*;
+use variable::arithmetics::identity::*;
 
 pub struct Store<Domain> {
   variables: Vec<Domain>
@@ -30,13 +31,13 @@ impl<Domain> Store<Domain>
 impl<Domain> Assign<Domain> for Store<Domain> where
   Domain: VarDomain
 {
-  type Variable = usize;
+  type Variable = Identity<Domain>;
 
-  fn assign(&mut self, dom: Domain) -> usize {
+  fn assign(&mut self, dom: Domain) -> Identity<Domain> {
     assert!(!dom.is_empty());
     let var_idx = self.variables.len();
     self.variables.push(dom);
-    var_idx
+    Identity::new(var_idx)
   }
 }
 
@@ -69,6 +70,7 @@ impl<Domain> Read<usize> for Store<Domain> where
 mod test {
   use super::*;
   use variable::ops::*;
+  use variable::arithmetics::identity::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
 
@@ -78,7 +80,7 @@ mod test {
     let mut store = Store::new();
 
     for i in 0..10 {
-      assert_eq!(store.assign(dom0_10), i);
+      assert_eq!(store.assign(dom0_10), Identity::new(i));
     }
   }
 
@@ -88,11 +90,11 @@ mod test {
     let dom5_5 = (5, 5).to_interval();
     let mut store = Store::new();
 
-    let vars: Vec<usize> = (0..10).map(|_| store.assign(dom0_10)).collect();
+    let vars: Vec<_> = (0..10).map(|_| store.assign(dom0_10)).collect();
     for var in vars {
-      assert_eq!(store.read(var), dom0_10);
-      assert_eq!(store.update(var, dom5_5), true);
-      assert_eq!(store.read(var), dom5_5);
+      assert_eq!(var.read(&store), dom0_10);
+      assert_eq!(var.update(&mut store, dom5_5), true);
+      assert_eq!(var.read(&store), dom5_5);
     }
   }
 
@@ -102,7 +104,7 @@ mod test {
     let dom5_5 = (5, 5).to_interval();
 
     let var = store.assign(dom5_5);
-    assert_eq!(store.update(var, Interval::empty()), false);
+    assert_eq!(var.update(&mut store, Interval::empty()), false);
   }
 
   #[test]
@@ -120,7 +122,7 @@ mod test {
 
     let mut store = Store::new();
     let var = store.assign(dom0_10);
-    store.update(var, dom11_11);
+    var.update(&mut store, dom11_11);
   }
 
   #[test]
@@ -131,6 +133,6 @@ mod test {
 
     let mut store = Store::new();
     let var = store.assign(dom0_10);
-    store.update(var, domm5_15);
+    var.update(&mut store, domm5_15);
   }
 }
