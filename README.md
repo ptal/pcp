@@ -15,14 +15,3 @@ Most of this work has its roots in the following research works:
 * Tom Schrijvers, Peter Stuckey, and Philip Wadler. Monadic constraint programming. *J. Funct. Program.*, 19(6):663–697, 2009.
 * Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, and Peter J. Stuckey. Search combinators. *Constraints*, 18(2):269–305, 2013.
 * ...
-
-___
-
-> *Four type parameters? [Laughing Out Loud]. Do you try to beat GeCode?*
-
-&#8213; Extract of an interview from *Solver magazine*
-
-
-> *It propagated me so fast.*
-
-&#8213; A nymphomaniac constraint
