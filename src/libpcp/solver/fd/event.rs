@@ -22,9 +22,9 @@ use std::cmp::min;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FDEvent {
-  Assignment,
-  Bound,
-  Inner
+  Assignment = 0,
+  Bound = 1,
+  Inner = 2
 }
 
 impl Merge for FDEvent {

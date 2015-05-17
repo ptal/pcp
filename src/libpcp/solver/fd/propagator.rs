@@ -710,49 +710,6 @@ mod test {
   }
 
   #[test]
-  fn equalxy_propagate_test() {
-    let var0_10 = Variable::new(1, (0,10).to_interval());
-    let var10_20 = Variable::new(2, (10,20).to_interval());
-    let var5_15 = Variable::new(3, (5,15).to_interval());
-    let var11_20 = Variable::new(4, (11,20).to_interval());
-    let var1_1 = Variable::new(5, (1,1).to_interval());
-
-    xequaly_propagate_test_one(make_var(var0_10), make_var(var10_20), Unknown, Entailed, Some(vec![(1, Assignment), (2, Assignment)]));
-    xequaly_propagate_test_one(make_var(var5_15), make_var(var10_20), Unknown, Unknown, Some(vec![(3, Bound), (2, Bound)]));
-    xequaly_propagate_test_one(make_var(var1_1), make_var(var0_10), Unknown, Entailed, Some(vec![(1, Assignment)]));
-    xequaly_propagate_test_one(make_var(var0_10), make_var(var0_10), Unknown, Unknown, Some(vec![]));
-    xequaly_propagate_test_one(make_var(var0_10), make_var(var11_20), Disentailed, Disentailed, None);
-  }
-
-  fn xequaly_propagate_test_one(v1: SharedVarI32, v2: SharedVarI32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
-    let propagator = XEqualY::new(v1, v2);
-    propagate_test_one(propagator, before, after, expected);
-  }
-
-  #[test]
-  fn xlessy_propagate_test() {
-    let var0_10 = Variable::new(1, (0,10).to_interval());
-    let var0_10_ = Variable::new(12, (0,10).to_interval());
-    let var10_20 = Variable::new(2, (10,20).to_interval());
-    let var5_15 = Variable::new(3, (5,15).to_interval());
-    let var11_20 = Variable::new(4, (11,20).to_interval());
-    let var1_1 = Variable::new(5, (1,1).to_interval());
-
-    xlessy_propagate_test_one(make_var(var0_10), make_var(var0_10_), Unknown, Unknown, Some(vec![(1, Bound), (12, Bound)]));
-    xlessy_propagate_test_one(make_var(var0_10), make_var(var10_20), Unknown, Unknown, Some(vec![]));
-    xlessy_propagate_test_one(make_var(var5_15), make_var(var10_20), Unknown, Unknown, Some(vec![]));
-    xlessy_propagate_test_one(make_var(var5_15), make_var(var0_10), Unknown, Unknown, Some(vec![(3, Bound), (1, Bound)]));
-    xlessy_propagate_test_one(make_var(var0_10), make_var(var11_20), Entailed, Entailed, Some(vec![]));
-    xlessy_propagate_test_one(make_var(var11_20), make_var(var0_10), Disentailed, Disentailed, None);
-    xlessy_propagate_test_one(make_var(var1_1), make_var(var0_10), Unknown, Entailed, Some(vec![(1, Bound)]));
-  }
-
-  fn xlessy_propagate_test_one(v1: SharedVarI32, v2: SharedVarI32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
-    let propagator = XLessThanY::new(v1, v2);
-    propagate_test_one(propagator, before, after, expected);
-  }
-
-  #[test]
   fn xlessyplusc_propagate_test() {
     let var0_10 = Variable::new(1, (0,10).to_interval());
     let var10_20 = Variable::new(2, (10,20).to_interval());
@@ -803,27 +760,6 @@ mod test {
     propagate_test_one(make_xnotequalc(0), Unknown, Entailed, Some(vec![(1, Bound)]));
     propagate_test_one(make_xnotequalc(10), Unknown, Entailed, Some(vec![(1, Bound)]));
     propagate_test_one(XNotEqualC::new(make_var(var0_0), 0), Disentailed, Disentailed, None);
-  }
-
-  #[test]
-  fn x_neq_y_plus_c_test() {
-    let var0_10 = Variable::new(1, (0,10).to_interval());
-    let var10_20 = Variable::new(2, (10,20).to_interval());
-    let var0_0 = Variable::new(5, (0,0).to_interval());
-
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_10), 0, Unknown, Unknown, Some(vec![]));
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var10_20), 0, Unknown, Unknown, Some(vec![]));
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var10_20), 1, Entailed, Entailed, Some(vec![]));
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 0, Unknown, Entailed, Some(vec![(1, Bound)]));
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 10, Unknown, Entailed, Some(vec![(1, Bound)]));
-    x_neq_y_plus_c_test_one(make_var(var0_10), make_var(var0_0), 5, Unknown, Unknown, Some(vec![]));
-    x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 10, Entailed, Entailed, Some(vec![]));
-    x_neq_y_plus_c_test_one(make_var(var0_0), make_var(var0_0), 0, Disentailed, Disentailed, None);
-  }
-
-  fn x_neq_y_plus_c_test_one(v1: SharedVarI32, v2: SharedVarI32, c: i32, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
-    let propagator = XNotEqualYPlusC::new(v1, v2, c);
-    propagate_test_one(propagator, before, after, expected);
   }
 
   #[test]

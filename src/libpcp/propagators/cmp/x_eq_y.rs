@@ -50,11 +50,11 @@ impl<Store, Domain, X, Y> Subsumption<Store> for XEqY<X, Y> where
     let x = self.x.read(store);
     let y = self.y.read(store);
 
-    if x.is_disjoint(&y) {
-      False
-    }
-    else if x.lower() == y.upper() && x.upper() == y.lower() {
+    if x.lower() == y.upper() && x.upper() == y.lower() {
       True
+    }
+    else if x.is_disjoint(&y) {
+      False
     }
     else {
       Unknown

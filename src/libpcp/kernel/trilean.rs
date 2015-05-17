@@ -12,10 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::trilean::Trilean::*;
+use std::ops::*;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Trilean
 {
-  True,
-  False,
-  Unknown
+  False = 0,
+  True = 1,
+  Unknown = 2
+}
+
+impl Not for Trilean {
+  type Output = Trilean;
+
+  fn not(self) -> Trilean {
+    match self {
+      False => True,
+      True => False,
+      Unknown => Unknown
+    }
+  }
 }
