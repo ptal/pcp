@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::DeepClone;
 use variable::ops::*;
 use variable::store::*;
 use variable::arithmetics::identity::*;
 use solver::event::*;
 use solver::merge::*;
+use solver::iterator::*;
+use std::slice;
 use std::collections::vec_map::{Drain, VecMap};
+use interval::ncollections::ops::*;
 
 pub struct DeltaStore<Event, Domain> {
   store: Store<Domain>,
@@ -38,8 +42,36 @@ impl<Event, Domain> DeltaStore<Event, Domain>
   }
 }
 
+impl<Event, Domain> DeepClone for DeltaStore<Event, Domain> where
+  Domain: Clone
+{
+  fn deep_clone(&self) -> Self {
+    DeltaStore {
+      store: self.store.deep_clone(),
+      delta: VecMap::new()
+    }
+  }
+}
+
+impl<Event, Domain> VariableIterator for DeltaStore<Event, Domain> {
+  type Variable = Domain;
+
+  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+    self.store.vars_iter()
+  }
+}
+
+impl<Event, Domain> Cardinality for DeltaStore<Event, Domain>
+{
+  type Size = usize;
+
+  fn size(&self) -> usize {
+    self.store.size()
+  }
+}
+
 impl<Event, Domain> Assign<Domain> for DeltaStore<Event, Domain> where
-  Domain: VarDomain
+  Domain: Cardinality
 {
   type Variable = Identity<Domain>;
 

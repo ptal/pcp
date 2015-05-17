@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::DeepClone;
 use variable::ops::*;
 use variable::arithmetics::identity::*;
+use solver::iterator::*;
+use std::slice;
+use interval::ncollections::ops::*;
 
 pub struct Store<Domain> {
   variables: Vec<Domain>
 }
 
-impl<Domain> Store<Domain>
-{
+impl<Domain> Store<Domain> {
   pub fn new() -> Store<Domain> {
     Store {
       variables: vec![]
@@ -28,8 +31,34 @@ impl<Domain> Store<Domain>
   }
 }
 
+impl<Domain> DeepClone for Store<Domain> where
+  Domain: Clone
+{
+  fn deep_clone(&self) -> Self {
+    Store {
+      variables: self.variables.clone()
+    }
+  }
+}
+
+impl<Domain> Cardinality for Store<Domain> {
+  type Size = usize;
+
+  fn size(&self) -> usize {
+    self.variables.len()
+  }
+}
+
+impl<Domain> VariableIterator for Store<Domain> {
+  type Variable = Domain;
+
+  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+    self.variables.iter()
+  }
+}
+
 impl<Domain> Assign<Domain> for Store<Domain> where
-  Domain: VarDomain
+  Domain: Cardinality
 {
   type Variable = Identity<Domain>;
 
