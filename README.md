@@ -1,3 +1,8 @@
+[![ptal on Travis CI][travis-image]][travis]
+
+[travis-image]: https://travis-ci.org/ptal/pcp.png
+[travis]: https://travis-ci.org/ptal/pcp
+
 PCP Constraint Programming library will make you feel NP like P.
 
 Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. This library is highly experimental.
