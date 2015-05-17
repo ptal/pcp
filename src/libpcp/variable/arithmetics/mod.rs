@@ -13,3 +13,7 @@
 // limitations under the License.
 
 pub mod identity;
+pub mod constant;
+
+pub use variable::arithmetics::identity::Identity;
+pub use variable::arithmetics::constant::Constant;
