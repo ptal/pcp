@@ -89,11 +89,11 @@ impl<X, Y> PropagatorDependencies<FDEvent> for XLessY<X, Y> where
 }
 
 impl<X, Y> DeepClone for XLessY<X, Y> where
-  X: Copy,
-  Y: Copy
+  X: DeepClone,
+  Y: DeepClone
 {
   fn deep_clone(&self) -> XLessY<X, Y> {
-    *self
+    XLessY::new(self.x.deep_clone(), self.y.deep_clone())
   }
 }
 

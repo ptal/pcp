@@ -32,12 +32,12 @@ impl<X, Y> XNeqY<X, Y> {
 }
 
 impl<Store, Domain, X, Y> Subsumption<Store> for XNeqY<X, Y> where
-  X: StoreRead<Store, Value=Domain> + Copy,
-  Y: StoreRead<Store, Value=Domain> + Copy,
+  X: StoreRead<Store, Value=Domain> + Clone,
+  Y: StoreRead<Store, Value=Domain> + Clone,
   Domain: Bounded + Disjoint
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
-    !XEqY::new(self.x, self.y).is_subsumed(store)
+    !XEqY::new(self.x.clone(), self.y.clone()).is_subsumed(store)
   }
 }
 
@@ -64,20 +64,20 @@ impl<Store, Domain, X, Y> Propagator<Store> for XNeqY<X, Y> where
 }
 
 impl<X, Y> PropagatorDependencies<FDEvent> for XNeqY<X, Y> where
-  X: ViewDependencies<FDEvent> + Copy,
-  Y: ViewDependencies<FDEvent> + Copy
+  X: ViewDependencies<FDEvent> + Clone,
+  Y: ViewDependencies<FDEvent> + Clone
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    XEqY::new(self.x, self.y).dependencies()
+    XEqY::new(self.x.clone(), self.y.clone()).dependencies()
   }
 }
 
 impl<X, Y> DeepClone for XNeqY<X, Y> where
-  X: Copy,
-  Y: Copy
+  X: DeepClone,
+  Y: DeepClone
 {
   fn deep_clone(&self) -> XNeqY<X, Y> {
-    *self
+    XNeqY::new(self.x.deep_clone(), self.y.deep_clone())
   }
 }
 

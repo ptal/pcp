@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::deep_clone::*;
 use variable::ops::*;
 use std::marker::PhantomData;
 
@@ -30,8 +31,13 @@ impl<Domain> Identity<Domain> {
   }
 }
 
-impl<Domain> VarIndex for Identity<Domain>
-{
+impl<Domain> DeepClone for Identity<Domain> {
+  fn deep_clone(&self) -> Identity<Domain> {
+    Identity::new(self.idx)
+  }
+}
+
+impl<Domain> VarIndex for Identity<Domain> {
   fn index(&self) -> usize {
     self.idx
   }
