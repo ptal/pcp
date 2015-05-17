@@ -670,7 +670,6 @@ mod test {
   use solver::entailment::Status::*;
   use solver::propagator::*;
   use interval::interval::*;
-  use interval::ncollections::ops::*;
   use std::rc::Rc;
   use std::cell::RefCell;
   use std::collections::VecMap;
@@ -760,32 +759,5 @@ mod test {
     propagate_test_one(make_xnotequalc(0), Unknown, Entailed, Some(vec![(1, Bound)]));
     propagate_test_one(make_xnotequalc(10), Unknown, Entailed, Some(vec![(1, Bound)]));
     propagate_test_one(XNotEqualC::new(make_var(var0_0), 0), Disentailed, Disentailed, None);
-  }
-
-  #[test]
-  fn distinct_test() {
-    let mut vars: Vec<Variable<Interval<i32>>> = (0..3)
-      .map(|v| Variable::new(v, Interval::singleton(v as i32)))
-      .collect();
-    vars.push(Variable::new(3, (0,3).to_interval()));
-    vars.push(Variable::new(4, (0,1).to_interval()));
-    vars.push(Variable::new(5, (0,3).to_interval()));
-
-    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[2])],
-      Entailed, Entailed, Some(vec![]));
-    distinct_test_one(vec![make_var(vars[0]), make_var(vars[0]), make_var(vars[2])],
-      Disentailed, Disentailed, None);
-    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[3])],
-      Unknown, Entailed, Some(vec![(3,Bound)]));
-    distinct_test_one(vec![make_var(vars[0]), make_var(vars[1]), make_var(vars[4])],
-      Unknown, Disentailed, None);
-    distinct_test_one(vec![make_var(vars[0]), make_var(vars[3]), make_var(vars[5])],
-      Unknown, Unknown, Some(vec![(3,Bound),(5,Bound)]));
-    distinct_test_one(vec![make_var(vars[3])], Entailed, Entailed, Some(vec![]));
-  }
-
-  fn distinct_test_one(vars: Vec<SharedVarI32>, before: Status, after: Status, expected: Option<Vec<(usize, FDEvent)>>) {
-    let propagator = Distinct::new(vars);
-    propagate_test_one(propagator, before, after, expected);
   }
 }

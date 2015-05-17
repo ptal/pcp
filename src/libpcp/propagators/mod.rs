@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod cmp;
+pub mod distinct;
 
 #[cfg(test)]
 pub mod test {
@@ -50,6 +51,18 @@ pub mod test {
     let x = store.assign(x);
     let y = store.assign(y);
     let propagator = make_prop(x, y);
+    subsumption_propagate(propagator, store, before, after, delta_expected, propagate_success);
+  }
+
+  pub fn nary_propagator_test<P, FnProp>(make_prop: FnProp, doms: Vec<Interval<i32>>,
+    before: Trilean, after: Trilean,
+    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
+   P: Propagator<FDStore> + Subsumption<FDStore>,
+   FnProp: FnOnce(Vec<FDVar>) -> P
+  {
+    let mut store = FDStore::new();
+    let vars = doms.into_iter().map(|d| store.assign(d)).collect();
+    let propagator = make_prop(vars);
     subsumption_propagate(propagator, store, before, after, delta_expected, propagate_success);
   }
 }
