@@ -19,41 +19,41 @@ use variable::ops::*;
 use interval::ncollections::ops::*;
 
 #[derive(Clone, Copy)]
-pub struct XLessY<X, Y>
+pub struct XEqY<X, Y>
 {
   x: X,
   y: Y
 }
 
-impl<X, Y> XLessY<X, Y> {
-  pub fn new(x: X, y: Y) -> XLessY<X, Y> {
-    XLessY { x: x, y: y }
+impl<X, Y> XEqY<X, Y> {
+  pub fn new(x: X, y: Y) -> XEqY<X, Y> {
+    XEqY { x: x, y: y }
   }
 }
 
-impl<Store, Domain, X, Y> Subsumption<Store> for XLessY<X, Y> where
+impl<Store, Domain, X, Y> Subsumption<Store> for XEqY<X, Y> where
   X: StoreRead<Store, Value=Domain>,
   Y: StoreRead<Store, Value=Domain>,
-  Domain: Bounded
+  Domain: Bounded + Disjoint
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False:
-    // x:     |--|
-    // y: |--|
+    // |--|
+    //     |--|
     //
     // True:
-    // x: |--|
-    // y:     |--|
+    // |-|
+    // |-|
     //
     // Unknown: Everything else.
 
     let x = self.x.read(store);
     let y = self.y.read(store);
 
-    if x.lower() > y.upper() {
+    if x.is_disjoint(&y) {
       False
     }
-    else if x.upper() < y.lower() {
+    else if x.lower() == y.upper() && x.upper() == y.lower() {
       True
     }
     else {
@@ -62,37 +62,37 @@ impl<Store, Domain, X, Y> Subsumption<Store> for XLessY<X, Y> where
   }
 }
 
-impl<Store, Domain, X, Y> Propagator<Store> for XLessY<X, Y> where
+impl<Store, Domain, X, Y> Propagator<Store> for XEqY<X, Y> where
   X: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
   Y: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Domain: Bounded,
-  Domain: StrictShrinkLeft<<Domain as Bounded>::Bound>,
-  Domain: StrictShrinkRight<<Domain as Bounded>::Bound>
+  Domain: Bounded + Clone,
+  Domain: Intersection<Output=Domain>
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
-    self.x.update(store, x.strict_shrink_right(y.upper())) &&
-    self.y.update(store, y.strict_shrink_left(x.lower()))
+    let new = x.intersection(&y);
+    self.x.update(store, new.clone()) &&
+    self.y.update(store, new)
   }
 }
 
-impl<X, Y> PropagatorDependencies<FDEvent> for XLessY<X, Y> where
+impl<X, Y> PropagatorDependencies<FDEvent> for XEqY<X, Y> where
   X: ViewDependencies<FDEvent>,
   Y: ViewDependencies<FDEvent>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    let mut deps = self.x.dependencies(FDEvent::Bound);
-    deps.append(&mut self.y.dependencies(FDEvent::Bound));
+    let mut deps = self.x.dependencies(FDEvent::Inner);
+    deps.append(&mut self.y.dependencies(FDEvent::Inner));
     deps
   }
 }
 
-impl<X, Y> DeepClone for XLessY<X, Y> where
+impl<X, Y> DeepClone for XEqY<X, Y> where
   X: Copy,
   Y: Copy
 {
-  fn deep_clone(&self) -> XLessY<X, Y> {
+  fn deep_clone(&self) -> XEqY<X, Y> {
     *self
   }
 }
@@ -108,26 +108,26 @@ mod test {
   use propagators::test::*;
 
   #[test]
-  fn x_less_y_test() {
+  fn x_eq_y_test() {
     let dom0_10 = (0,10).to_interval();
     let dom10_20 = (10,20).to_interval();
     let dom5_15 = (5,15).to_interval();
     let dom11_20 = (11,20).to_interval();
     let dom1_1 = (1,1).to_interval();
 
-    x_less_y_test_one(dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_less_y_test_one(dom0_10, dom10_20, Unknown, Unknown, vec![], true);
-    x_less_y_test_one(dom5_15, dom10_20, Unknown, Unknown, vec![], true);
-    x_less_y_test_one(dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_less_y_test_one(dom0_10, dom11_20, True, True, vec![], true);
-    x_less_y_test_one(dom11_20, dom0_10, False, False, vec![], false);
-    x_less_y_test_one(dom1_1, dom0_10, Unknown, True, vec![(1, Bound)], true);
+    x_eq_y_test_one(dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_eq_y_test_one(dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+    x_eq_y_test_one(dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(dom0_10, dom11_20, False, False, vec![], false);
+    x_eq_y_test_one(dom11_20, dom0_10, False, False, vec![], false);
+    x_eq_y_test_one(dom1_1, dom0_10, Unknown, True, vec![(1, Assignment)], true);
   }
 
-  fn x_less_y_test_one(x: Interval<i32>, y: Interval<i32>,
+  fn x_eq_y_test_one(x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    binary_propagator_test(XLessY::new, x, y, before, after, delta_expected, propagate_success);
+    binary_propagator_test(XEqY::new, x, y, before, after, delta_expected, propagate_success);
   }
 }
