@@ -26,7 +26,7 @@ use num::traits::Num;
 pub struct BinarySplit;
 
 impl<S,B,D> Distributor<S> for BinarySplit where
-  S: VariableIterator<Domain=D> + Space<Constraint=Box<PropagatorErasure<FDEvent, D>>>,
+  S: VariableIterator<Variable=SharedVar<D>> + Space<Constraint=Box<PropagatorErasure<FDEvent, D>>>,
   D: Cardinality + Bounded<Bound=B> + ShrinkLeft<B> + ShrinkRight<B> + Subset + 'static,
   B: Num + PartialOrd + Clone + 'static
 {
@@ -53,7 +53,7 @@ impl<S,B,D> Distributor<S> for BinarySplit where
 }
 
 pub fn nth_var<S, D>(s: &S, var_idx: usize) -> SharedVar<D> where
-  S: VariableIterator<Domain=D>
+  S: VariableIterator<Variable=SharedVar<D>>
 {
   s.vars_iter()
   .nth(var_idx)

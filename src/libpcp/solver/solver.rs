@@ -37,7 +37,7 @@ pub struct Solver<E, Dom, Deps, A> {
 
 impl<E, Dom, Deps, A> VariableIterator for Solver<E, Dom, Deps, A>
 {
-  type Domain = Dom;
+  type Variable = SharedVar<Dom>;
 
   fn vars_iter<'a>(&'a self) -> slice::Iter<'a, SharedVar<Dom>> {
     self.variables.iter()

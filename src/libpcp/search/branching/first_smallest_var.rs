@@ -14,6 +14,7 @@
 
 use solver::iterator::*;
 use variable::ops::VarIndex;
+use variable::SharedVar;
 use search::branching::*;
 use interval::ncollections::ops::*;
 use num::traits::Unsigned;
@@ -21,7 +22,7 @@ use num::traits::Unsigned;
 pub struct FirstSmallestVar;
 
 impl<S, D, Size> VarSelection<S> for FirstSmallestVar where
-  S: VariableIterator<Domain=D>,
+  S: VariableIterator<Variable=SharedVar<D>>,
   D: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
