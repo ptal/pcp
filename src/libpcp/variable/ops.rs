@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::event::*;
+use kernel::event::*;
 use interval::ncollections::ops::*;
 
 pub trait VarIndex

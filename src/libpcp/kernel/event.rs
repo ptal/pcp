@@ -12,4 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod event;
+pub trait EventIndex : Copy {
+  fn to_index(self) -> usize;
+  fn size() -> usize;
+}
+
+pub trait MonotonicEvent<Domain> {
+  // precondition: `little` is a subset of `big`.
+  // returns `None` if no event occurred.
+  fn new(little: &Domain, big: &Domain) -> Option<Self>;
+}

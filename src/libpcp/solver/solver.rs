@@ -13,10 +13,6 @@
 // limitations under the License.
 
 use interval::ncollections::ops::*;
-use solver::dependencies::VarEventDependencies;
-use solver::agenda::Agenda;
-use solver::event::EventIndex;
-use solver::iterator::*;
 use kernel::*;
 use kernel::Trilean::*;
 use variable::delta_store::DeltaStore;

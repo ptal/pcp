@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::DeepClone;
+use kernel::*;
 use variable::ops::*;
 use variable::arithmetics::identity::*;
-use solver::iterator::*;
 use std::slice;
 use interval::ncollections::ops::*;
 

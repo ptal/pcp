@@ -12,4 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod event;
+use std::slice;
+
+pub trait VariableIterator {
+  type Variable;
+
+  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Self::Variable>;
+}

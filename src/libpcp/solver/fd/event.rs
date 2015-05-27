@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::merge::Merge;
-use solver::event::*;
+use kernel::Merge;
+use kernel::event::*;
 use solver::fd::event::FDEvent::*;
 use interval::ncollections::ops::*;
 use std::cmp::min;

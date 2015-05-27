@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::DeepClone;
+use kernel::*;
 use variable::ops::*;
 use variable::store::*;
 use variable::arithmetics::identity::*;
-use solver::event::*;
-use solver::merge::*;
-use solver::iterator::*;
 use std::slice;
 use std::collections::vec_map::{Drain, VecMap};
 use interval::ncollections::ops::*;

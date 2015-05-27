@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::event::*;
+use kernel::event::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
 use interval::ops::*;
