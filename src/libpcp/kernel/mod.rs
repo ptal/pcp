@@ -16,8 +16,10 @@ pub mod deep_clone;
 pub mod subsumption;
 pub mod trilean;
 pub mod propagator;
+pub mod space;
 
 pub use kernel::deep_clone::*;
 pub use kernel::subsumption::*;
 pub use kernel::trilean::*;
 pub use kernel::propagator::*;
+pub use kernel::space::*;

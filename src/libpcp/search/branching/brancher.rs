@@ -14,7 +14,7 @@
 
 use search::branching::*;
 use search::search_tree_visitor::*;
-use solver::space::Space;
+use kernel::Space;
 
 pub struct Brancher<V,D>
 {

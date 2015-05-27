@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::space::Space;
+use kernel::Space;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use std::cmp::PartialEq;

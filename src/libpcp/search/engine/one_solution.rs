@@ -17,7 +17,7 @@ use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use search::engine::queue::*;
 use search::engine::PartialExploration;
-use solver::space::Space;
+use kernel::Space;
 
 pub struct OneSolution<Q, C> {
   queue: Q,

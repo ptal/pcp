@@ -15,7 +15,7 @@
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::engine::PartialExploration;
-use solver::space::Space;
+use kernel::Space;
 
 pub struct AllSolution<C> {
   child: C

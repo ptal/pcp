@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::space::*;
+use kernel::*;
 use alloc::boxed::FnBox;
 
 // A branch represents an edge between two distinct nodes in the search tree.
