@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::deep_clone::*;
 use variable::ops::*;
+use variable::arithmetics::ExprInference;
 use std::marker::PhantomData;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -22,18 +22,16 @@ pub struct Identity<Domain> {
   phantom: PhantomData<Domain>
 }
 
+impl<Domain> ExprInference for Identity<Domain> {
+  type Output = Domain;
+}
+
 impl<Domain> Identity<Domain> {
   pub fn new(idx: usize) -> Identity<Domain> {
     Identity {
       idx: idx,
       phantom: PhantomData
     }
-  }
-}
-
-impl<Domain> DeepClone for Identity<Domain> {
-  fn deep_clone(&self) -> Identity<Domain> {
-    Identity::new(self.idx)
   }
 }
 

@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod expr_inference;
 pub mod identity;
 pub mod constant;
+pub mod addition;
 
+pub use variable::arithmetics::expr_inference::ExprInference;
 pub use variable::arithmetics::identity::Identity;
 pub use variable::arithmetics::constant::Constant;
+pub use variable::arithmetics::addition::Addition;
