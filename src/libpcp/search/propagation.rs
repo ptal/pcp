@@ -13,8 +13,8 @@
 // limitations under the License.
 
 use search::search_tree_visitor::*;
-use solver::space::Space;
-use solver::space::Status as SpaceStatus;
+use kernel::*;
+use kernel::Trilean::*;
 
 pub struct Propagation<C> {
   child: C
@@ -39,9 +39,9 @@ impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
   fn enter(&mut self, mut current: S) -> (S, Status<S>) {
     let status = current.solve();
     match status {
-      SpaceStatus::Satisfiable => (current, Status::Satisfiable),
-      SpaceStatus::Unsatisfiable => (current, Status::Unsatisfiable),
-      SpaceStatus::Unknown => self.child.enter(current)
+      True => (current, Status::Satisfiable),
+      False => (current, Status::Unsatisfiable),
+      Unknown => self.child.enter(current)
     }
   }
 }
