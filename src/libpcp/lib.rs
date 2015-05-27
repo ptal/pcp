@@ -28,4 +28,4 @@ pub mod kernel;
 pub mod propagators;
 pub mod variable;
 pub mod solver;
-pub mod search;
+// pub mod search;
