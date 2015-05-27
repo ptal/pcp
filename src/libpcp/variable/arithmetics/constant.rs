@@ -12,56 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::deep_clone::*;
 use variable::ops::*;
+use variable::arithmetics::ExprInference;
 use interval::ncollections::ops::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Constant<Domain> where
-  Domain: Bounded
+pub struct Constant<V>
 {
-  value: Domain::Bound
+  value: V
 }
 
-impl<Domain> Constant<Domain> where
-  Domain: Bounded
+impl<V> ExprInference for Constant<V>
 {
-  pub fn new(value: Domain::Bound) -> Constant<Domain> {
+  type Output = V;
+}
+
+impl<V> Constant<V>
+{
+  pub fn new(value: V) -> Constant<V> {
     Constant {
       value: value
     }
   }
 }
 
-impl<Domain, Bound> DeepClone for Constant<Domain> where
-  Domain: Bounded<Bound=Bound>,
-  Bound: Clone
+impl<V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Constant<V> where
+  Domain: Cardinality
 {
-  fn deep_clone(&self) -> Constant<Domain> {
-    Constant::new(self.value.clone())
+  fn update(&self, _store: &mut Store, value: Domain) -> bool {
+    !value.is_empty()
   }
 }
 
-impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Constant<Domain> where
-  Domain: Bounded
+impl<V, Store> StoreRead<Store> for Constant<V> where
+  V: Clone
 {
-  fn update(&self, _store: &mut Store, _value: Domain) -> bool {
-    true
+  type Value = Option<V>;
+  fn read(&self, _store: &Store) -> Option<V> {
+    Some(self.value.clone())
   }
 }
 
-impl<Domain, Bound, Store> StoreRead<Store> for Constant<Domain> where
-  Domain: Bounded<Bound=Bound> + Singleton<Bound>,
-  Bound: Clone
-{
-  type Value = Domain;
-  fn read(&self, _store: &Store) -> Domain {
-    Domain::singleton(self.value.clone())
-  }
-}
-
-impl<Domain, Event> ViewDependencies<Event> for Constant<Domain> where
-  Domain: Bounded
+impl<V, Event> ViewDependencies<Event> for Constant<V>
 {
   fn dependencies(&self, _event: Event) -> Vec<(usize, Event)> {
     vec![]
@@ -85,10 +77,10 @@ mod test {
     let dom0_4 = (0,4).to_interval();
     let mut store: FDStore = DeltaStore::new();
     let x = store.assign(dom0_10);
-    let c: Constant<Interval<i32>> = Constant::new(5)
+    let c: Constant<i32> = Constant::new(5);
 
     let x_less_c = XLessY::new(x, c);
-    subsumption_propagate(x_less_c, &mut store, Unknown, True, vec![(0, Bound)], true);
+    subsumption_propagate(1, x_less_c, &mut store, Unknown, True, vec![(0, Bound)], true);
     assert_eq!(x.read(&store), dom0_4);
   }
 }
