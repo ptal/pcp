@@ -31,14 +31,17 @@ impl<X, Y> XLessY<X, Y> {
   }
 }
 
-impl<Store, Domain, X, Y> Subsumption<Store> for XLessY<X, Y> where
-  X: StoreRead<Store, Value=Domain>,
-  Y: StoreRead<Store, Value=Domain>,
-  Domain: Bounded
+impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XLessY<X, Y> where
+  X: StoreRead<Store, Value=DomX>,
+  Y: StoreRead<Store, Value=DomY>,
+  DomX: Bounded<Bound=BX>,
+  DomY: Bounded<Bound=BY>,
+  BX: PartialOrd + PartialOrd<BY>,
+  BY: PartialOrd + PartialOrd<BX>
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False:
-    // x:     |--|
+    // x:    |--|
     // y: |--|
     //
     // True:
@@ -50,7 +53,7 @@ impl<Store, Domain, X, Y> Subsumption<Store> for XLessY<X, Y> where
     let x = self.x.read(store);
     let y = self.y.read(store);
 
-    if x.lower() > y.upper() {
+    if x.lower() >= y.upper() {
       False
     }
     else if x.upper() < y.lower() {
@@ -62,12 +65,13 @@ impl<Store, Domain, X, Y> Subsumption<Store> for XLessY<X, Y> where
   }
 }
 
-impl<Store, Domain, X, Y> Propagator<Store> for XLessY<X, Y> where
-  X: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Y: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Domain: Bounded,
-  Domain: StrictShrinkLeft<<Domain as Bounded>::Bound>,
-  Domain: StrictShrinkRight<<Domain as Bounded>::Bound>
+impl<Store, BX, BY, DomX, DomY, X, Y> Propagator<Store> for XLessY<X, Y> where
+  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
+  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY>,
+  DomX: Bounded<Bound=BX> + StrictShrinkLeft<BY> + StrictShrinkRight<BY>,
+  DomY: Bounded<Bound=BY> + StrictShrinkLeft<BX> + StrictShrinkRight<BX>,
+  BX: PartialOrd,
+  BY: PartialOrd
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);
@@ -111,23 +115,25 @@ mod test {
   fn x_less_y_test() {
     let dom0_10 = (0,10).to_interval();
     let dom10_20 = (10,20).to_interval();
+    let dom10_11 = (10,11).to_interval();
     let dom5_15 = (5,15).to_interval();
     let dom11_20 = (11,20).to_interval();
     let dom1_1 = (1,1).to_interval();
 
-    x_less_y_test_one(dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_less_y_test_one(dom0_10, dom10_20, Unknown, Unknown, vec![], true);
-    x_less_y_test_one(dom5_15, dom10_20, Unknown, Unknown, vec![], true);
-    x_less_y_test_one(dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_less_y_test_one(dom0_10, dom11_20, True, True, vec![], true);
-    x_less_y_test_one(dom11_20, dom0_10, False, False, vec![], false);
-    x_less_y_test_one(dom1_1, dom0_10, Unknown, True, vec![(1, Bound)], true);
+    x_less_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
+    x_less_y_test_one(3, dom10_11, dom10_11, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+    x_less_y_test_one(4, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
+    x_less_y_test_one(5, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_test_one(6, dom0_10, dom11_20, True, True, vec![], true);
+    x_less_y_test_one(7, dom11_20, dom0_10, False, False, vec![], false);
+    x_less_y_test_one(8, dom1_1, dom0_10, Unknown, True, vec![(1, Bound)], true);
   }
 
-  fn x_less_y_test_one(x: Interval<i32>, y: Interval<i32>,
+  fn x_less_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    binary_propagator_test(XLessY::new, x, y, before, after, delta_expected, propagate_success);
+    binary_propagator_test(test_num, XLessY::new, x, y, before, after, delta_expected, propagate_success);
   }
 }

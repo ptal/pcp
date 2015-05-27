@@ -31,10 +31,13 @@ impl<X, Y> XEqY<X, Y> {
   }
 }
 
-impl<Store, Domain, X, Y> Subsumption<Store> for XEqY<X, Y> where
-  X: StoreRead<Store, Value=Domain>,
-  Y: StoreRead<Store, Value=Domain>,
-  Domain: Bounded + Disjoint
+impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XEqY<X, Y> where
+  X: StoreRead<Store, Value=DomX>,
+  Y: StoreRead<Store, Value=DomY>,
+  DomX: Bounded<Bound=BX> + Disjoint<DomY>,
+  DomY: Bounded<Bound=BY>,
+  BX: PartialOrd + PartialOrd<BY>,
+  BY: PartialOrd
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False:
@@ -62,11 +65,10 @@ impl<Store, Domain, X, Y> Subsumption<Store> for XEqY<X, Y> where
   }
 }
 
-impl<Store, Domain, X, Y> Propagator<Store> for XEqY<X, Y> where
-  X: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Y: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Domain: Bounded + Clone,
-  Domain: Intersection<Output=Domain>
+impl<Store, DomX, DomY, X, Y> Propagator<Store> for XEqY<X, Y> where
+  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
+  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomX>,
+  DomX: Intersection<DomY, Output=DomX> + Clone,
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);
@@ -115,19 +117,19 @@ mod test {
     let dom11_20 = (11,20).to_interval();
     let dom1_1 = (1,1).to_interval();
 
-    x_eq_y_test_one(dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_eq_y_test_one(dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-    x_eq_y_test_one(dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_eq_y_test_one(dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_eq_y_test_one(dom0_10, dom11_20, False, False, vec![], false);
-    x_eq_y_test_one(dom11_20, dom0_10, False, False, vec![], false);
-    x_eq_y_test_one(dom1_1, dom0_10, Unknown, True, vec![(1, Assignment)], true);
+    x_eq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_eq_y_test_one(2, dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+    x_eq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(4, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(5, dom0_10, dom11_20, False, False, vec![], false);
+    x_eq_y_test_one(6, dom11_20, dom0_10, False, False, vec![], false);
+    x_eq_y_test_one(7, dom1_1, dom0_10, Unknown, True, vec![(1, Assignment)], true);
   }
 
-  fn x_eq_y_test_one(x: Interval<i32>, y: Interval<i32>,
+  fn x_eq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    binary_propagator_test(XEqY::new, x, y, before, after, delta_expected, propagate_success);
+    binary_propagator_test(test_num, XEqY::new, x, y, before, after, delta_expected, propagate_success);
   }
 }

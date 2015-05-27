@@ -31,21 +31,26 @@ impl<X, Y> XNeqY<X, Y> {
   }
 }
 
-impl<Store, Domain, X, Y> Subsumption<Store> for XNeqY<X, Y> where
-  X: StoreRead<Store, Value=Domain> + Clone,
-  Y: StoreRead<Store, Value=Domain> + Clone,
-  Domain: Bounded + Disjoint
+impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XNeqY<X, Y> where
+  X: StoreRead<Store, Value=DomX> + Clone,
+  Y: StoreRead<Store, Value=DomY> + Clone,
+  DomX: Bounded<Bound=BX> + Disjoint<DomY>,
+  DomY: Bounded<Bound=BY>,
+  BX: PartialOrd + PartialOrd<BY>,
+  BY: PartialOrd
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     !XEqY::new(self.x.clone(), self.y.clone()).is_subsumed(store)
   }
 }
 
-impl<Store, Domain, X, Y> Propagator<Store> for XNeqY<X, Y> where
-  X: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Y: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Domain: Bounded + Cardinality,
-  Domain: Difference<<Domain as Bounded>::Bound, Output=Domain>
+impl<Store, BX, BY, DomX, DomY, X, Y> Propagator<Store> for XNeqY<X, Y> where
+  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
+  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY>,
+  DomX: Bounded<Bound=BX> + Cardinality + Difference<BY, Output=DomX>,
+  DomY: Bounded<Bound=BY> + Cardinality + Difference<BX, Output=DomY>,
+  BX: PartialOrd,
+  BY: PartialOrd
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);
@@ -101,20 +106,20 @@ mod test {
     let zero = (0,0).to_interval();
     let ten = (10,10).to_interval();
 
-    x_neq_y_test_one(dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(dom0_10, dom10_20, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(dom5_15, dom10_20, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(dom0_10, dom11_20, True, True, vec![], true);
-    x_neq_y_test_one(one, dom0_10, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(zero, dom0_10, Unknown, True, vec![(1, Bound)], true);
-    x_neq_y_test_one(ten, dom0_10, Unknown, True, vec![(1, Bound)], true);
-    x_neq_y_test_one(one, one, False, False, vec![], false);
+    x_neq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_neq_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
+    x_neq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
+    x_neq_y_test_one(4, dom0_10, dom11_20, True, True, vec![], true);
+    x_neq_y_test_one(5, one, dom0_10, Unknown, Unknown, vec![], true);
+    x_neq_y_test_one(6, zero, dom0_10, Unknown, True, vec![(1, Bound)], true);
+    x_neq_y_test_one(7, ten, dom0_10, Unknown, True, vec![(1, Bound)], true);
+    x_neq_y_test_one(8, one, one, False, False, vec![], false);
   }
 
-  fn x_neq_y_test_one(x: Interval<i32>, y: Interval<i32>,
+  fn x_neq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    binary_propagator_test(XNeqY::new, x, y, before, after, delta_expected, propagate_success);
+    binary_propagator_test(test_num, XNeqY::new, x, y, before, after, delta_expected, propagate_success);
   }
 }

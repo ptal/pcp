@@ -28,11 +28,12 @@ pub mod test {
   pub type FDStore = DeltaStore<FDEvent, Interval<i32>>;
   pub type FDVar = Identity<Interval<i32>>;
 
-  pub fn subsumption_propagate<P>(mut prop: P, store: &mut FDStore,
+  pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut FDStore,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
    P: Propagator<FDStore> + Subsumption<FDStore>
   {
+    println!("Test number {}", test_num);
     assert_eq!(prop.is_subsumed(store), before);
     assert_eq!(prop.propagate(store), propagate_success);
     if propagate_success {
@@ -41,7 +42,7 @@ pub mod test {
     assert_eq!(prop.is_subsumed(store), after);
   }
 
-  pub fn binary_propagator_test<P, FnProp>(make_prop: FnProp, x: Interval<i32>, y: Interval<i32>,
+  pub fn binary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
    P: Propagator<FDStore> + Subsumption<FDStore>,
@@ -51,10 +52,10 @@ pub mod test {
     let x = store.assign(x);
     let y = store.assign(y);
     let propagator = make_prop(x, y);
-    subsumption_propagate(propagator, &mut store, before, after, delta_expected, propagate_success);
+    subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
   }
 
-  pub fn nary_propagator_test<P, FnProp>(make_prop: FnProp, doms: Vec<Interval<i32>>,
+  pub fn nary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, doms: Vec<Interval<i32>>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
    P: Propagator<FDStore> + Subsumption<FDStore>,
@@ -63,6 +64,6 @@ pub mod test {
     let mut store = FDStore::new();
     let vars = doms.into_iter().map(|d| store.assign(d)).collect();
     let propagator = make_prop(vars);
-    subsumption_propagate(propagator, &mut store, before, after, delta_expected, propagate_success);
+    subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
   }
 }
