@@ -22,17 +22,16 @@ use num::traits::Unsigned;
 pub struct FirstSmallestVar;
 
 impl<S, D, Size> VarSelection<S> for FirstSmallestVar where
-  S: VariableIterator<Variable=SharedVar<D>>,
+  S: VariableIterator<Variable=D>,
   D: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
   fn select(&mut self, space: &S) -> usize {
-    space.vars_iter()
-      .map(|v| v.borrow())
-      .filter(|v| v.size() > Size::one())
-      .min_by(|v| v.size())
+    space.vars_iter().enumerate()
+      .filter(|&(_, v)| v.size() > Size::one())
+      .min_by(|&(_, v)| v.size())
       .expect("Cannot select a variable in a space where all variables are assigned.")
-      .index()
+      .0
   }
 }
 

@@ -15,45 +15,47 @@
 use solver::iterator::*;
 use search::branching::*;
 use search::branching::branch::*;
-use solver::fd::propagator::*;
-use solver::propagator::*;
-use solver::space::Space;
+use propagators::cmp::*;
+use variable::arithmetics::*;
+use solver::solver::*;
+use kernel::Space;
 use solver::fd::event::*;
 use variable::*;
 use interval::ncollections::ops::*;
 use num::traits::Num;
+use num::PrimInt;
 
 pub struct BinarySplit;
 
-impl<S,B,D> Distributor<S> for BinarySplit where
-  S: VariableIterator<Variable=SharedVar<D>> + Space<Constraint=Box<PropagatorErasure<FDEvent, D>>>,
-  D: Cardinality + Bounded<Bound=B> + ShrinkLeft<B> + ShrinkRight<B> + Subset + 'static,
-  B: Num + PartialOrd + Clone + 'static
+impl<S,B,D,R> Distributor<S> for BinarySplit where
+  S: VariableIterator<Variable=D> + Space<Constraint=Box<PropagatorErasure<FDEvent, D>>>,
+  D: ExprInference<Output=R> + Clone + Cardinality + Bounded<Bound=B> + ShrinkLeft<B> + ShrinkRight<B> + Subset + 'static,
+  R: Bounded<Bound=B>,
+  B: PrimInt + Num + PartialOrd + Clone + 'static
 {
   fn distribute(&mut self, space: &S, var_idx: usize) -> Vec<Branch<S>> {
     let var = nth_var(space, var_idx);
-    assert!(!var.borrow().is_singleton() && !var.borrow().is_empty(),
+    assert!(!var.is_singleton() && !var.is_empty(),
       "Can not distribute over assigned or failed variables.");
-    let mid = (var.borrow().lower() + var.borrow().upper()) / (B::one() + B::one());
+    let mid = (var.lower() + var.upper()) / (B::one() + B::one());
     let mid2 = mid.clone();
 
     Branch::distribute(space,
       vec![
         Box::new(move |s: &mut S| {
-          let v = nth_var(s, var_idx);
-          s.add(Box::new(XLessEqThanC::new(v, mid)))
+          s.add(Box::new(x_leq_y(Identity::<D>::new(var_idx), Constant::new(mid))))
         }),
         Box::new(move |s: &mut S| {
-          let v = nth_var(s, var_idx);
-          s.add(Box::new(XGreaterThanC::new(v, mid2)))
+          s.add(Box::new(x_greater_y(Identity::<D>::new(var_idx), Constant::new(mid2))))
         })
       ]
     )
   }
 }
 
-pub fn nth_var<S, D>(s: &S, var_idx: usize) -> SharedVar<D> where
-  S: VariableIterator<Variable=SharedVar<D>>
+pub fn nth_var<S, D>(s: &S, var_idx: usize) -> D where
+  S: VariableIterator<Variable=D>,
+  D: Clone
 {
   s.vars_iter()
   .nth(var_idx)
