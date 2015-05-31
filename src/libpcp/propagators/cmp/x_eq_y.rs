@@ -91,11 +91,11 @@ impl<X, Y> PropagatorDependencies<FDEvent> for XEqY<X, Y> where
 }
 
 impl<X, Y> DeepClone for XEqY<X, Y> where
-  X: DeepClone,
-  Y: DeepClone
+  X: Clone,
+  Y: Clone
 {
   fn deep_clone(&self) -> XEqY<X, Y> {
-    XEqY::new(self.x.deep_clone(), self.y.deep_clone())
+    XEqY::new(self.x.clone(), self.y.clone())
   }
 }
 

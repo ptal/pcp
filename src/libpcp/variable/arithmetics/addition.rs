@@ -66,3 +66,44 @@ impl<X, V, Event> ViewDependencies<Event> for Addition<X, V> where
     self.x.dependencies(event)
   }
 }
+
+#[cfg(test)]
+mod test {
+  use super::*;
+  use kernel::*;
+  use kernel::trilean::Trilean::*;
+  use solver::fd::event::FDEvent;
+  use solver::fd::event::FDEvent::*;
+  use variable::delta_store::*;
+  use variable::ops::*;
+  use propagators::test::*;
+  use propagators::cmp::XLessY;
+  use interval::interval::*;
+
+  #[test]
+  fn x_less_y_plus_c() {
+    let dom0_10 = (0,10).to_interval();
+    let dom10_20 = (10,20).to_interval();
+    let dom5_15 = (5,15).to_interval();
+    let dom1_1 = (1,1).to_interval();
+
+    // Same test as `x < y` but we add `c` to `y`.
+    x_less_y_plus_c_test_one(1, dom0_10, dom5_15, -5, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_plus_c_test_one(2, dom0_10, dom0_10, 10, Unknown, Unknown, vec![], true);
+    x_less_y_plus_c_test_one(3, dom5_15, dom5_15, 5, Unknown, Unknown, vec![], true);
+    x_less_y_plus_c_test_one(4, dom5_15, dom10_20, -10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_plus_c_test_one(5, dom0_10, dom0_10, 11, True, True, vec![], true);
+    x_less_y_plus_c_test_one(6, dom0_10, dom0_10, -11, False, False, vec![], false);
+    x_less_y_plus_c_test_one(7, dom1_1, dom5_15, -5, Unknown, True, vec![(1, Bound)], true);
+  }
+
+  fn x_less_y_plus_c_test_one(id: u32, x: Interval<i32>, y: Interval<i32>, c: i32,
+    before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
+  {
+    let mut store: FDStore = DeltaStore::new();
+    let x = store.assign(x);
+    let y = store.assign(y);
+    let x_less_y_plus_c = XLessY::new(x, Addition::new(y, c));
+    subsumption_propagate(id, x_less_y_plus_c, &mut store, before, after, expected, update_success);
+  }
+}

@@ -82,7 +82,7 @@ impl<V> PropagatorDependencies<FDEvent> for Distinct<V> where
 }
 
 impl<V> DeepClone for Distinct<V> where
-  V: DeepClone
+  V: Clone
 {
   fn deep_clone(&self) -> Distinct<V> {
     Distinct {

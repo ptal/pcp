@@ -35,12 +35,12 @@ pub fn x_geq_y<X, Y, R, BX>(x: X, y: Y) -> XLessY<Y, Addition<X, BX>> where
   x_greater_y(Addition::new(x, BX::one()), y)
 }
 
-pub fn x_leq_y<X, Y, R, BX>(x: X, y: Y) -> XLessY<Addition<X, BX>, Y> where
-  X: ExprInference<Output=R>,
-  R: Bounded<Bound=BX>,
-  BX: PrimInt
+pub fn x_leq_y<X, Y, R, BY>(x: X, y: Y) -> XLessY<X, Addition<Y, BY>> where
+  Y: ExprInference<Output=R>,
+  R: Bounded<Bound=BY>,
+  BY: PrimInt
 {
-  XLessY::new(Addition::new(x, BX::one()), y)
+  XLessY::new(x, Addition::new(y, BY::one()))
 }
 
 #[cfg(test)]
