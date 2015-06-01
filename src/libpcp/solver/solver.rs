@@ -221,90 +221,91 @@ impl<E, Dom, Deps, A> Display for Solver<E, Dom, Deps, A> where
   }
 }
 
-// #[cfg(test)]
-// mod test {
-  // use super::*;
-  // use interval::interval::*;
-  // use interval::ops::*;
-  // use solver::space::*;
-  // use solver::fd::event::*;
-  // use solver::fd::propagator::*;
-  // use solver::agenda::RelaxedFifoAgenda;
-  // use solver::dependencies::VarEventDepsVector;
+#[cfg(test)]
+mod test {
+  use super::*;
+  use solver::fd::event::FDEvent;
+  use interval::interval::*;
+  use interval::ops::*;
+  use kernel::*;
+  use kernel::Trilean::*;
+  use propagators::cmp::*;
+  use propagators::distinct::*;
+  use variable::arithmetics::*;
 
-  // type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
 
-  // #[test]
-  // fn basic_test() {
-  //   let mut solver: FDSolver = Solver::new();
+  #[test]
+  fn basic_test() {
+    let mut solver: FDSolver = Solver::new();
 
-  //   assert_eq!(solver.solve(), Status::Satisfiable);
+    assert_eq!(solver.solve(), True);
 
-  //   let var1 = solver.newvar(Interval::new(1,4));
-  //   let var2 = solver.newvar(Interval::new(1,4));
-  //   let var3 = solver.newvar(Interval::new(1,1));
+    let var1 = solver.newvar(Interval::new(1,4));
+    let var2 = solver.newvar(Interval::new(1,4));
+    let var3 = solver.newvar(Interval::new(1,1));
 
-  //   assert_eq!(solver.solve(), Status::Satisfiable);
+    assert_eq!(solver.solve(), True);
 
-  //   solver.add(Box::new(XLessThanY::new(var1.clone(), var2)));
-  //   assert_eq!(solver.solve(), Status::Unknown);
+    solver.add(Box::new(XLessY::new(var1.clone(), var2)));
+    assert_eq!(solver.solve(), Unknown);
 
-  //   solver.add(Box::new(XEqualY::new(var1, var3)));
-  //   assert_eq!(solver.solve(), Status::Satisfiable);
-  // }
+    solver.add(Box::new(XEqY::new(var1, var3)));
+    assert_eq!(solver.solve(), True);
+  }
 
-  // fn chained_lt(n: usize, expect: Status) {
-  //   // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
+  fn chained_lt(n: usize, expect: Trilean) {
+    // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
 
-  //   let mut solver: FDSolver = Solver::new();
-  //   let mut vars = vec![];
-  //   for _ in 0..n {
-  //     vars.push(solver.newvar(Interval::new(1,10)));
-  //   }
-  //   for i in 0..n-1 {
-  //     solver.add(Box::new(XLessThanY::new(vars[i].clone(), vars[i+1].clone())));
-  //   }
-  //   assert_eq!(solver.solve(), expect);
-  // }
+    let mut solver: FDSolver = Solver::new();
+    let mut vars = vec![];
+    for _ in 0..n {
+      vars.push(solver.newvar(Interval::new(1,10)));
+    }
+    for i in 0..n-1 {
+      solver.add(Box::new(XLessY::new(vars[i].clone(), vars[i+1].clone())));
+    }
+    assert_eq!(solver.solve(), expect);
+  }
 
-  // #[test]
-  // fn chained_lt_tests() {
-  //   chained_lt(1, Status::Satisfiable);
-  //   chained_lt(2, Status::Unknown);
-  //   chained_lt(5, Status::Unknown);
-  //   chained_lt(9, Status::Unknown);
-  //   chained_lt(10, Status::Satisfiable);
-  //   chained_lt(11, Status::Unsatisfiable);
-  // }
+  #[test]
+  fn chained_lt_tests() {
+    chained_lt(1, True);
+    chained_lt(2, Unknown);
+    chained_lt(5, Unknown);
+    chained_lt(9, Unknown);
+    chained_lt(10, True);
+    chained_lt(11, False);
+  }
 
-  // #[test]
-  // fn example_nqueens() {
-  //   nqueens(1, Status::Satisfiable);
-  //   nqueens(2, Status::Unknown);
-  //   nqueens(3, Status::Unknown);
-  //   nqueens(4, Status::Unknown);
-  // }
+  #[test]
+  fn example_nqueens() {
+    nqueens(1, True);
+    nqueens(2, Unknown);
+    nqueens(3, Unknown);
+    nqueens(4, Unknown);
+  }
 
-  // fn nqueens(n: usize, expect: Status) {
-  //   let mut solver: FDSolver = Solver::new();
-  //   let mut queens = vec![];
-  //   // 2 queens can't share the same line.
-  //   for _ in 0..n {
-  //     queens.push(solver.newvar((1, n as i32).to_interval()));
-  //   }
-  //   for i in 0..n-1 {
-  //     for j in i + 1..n {
-  //       // 2 queens can't share the same diagonal.
-  //       let q1 = (i + 1) as i32;
-  //       let q2 = (j + 1) as i32;
-  //       // Xi + i != Xj + j
-  //       solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), q2 - q1)));
-  //       // Xi - i != Xj - j
-  //       solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), -q2 + q1)));
-  //     }
-  //   }
-  //   // 2 queens can't share the same column.
-  //   solver.add(Box::new(Distinct::new(queens)));
-  //   assert_eq!(solver.solve(), expect);
-  // }
-// }
+  fn nqueens(n: usize, expect: Trilean) {
+    let mut solver: FDSolver = Solver::new();
+    let mut queens = vec![];
+    // 2 queens can't share the same line.
+    for _ in 0..n {
+      queens.push(solver.newvar((1, n as i32).to_interval()));
+    }
+    for i in 0..n-1 {
+      for j in i + 1..n {
+        // 2 queens can't share the same diagonal.
+        let q1 = (i + 1) as i32;
+        let q2 = (j + 1) as i32;
+        // Xi + i != Xj + j
+        solver.add(Box::new(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1))));
+        // Xi - i != Xj - j
+        solver.add(Box::new(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1))));
+      }
+    }
+    // 2 queens can't share the same column.
+    solver.add(Box::new(Distinct::new(queens)));
+    assert_eq!(solver.solve(), expect);
+  }
+}
