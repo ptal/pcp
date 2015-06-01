@@ -22,7 +22,8 @@ use interval::ncollections::ops::*;
 #[derive(Clone)]
 pub struct Distinct<V>
 {
-  props: Vec<XNeqY<V,V>>
+  props: Vec<XNeqY<V,V>>,
+  vars: Vec<V>
 }
 
 impl<V> Distinct<V> where
@@ -36,7 +37,10 @@ impl<V> Distinct<V> where
         props.push(i_neq_j);
       }
     }
-    Distinct { props: props }
+    Distinct {
+      props: props,
+      vars: vars
+    }
   }
 }
 
@@ -77,7 +81,7 @@ impl<V> PropagatorDependencies<FDEvent> for Distinct<V> where
   V: ViewDependencies<FDEvent> + Clone
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    self.props.iter().flat_map(|p| p.dependencies()).collect()
+    self.vars.iter().flat_map(|v| v.dependencies(FDEvent::Inner)).collect()
   }
 }
 
@@ -86,7 +90,8 @@ impl<V> DeepClone for Distinct<V> where
 {
   fn deep_clone(&self) -> Distinct<V> {
     Distinct {
-      props: self.props.iter().map(|p| p.deep_clone()).collect()
+      props: self.props.iter().map(|p| p.deep_clone()).collect(),
+      vars: self.vars.clone()
     }
   }
 }
