@@ -12,26 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod deep_clone;
-pub mod subsumption;
-pub mod trilean;
-pub mod propagator;
-pub mod space;
-pub mod merge;
-pub mod event;
-pub mod agenda;
-pub mod dependencies;
-pub mod iterator;
-pub mod state;
+pub trait State {
+  type Label : Clone;
 
-pub use kernel::deep_clone::*;
-pub use kernel::subsumption::*;
-pub use kernel::trilean::*;
-pub use kernel::propagator::*;
-pub use kernel::space::*;
-pub use kernel::merge::*;
-pub use kernel::event::*;
-pub use kernel::agenda::*;
-pub use kernel::dependencies::*;
-pub use kernel::iterator::*;
-pub use kernel::state::*;
+  fn mark(&self) -> Self::Label;
+  fn restore(self, label: Self::Label) -> Self;
+}

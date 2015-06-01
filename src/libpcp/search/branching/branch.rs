@@ -22,12 +22,12 @@ use alloc::boxed::FnBox;
 // We don't store the propagators but instead a closure that
 // add the propagator(s) to the new space, when available.
 
-pub struct Branch<S: Space> {
-  mark: <S as Space>::Label,
+pub struct Branch<S: State> {
+  mark: <S as State>::Label,
   alternative: Box<FnBox(&mut S)>
 }
 
-impl<S: Space> Branch<S> {
+impl<S: Space + State> Branch<S> {
   pub fn distribute(space: &S, alternatives: Vec<Box<FnBox(&mut S)>>) -> Vec<Branch<S>> {
     let mark = space.mark();
     alternatives.into_iter().map(|alt|
@@ -39,7 +39,7 @@ impl<S: Space> Branch<S> {
   }
 
   pub fn commit(self, space_from: S) -> S {
-    let mut new = space_from.goto(self.mark);
+    let mut new = space_from.restore(self.mark);
     self.alternative.call_once((&mut new,));
     new
   }

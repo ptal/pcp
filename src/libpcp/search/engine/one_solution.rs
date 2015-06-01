@@ -17,7 +17,7 @@ use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use search::engine::queue::*;
 use search::engine::PartialExploration;
-use kernel::Space;
+use kernel::*;
 
 pub struct OneSolution<Q, C> {
   queue: Q,
@@ -30,7 +30,7 @@ impl<Q,C> PartialExploration for OneSolution<Q,C> {}
 impl<Q, C> OneSolution<Q, C>
 {
   pub fn new<S>(child: C) -> OneSolution<Q, C> where
-    S: Space,
+    S: Space + State,
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
@@ -42,7 +42,7 @@ impl<Q, C> OneSolution<Q, C>
   }
 
   fn push_branches<S>(&mut self, branches: Vec<Branch<S>>) where
-    S: Space,
+    S: Space + State,
     Q: Queue<Branch<S>>
   {
     for branch in branches {
@@ -51,7 +51,7 @@ impl<Q, C> OneSolution<Q, C>
   }
 
   fn enter_child<S>(&mut self, current: S, status: &mut Status<S>) -> S where
-    S: Space,
+    S: Space + State,
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
@@ -67,7 +67,7 @@ impl<Q, C> OneSolution<Q, C>
 
   // Only visit the root if we didn't visit it before (based on the queue emptiness).
   fn enter_root<S>(&mut self, root: S, status: &mut Status<S>) -> S where
-    S: Space,
+    S: Space + State,
     Q: Queue<Branch<S>>,
     C: SearchTreeVisitor<S>
   {
@@ -81,7 +81,7 @@ impl<Q, C> OneSolution<Q, C>
 }
 
 impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
- S: Space,
+ S: Space + State,
  Q: Queue<Branch<S>>,
  C: SearchTreeVisitor<S>
 {

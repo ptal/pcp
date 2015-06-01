@@ -79,7 +79,6 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
   type Constraint = Box<PropagatorErasure<DeltaStore<E, Dom>, E> + 'static>;
   type Variable = Identity<Dom>;
   type Domain = Dom;
-  type Label = Rc<Solver<E, Dom, Deps, A>>;
 
   fn newvar(&mut self, dom: Dom) -> Identity<Dom> {
     self.store.assign(dom)
@@ -93,12 +92,21 @@ impl<E, Dom, Deps, A> Space for Solver<E, Dom, Deps, A> where
     self.prepare();
     self.propagation_loop()
   }
+}
+
+impl<E, Dom, Deps, A> State for Solver<E, Dom, Deps, A> where
+ Dom: Cardinality+Clone,
+ E: EventIndex,
+ Deps: VarEventDependencies,
+ A: Agenda
+{
+  type Label = Rc<Solver<E, Dom, Deps, A>>;
 
   fn mark(&self) -> Rc<Solver<E, Dom, Deps, A>> {
     Rc::new(self.deep_clone())
   }
 
-  fn goto(self, label: Rc<Solver<E, Dom, Deps, A>>) -> Self {
+  fn restore(self, label: Rc<Solver<E, Dom, Deps, A>>) -> Self {
     try_unwrap(label).unwrap_or_else(|l| l.deep_clone())
   }
 }

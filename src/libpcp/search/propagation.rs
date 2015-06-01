@@ -29,7 +29,7 @@ impl<C> Propagation<C> {
 }
 
 impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
-  S: Space,
+  S: Space + State,
   C: SearchTreeVisitor<S>
 {
   fn start(&mut self, root: &S) {

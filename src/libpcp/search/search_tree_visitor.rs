@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::Space;
+use kernel::State;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter, Error};
 
-pub enum Status<S: Space> {
+pub enum Status<S: State> {
   Satisfiable,
   Pruned,
   Unsatisfiable,
   Unknown(Vec<Branch<S>>)
 }
 
-impl<S: Space> Debug for Status<S> {
+impl<S: State> Debug for Status<S> {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let name = match self {
       &Satisfiable => "Satisfiable",
@@ -37,7 +37,7 @@ impl<S: Space> Debug for Status<S> {
   }
 }
 
-impl<S: Space> PartialEq for Status<S> {
+impl<S: State> PartialEq for Status<S> {
   fn eq(&self, other: &Status<S>) -> bool {
     match (self, other) {
       (&Satisfiable, &Satisfiable) => true,
@@ -49,8 +49,8 @@ impl<S: Space> PartialEq for Status<S> {
   }
 }
 
-impl<S: Space> Status<S> {
-  // Promote the self to `Pruned` or `Satisfiable` depending on `status`.
+impl<S: State> Status<S> {
+  // Promote `self` to `Pruned` or `Satisfiable` depending on `status`.
   pub fn or(self, status: &Status<S>) -> Self {
     match (self, status) {
       (_, &Satisfiable) => Satisfiable,
@@ -60,7 +60,7 @@ impl<S: Space> Status<S> {
   }
 }
 
-pub trait SearchTreeVisitor<S: Space> {
+pub trait SearchTreeVisitor<S: State> {
   fn start(&mut self, _root: &S) {}
   fn enter(&mut self, current: S) -> (S, Status<S>);
 }

@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::iterator::*;
-use variable::ops::VarIndex;
-use variable::SharedVar;
+use kernel::*;
 use search::branching::*;
 use interval::ncollections::ops::*;
 use num::traits::Unsigned;

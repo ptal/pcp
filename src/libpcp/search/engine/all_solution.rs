@@ -15,7 +15,7 @@
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::engine::PartialExploration;
-use kernel::Space;
+use kernel::*;
 
 pub struct AllSolution<C> {
   child: C
@@ -34,7 +34,7 @@ impl<C> AllSolution<C>
 }
 
 impl<S, C> SearchTreeVisitor<S> for AllSolution<C> where
- S: Space,
+ S: Space + State,
  C: SearchTreeVisitor<S> + PartialExploration
 {
   fn start(&mut self, root: &S) {
