@@ -45,36 +45,36 @@ impl<VStore, Event, R> PropagatorErasure<VStore, Event> for R where
  R: BoxedDeepClone<VStore, Event>
 {}
 
-pub struct Store<VStore, Event, Deps, Agenda>
+pub struct Store<VStore, Event, Deps, Scheduler>
 {
   propagators: Vec<Box<PropagatorErasure<VStore, Event> + 'static>>,
   deps: Deps,
-  agenda: Agenda
+  scheduler: Scheduler
 }
 
 impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
  Event: EventIndex,
  Deps: VarEventDependencies,
- A: Agenda
+ A: Scheduler
 {
   pub fn new() -> Store<VStore, Event, Deps, A> {
     Store {
       propagators: vec![],
       deps: VarEventDependencies::new(0,0),
-      agenda: Agenda::new(0)
+      scheduler: Scheduler::new(0)
     }
   }
 }
 
-impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
+impl<VStore, Event, Deps, S> Store<VStore, Event, Deps, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
  Deps: VarEventDependencies,
- A: Agenda
+ S: Scheduler
 {
   fn prepare(&mut self, store: &VStore) {
     self.init_deps(store);
-    self.init_agenda();
+    self.init_scheduler();
   }
 
   fn init_deps(&mut self, store: &VStore) {
@@ -87,17 +87,17 @@ impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
     }
   }
 
-  fn init_agenda(&mut self) {
+  fn init_scheduler(&mut self) {
     let num_props = self.propagators.len();
-    self.agenda = Agenda::new(num_props);
+    self.scheduler = Scheduler::new(num_props);
     for p_idx in 0..num_props {
-      self.agenda.schedule(p_idx);
+      self.scheduler.schedule(p_idx);
     }
   }
 
   fn propagation_loop(&mut self, store: &mut VStore) -> Trilean {
     let mut unsatisfiable = false;
-    while let Some(p_idx) = self.agenda.pop() {
+    while let Some(p_idx) = self.scheduler.pop() {
       if !self.propagate_one(p_idx, store) {
         unsatisfiable = true;
         break;
@@ -121,7 +121,7 @@ impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
 
   fn reschedule_prop(&mut self, p_idx: usize, store: &mut VStore) {
     if !store.drain_delta().peekable().is_empty() {
-      self.agenda.schedule(p_idx);
+      self.scheduler.schedule(p_idx);
     }
   }
 
@@ -129,13 +129,13 @@ impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
     for (v, ev) in store.drain_delta() {
       let reactions = self.deps.react(v, ev);
       for p in reactions.into_iter() {
-        self.agenda.schedule(p);
+        self.scheduler.schedule(p);
       }
     }
   }
 
   fn unlink_prop(&mut self, p_idx: usize) {
-    self.agenda.unschedule(p_idx);
+    self.scheduler.unschedule(p_idx);
     let deps = self.propagators[p_idx].dependencies();
     for &(var, ev) in deps.iter() {
       self.deps.unsubscribe(var, ev, p_idx)
@@ -143,7 +143,7 @@ impl<VStore, Event, Deps, A> Store<VStore, Event, Deps, A> where
   }
 }
 
-impl<Prop, VStore, Event, D, A> Assign<Prop> for Store<VStore, Event, D, A> where
+impl<Prop, VStore, Event, D, S> Assign<Prop> for Store<VStore, Event, D, S> where
  Prop: PropagatorErasure<VStore, Event> + 'static
 {
   type Variable = ();
@@ -152,11 +152,11 @@ impl<Prop, VStore, Event, D, A> Assign<Prop> for Store<VStore, Event, D, A> wher
   }
 }
 
-impl<VStore, Event, Deps, A> Consistency<VStore> for Store<VStore, Event, Deps, A> where
+impl<VStore, Event, Deps, S> Consistency<VStore> for Store<VStore, Event, Deps, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
  Deps: VarEventDependencies,
- A: Agenda
+ S: Scheduler
 {
   fn consistency(&mut self, store: &mut VStore) -> Trilean {
     self.prepare(store);
@@ -164,26 +164,26 @@ impl<VStore, Event, Deps, A> Consistency<VStore> for Store<VStore, Event, Deps, 
   }
 }
 
-impl<VStore, Event, Deps, A> State for Store<VStore, Event, Deps, A> where
+impl<VStore, Event, Deps, S> State for Store<VStore, Event, Deps, S> where
  Event: EventIndex,
  Deps: VarEventDependencies,
- A: Agenda
+ S: Scheduler
 {
-  type Label = Store<VStore, Event, Deps, A>;
+  type Label = Store<VStore, Event, Deps, S>;
 
-  fn mark(&self) -> Store<VStore, Event, Deps, A> {
+  fn mark(&self) -> Store<VStore, Event, Deps, S> {
     self.deep_clone()
   }
 
-  fn restore(self, label: Store<VStore, Event, Deps, A>) -> Self {
+  fn restore(self, label: Store<VStore, Event, Deps, S>) -> Self {
     label
   }
 }
 
-impl<VStore, Event, Deps, A> DeepClone for Store<VStore, Event, Deps, A> where
+impl<VStore, Event, Deps, S> DeepClone for Store<VStore, Event, Deps, S> where
  Event: EventIndex,
  Deps: VarEventDependencies,
- A: Agenda
+ S: Scheduler
 {
   fn deep_clone(&self) -> Self {
     let mut store = Store::new();
@@ -209,7 +209,7 @@ mod test {
   use variable::delta_store::DeltaStore;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
-  type CStore = Store<VStore, FDEvent, VarEventDepsVector, RelaxedFifoAgenda>;
+  type CStore = Store<VStore, FDEvent, VarEventDepsVector, RelaxedFifoScheduler>;
 
   #[test]
   fn basic_test() {

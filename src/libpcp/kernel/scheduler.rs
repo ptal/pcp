@@ -16,7 +16,7 @@ use std::collections::VecDeque;
 use std::iter::repeat;
 use std::iter::FromIterator;
 
-pub trait Agenda {
+pub trait Scheduler {
   fn new(capacity: usize) -> Self;
   fn schedule(&mut self, idx: usize);
   fn unschedule(&mut self, idx: usize);
@@ -29,16 +29,16 @@ pub trait Agenda {
 // is not call as often as pop, hence the ordering shouldn't
 // be too much modified. Anyways, we don't care, the unschedule
 // operation is always a good news, it is called when a
-// propagator is entailed, so the problem is reduced.
+// propagator is entailed, so the problem is less important.
 
-pub struct RelaxedFifoAgenda {
+pub struct RelaxedFifoScheduler {
   inside_queue: Vec<bool>,
   queue: VecDeque<usize>
 }
 
-impl Agenda for RelaxedFifoAgenda {
-  fn new(capacity: usize) -> RelaxedFifoAgenda {
-    RelaxedFifoAgenda {
+impl Scheduler for RelaxedFifoScheduler {
+  fn new(capacity: usize) -> RelaxedFifoScheduler {
+    RelaxedFifoScheduler {
       inside_queue: FromIterator::from_iter(repeat(false).take(capacity)),
       queue: VecDeque::with_capacity(capacity)
     }
@@ -79,57 +79,57 @@ mod test {
 
   #[test]
   fn schedule_test() {
-    let mut sched: RelaxedFifoAgenda = Agenda::new(3);
-    sched_21(&mut sched);
-    assert_eq!(sched.pop(), Some(2));
-    pop_1(&mut sched);
+    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    schedule_21(&mut scheduler);
+    assert_eq!(scheduler.pop(), Some(2));
+    pop_1(&mut scheduler);
 
-    sched.schedule(1);
-    sched.schedule(1);
-    pop_1(&mut sched);
+    scheduler.schedule(1);
+    scheduler.schedule(1);
+    pop_1(&mut scheduler);
   }
 
   #[test]
   fn unschedule_test() {
-    let mut sched: RelaxedFifoAgenda = Agenda::new(3);
-    sched_21(&mut sched);
-    sched.unschedule(1);
-    assert_eq!(sched.pop(), Some(2));
-    assert_eq!(sched.pop(), None);
+    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    schedule_21(&mut scheduler);
+    scheduler.unschedule(1);
+    assert_eq!(scheduler.pop(), Some(2));
+    assert_eq!(scheduler.pop(), None);
 
-    sched_21(&mut sched);
-    sched.unschedule(2);
-    pop_1(&mut sched);
+    schedule_21(&mut scheduler);
+    scheduler.unschedule(2);
+    pop_1(&mut scheduler);
 
-    sched_21(&mut sched);
-    sched.unschedule(2);
-    sched.unschedule(2);
-    pop_1(&mut sched);
+    schedule_21(&mut scheduler);
+    scheduler.unschedule(2);
+    scheduler.unschedule(2);
+    pop_1(&mut scheduler);
   }
 
-  fn sched_21(sched: &mut RelaxedFifoAgenda) {
-    sched.schedule(2);
-    sched.schedule(1);
+  fn schedule_21(scheduler: &mut RelaxedFifoScheduler) {
+    scheduler.schedule(2);
+    scheduler.schedule(1);
   }
 
-  fn pop_1(sched: &mut RelaxedFifoAgenda) {
-    assert_eq!(sched.is_empty(), false);
-    assert_eq!(sched.pop(), Some(1));
-    assert_eq!(sched.pop(), None);
-    assert_eq!(sched.is_empty(), true);
+  fn pop_1(scheduler: &mut RelaxedFifoScheduler) {
+    assert_eq!(scheduler.is_empty(), false);
+    assert_eq!(scheduler.pop(), Some(1));
+    assert_eq!(scheduler.pop(), None);
+    assert_eq!(scheduler.is_empty(), true);
   }
 
   #[test]
   #[should_panic]
   fn schedule_outofbound() {
-    let mut sched: RelaxedFifoAgenda = Agenda::new(3);
-    sched.schedule(3);
+    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    scheduler.schedule(3);
   }
 
   #[test]
   #[should_panic]
   fn unschedule_outofbound() {
-    let mut sched: RelaxedFifoAgenda = Agenda::new(3);
-    sched.unschedule(3);
+    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    scheduler.unschedule(3);
   }
 }
