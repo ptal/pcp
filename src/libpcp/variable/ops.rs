@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::event::*;
 use interval::ncollections::ops::*;
+use std::collections::vec_map::Drain;
+
+pub trait DrainDelta<Event>
+{
+  fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
+}
 
 pub trait VarIndex
 {
@@ -63,44 +68,4 @@ pub trait StoreRead<Store>
 pub trait ViewDependencies<Event>
 {
   fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
-}
-
-pub trait EventUpdate<Domain: VarDomain>
-{
-  fn event_update<Event>(&mut self, value: Domain,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
-}
-
-pub trait EventShrinkLeft<Domain: VarDomain>
-{
-  fn event_shrink_left<Event>(&mut self, lb: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
-}
-
-pub trait EventShrinkRight<Domain: VarDomain>
-{
-  fn event_shrink_right<Event>(&mut self, ub: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
-}
-
-pub trait EventRemove<Domain: VarDomain>
-{
-  fn event_remove<Event>(&mut self, value: Domain::Bound,
-    events: &mut Vec<(usize, Event)>) -> bool
-  where
-    Event: MonotonicEvent<Domain>;
-}
-
-pub trait EventIntersection<Domain, RHS = Self>
-{
-  fn event_intersection<Event>(&mut self, other: &mut RHS,
-    events: &mut Vec<(usize, Event)>) -> bool
-   where
-    Event: MonotonicEvent<Domain>;
 }

@@ -17,6 +17,8 @@ use variable::ops::*;
 use variable::arithmetics::identity::*;
 use std::slice;
 use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Display, Error};
+use std::result::fold;
 
 pub struct Store<Domain> {
   variables: Vec<Domain>
@@ -37,6 +39,20 @@ impl<Domain> DeepClone for Store<Domain> where
     Store {
       variables: self.variables.clone()
     }
+  }
+}
+
+impl<Domain> State for Store<Domain> where
+ Domain: Clone
+{
+  type Label = Store<Domain>;
+
+  fn mark(&self) -> Store<Domain> {
+    self.deep_clone()
+  }
+
+  fn restore(self, label: Store<Domain>) -> Self {
+    label
   }
 }
 
@@ -91,6 +107,17 @@ impl<Domain> Read<usize> for Store<Domain> where
   fn read(&self, key: usize) -> Domain {
     assert!(key < self.variables.len(), "Variable not registered in the store. Variable index must be obtained with `assign`.");
     self.variables[key].clone()
+  }
+}
+
+impl<Domain> Display for Store<Domain> where
+ Domain: Display
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    let format_vars =
+      self.variables.iter()
+      .map(|v| formatter.write_fmt(format_args!("{}\n", v)));
+    fold(format_vars, (), |a,_| a)
   }
 }
 

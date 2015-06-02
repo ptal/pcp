@@ -16,30 +16,37 @@ use kernel::*;
 use variable::ops::*;
 use variable::store::*;
 use variable::arithmetics::identity::*;
+use interval::ncollections::ops::*;
 use std::slice;
 use std::collections::vec_map::{Drain, VecMap};
-use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Display, Error};
 
-pub struct DeltaStore<Event, Domain> {
+pub struct DeltaStore<Domain, Event> {
   store: Store<Domain>,
   delta: VecMap<Event>
 }
 
-impl<Event, Domain> DeltaStore<Event, Domain>
+impl<Domain, Event> DeltaStore<Domain, Event>
 {
-  pub fn new() -> DeltaStore<Event, Domain> {
+  pub fn new() -> DeltaStore<Domain, Event> {
+    DeltaStore::from_store(Store::new())
+  }
+
+  fn from_store(store: Store<Domain>) -> DeltaStore<Domain, Event> {
     DeltaStore {
-      store: Store::new(),
+      store: store,
       delta: VecMap::new()
     }
   }
+}
 
-  pub fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
+impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> {
+  fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
     self.delta.drain()
   }
 }
 
-impl<Event, Domain> DeepClone for DeltaStore<Event, Domain> where
+impl<Domain, Event> DeepClone for DeltaStore<Domain, Event> where
   Domain: Clone
 {
   fn deep_clone(&self) -> Self {
@@ -50,7 +57,21 @@ impl<Event, Domain> DeepClone for DeltaStore<Event, Domain> where
   }
 }
 
-impl<Event, Domain> VariableIterator for DeltaStore<Event, Domain> {
+impl<Domain, Event> State for DeltaStore<Domain, Event> where
+ Domain: Clone
+{
+  type Label = Store<Domain>;
+
+  fn mark(&self) -> Store<Domain> {
+    self.store.mark()
+  }
+
+  fn restore(self, label: Store<Domain>) -> Self {
+    DeltaStore::from_store(label)
+  }
+}
+
+impl<Domain, Event> VariableIterator for DeltaStore<Domain, Event> {
   type Variable = Domain;
 
   fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
@@ -58,7 +79,7 @@ impl<Event, Domain> VariableIterator for DeltaStore<Event, Domain> {
   }
 }
 
-impl<Event, Domain> Cardinality for DeltaStore<Event, Domain>
+impl<Domain, Event> Cardinality for DeltaStore<Domain, Event>
 {
   type Size = usize;
 
@@ -67,7 +88,7 @@ impl<Event, Domain> Cardinality for DeltaStore<Event, Domain>
   }
 }
 
-impl<Event, Domain> Assign<Domain> for DeltaStore<Event, Domain> where
+impl<Domain, Event> Assign<Domain> for DeltaStore<Domain, Event> where
   Domain: Cardinality
 {
   type Variable = Identity<Domain>;
@@ -79,7 +100,7 @@ impl<Event, Domain> Assign<Domain> for DeltaStore<Event, Domain> where
   }
 }
 
-impl<Event, Domain> MonotonicUpdate<usize, Domain> for DeltaStore<Event, Domain> where
+impl<Domain, Event> MonotonicUpdate<usize, Domain> for DeltaStore<Domain, Event> where
   Domain: VarDomain+Clone,
   Event: MonotonicEvent<Domain> + Merge + Clone
 {
@@ -103,12 +124,20 @@ impl<Event, Domain> MonotonicUpdate<usize, Domain> for DeltaStore<Event, Domain>
   }
 }
 
-impl<Event, Domain> Read<usize> for DeltaStore<Event, Domain> where
+impl<Domain, Event> Read<usize> for DeltaStore<Domain, Event> where
   Domain: Clone
 {
   type Value = Domain;
   fn read(&self, key: usize) -> Domain {
     self.store.read(key)
+  }
+}
+
+impl<Domain, Event> Display for DeltaStore<Domain, Event> where
+ Domain: Display
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    self.store.fmt(formatter)
   }
 }
 
@@ -122,7 +151,7 @@ pub mod test {
   use interval::interval::*;
   use interval::ncollections::ops::*;
 
-  type FDStore = DeltaStore<FDEvent, Interval<i32>>;
+  pub type FDStore = DeltaStore<Interval<i32>, FDEvent>;
 
   fn test_op<Op>(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
     Op: FnOnce(&FDStore, Identity<Interval<i32>>) -> Interval<i32>
@@ -160,7 +189,7 @@ pub mod test {
     }
   }
 
-  pub fn consume_delta(store: &mut DeltaStore<FDEvent, Interval<i32>>, delta_expected: Vec<(usize, FDEvent)>) {
+  pub fn consume_delta(store: &mut FDStore, delta_expected: Vec<(usize, FDEvent)>) {
     let res: Vec<(usize, FDEvent)> = store.drain_delta().collect();
     assert_eq!(res, delta_expected);
     assert!(store.drain_delta().next().is_none());
