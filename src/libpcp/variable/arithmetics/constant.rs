@@ -66,8 +66,8 @@ mod test {
   use super::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
-  use solver::fd::event::FDEvent;
-  use solver::fd::event::FDEvent::*;
+  use propagators::event::FDEvent;
+  use propagators::event::FDEvent::*;
   use variable::delta_store::*;
   use variable::ops::*;
   use propagators::test::*;

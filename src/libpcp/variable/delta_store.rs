@@ -146,8 +146,8 @@ pub mod test {
   use super::*;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
-  use solver::fd::event::*;
-  use solver::fd::event::FDEvent::*;
+  use propagators::event::*;
+  use propagators::event::FDEvent::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
 

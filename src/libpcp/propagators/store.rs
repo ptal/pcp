@@ -197,7 +197,7 @@ impl<VStore, Event, Deps, A> DeepClone for Store<VStore, Event, Deps, A> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use solver::fd::event::FDEvent;
+  use propagators::event::FDEvent;
   use interval::interval::*;
   use interval::ops::*;
   use kernel::*;

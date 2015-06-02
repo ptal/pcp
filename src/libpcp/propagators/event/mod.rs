@@ -14,7 +14,7 @@
 
 use kernel::Merge;
 use kernel::event::*;
-use solver::fd::event::FDEvent::*;
+use propagators::event::FDEvent::*;
 use interval::ncollections::ops::*;
 use std::cmp::min;
 

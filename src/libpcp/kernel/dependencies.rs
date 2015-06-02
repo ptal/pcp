@@ -86,8 +86,8 @@ impl VarEventDependencies for VarEventDepsVector {
 #[cfg(test)]
 mod test {
   use super::*;
-  use solver::fd::event::FDEvent;
-  use solver::fd::event::FDEvent::*;
+  use propagators::event::FDEvent;
+  use propagators::event::FDEvent::*;
   use kernel::event::EventIndex;
 
   fn make_deps() -> VarEventDepsVector {
