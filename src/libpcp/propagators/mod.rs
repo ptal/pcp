@@ -14,6 +14,7 @@
 
 pub mod cmp;
 pub mod distinct;
+pub mod store;
 
 #[cfg(test)]
 pub mod test {
@@ -22,10 +23,9 @@ pub mod test {
   use interval::interval::*;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
-  use variable::delta_store::*;
-  use variable::delta_store::test::*;
+  use variable::delta_store::test::consume_delta;
+  pub use variable::delta_store::test::FDStore;
 
-  pub type FDStore = DeltaStore<FDEvent, Interval<i32>>;
   pub type FDVar = Identity<Interval<i32>>;
 
   pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut FDStore,
