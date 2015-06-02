@@ -25,6 +25,8 @@ pub struct XNeqY<X, Y>
   y: Y
 }
 
+impl<X, Y> PropagatorKind for XNeqY<X, Y> {}
+
 impl<X, Y> XNeqY<X, Y> {
   pub fn new(x: X, y: Y) -> XNeqY<X, Y> {
     XNeqY { x: x, y: y }

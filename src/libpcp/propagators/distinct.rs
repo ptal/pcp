@@ -26,6 +26,8 @@ pub struct Distinct<V>
   vars: Vec<V>
 }
 
+impl<V> PropagatorKind for Distinct<V> {}
+
 impl<V> Distinct<V> where
   V: Clone
 {

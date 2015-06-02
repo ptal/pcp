@@ -25,6 +25,8 @@ pub struct XEqY<X, Y>
   y: Y
 }
 
+impl<X, Y> PropagatorKind for XEqY<X, Y> {}
+
 impl<X, Y> XEqY<X, Y> {
   pub fn new(x: X, y: Y) -> XEqY<X, Y> {
     XEqY { x: x, y: y }

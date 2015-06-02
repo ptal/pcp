@@ -25,6 +25,8 @@ pub struct XLessY<X, Y>
   y: Y
 }
 
+impl<X, Y> PropagatorKind for XLessY<X, Y> {}
+
 impl<X, Y> XLessY<X, Y> {
   pub fn new(x: X, y: Y) -> XLessY<X, Y> {
     XLessY { x: x, y: y }
