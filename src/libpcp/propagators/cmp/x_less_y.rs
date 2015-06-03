@@ -96,15 +96,6 @@ impl<X, Y> PropagatorDependencies<FDEvent> for XLessY<X, Y> where
   }
 }
 
-impl<X, Y> DeepClone for XLessY<X, Y> where
-  X: Clone,
-  Y: Clone
-{
-  fn deep_clone(&self) -> XLessY<X, Y> {
-    XLessY::new(self.x.clone(), self.y.clone())
-  }
-}
-
 #[cfg(test)]
 mod test {
   use super::*;

@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod deep_clone;
 pub mod trilean;
 pub mod consistency;
 pub mod merge;
 pub mod event;
 pub mod state;
 
-pub use kernel::deep_clone::*;
 pub use kernel::trilean::*;
 pub use kernel::consistency::*;
 pub use kernel::merge::*;

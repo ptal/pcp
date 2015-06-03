@@ -21,6 +21,7 @@ use interval::ncollections::ops::*;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
 
+#[derive(Clone)]
 pub struct Store<Domain> {
   variables: Vec<Domain>
 }
@@ -33,23 +34,13 @@ impl<Domain> Store<Domain> {
   }
 }
 
-impl<Domain> DeepClone for Store<Domain> where
-  Domain: Clone
-{
-  fn deep_clone(&self) -> Self {
-    Store {
-      variables: self.variables.clone()
-    }
-  }
-}
-
 impl<Domain> State for Store<Domain> where
  Domain: Clone
 {
   type Label = Store<Domain>;
 
   fn mark(&self) -> Store<Domain> {
-    self.deep_clone()
+    self.clone()
   }
 
   fn restore(self, label: Store<Domain>) -> Self {

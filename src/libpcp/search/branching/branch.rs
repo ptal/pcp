@@ -32,7 +32,7 @@ pub struct Branch<Space> where
 
 impl<Space, L> Branch<Space> where
   Space: State<Label=L>,
-  L: DeepClone
+  L: Clone
 {
   pub fn distribute(space: &Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> Vec<Branch<Space>> {
     let label = shared_mark(space);

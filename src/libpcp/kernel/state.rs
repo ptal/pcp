@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::deep_clone::DeepClone;
 use std::rc::*;
+use std::ops::Deref;
 
 pub trait State {
   type Label;
@@ -45,7 +45,7 @@ pub fn shared_mark<S>(state: &S) -> Rc<S::Label> where
 
 pub fn shared_restore<S, L>(state: S, label: Rc<S::Label>) -> S where
  S: State<Label=L>,
- L: DeepClone
+ L: Clone
 {
-  state.restore(try_unwrap(label).unwrap_or_else(|l| l.deep_clone()))
+  state.restore(try_unwrap(label).unwrap_or_else(|l| l.deref().clone()))
 }

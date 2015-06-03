@@ -89,17 +89,6 @@ impl<V> PropagatorDependencies<FDEvent> for Distinct<V> where
   }
 }
 
-impl<V> DeepClone for Distinct<V> where
-  V: Clone
-{
-  fn deep_clone(&self) -> Distinct<V> {
-    Distinct {
-      props: self.props.iter().map(|p| p.deep_clone()).collect(),
-      vars: self.vars.clone()
-    }
-  }
-}
-
 #[cfg(test)]
 mod test {
   use super::*;

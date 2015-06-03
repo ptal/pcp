@@ -81,15 +81,6 @@ impl<X, Y> PropagatorDependencies<FDEvent> for XNeqY<X, Y> where
   }
 }
 
-impl<X, Y> DeepClone for XNeqY<X, Y> where
-  X: Clone,
-  Y: Clone
-{
-  fn deep_clone(&self) -> XNeqY<X, Y> {
-    XNeqY::new(self.x.clone(), self.y.clone())
-  }
-}
-
 #[cfg(test)]
 mod test {
   use super::*;

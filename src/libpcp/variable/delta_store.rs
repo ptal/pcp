@@ -47,12 +47,12 @@ impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> {
   }
 }
 
-impl<Domain, Event> DeepClone for DeltaStore<Domain, Event> where
+impl<Domain, Event> Clone for DeltaStore<Domain, Event> where
   Domain: Clone
 {
-  fn deep_clone(&self) -> Self {
+  fn clone(&self) -> Self {
     DeltaStore {
-      store: self.store.deep_clone(),
+      store: self.store.clone(),
       delta: VecMap::new()
     }
   }

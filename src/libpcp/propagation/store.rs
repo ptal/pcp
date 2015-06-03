@@ -20,32 +20,32 @@ use propagation::propagator::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
 
-pub trait BoxedDeepClone<VStore, Event>
+pub trait BoxedClone<VStore, Event>
 {
-  fn boxed_deep_clone(&self) -> Box<PropagatorRequirements<VStore, Event>>;
+  fn boxed_clone(&self) -> Box<PropagatorRequirements<VStore, Event>>;
 }
 
-impl<VStore, Event, R> BoxedDeepClone<VStore, Event> for R where
-  R: DeepClone,
+impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
+  R: Clone,
   R: Consistency<VStore>,
   R: PropagatorDependencies<Event>,
   R: 'static
 {
-  fn boxed_deep_clone(&self) -> Box<PropagatorRequirements<VStore, Event>> {
-    Box::new(self.deep_clone())
+  fn boxed_clone(&self) -> Box<PropagatorRequirements<VStore, Event>> {
+    Box::new(self.clone())
   }
 }
 
 pub trait PropagatorRequirements<VStore, Event> :
     Consistency<VStore>
   + PropagatorDependencies<Event>
-  + BoxedDeepClone<VStore, Event>
+  + BoxedClone<VStore, Event>
 {}
 
 impl<VStore, Event, R> PropagatorRequirements<VStore, Event> for R where
  R: Consistency<VStore>,
  R: PropagatorDependencies<Event>,
- R: BoxedDeepClone<VStore, Event>
+ R: BoxedClone<VStore, Event>
 {}
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
@@ -175,7 +175,7 @@ impl<VStore, Event, R, S> State for Store<VStore, Event, R, S> where
   type Label = Store<VStore, Event, R, S>;
 
   fn mark(&self) -> Store<VStore, Event, R, S> {
-    self.deep_clone()
+    self.clone()
   }
 
   fn restore(self, label: Store<VStore, Event, R, S>) -> Self {
@@ -183,15 +183,15 @@ impl<VStore, Event, R, S> State for Store<VStore, Event, R, S> where
   }
 }
 
-impl<VStore, Event, R, S> DeepClone for Store<VStore, Event, R, S> where
+impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
  Event: EventIndex,
  R: Reactor,
  S: Scheduler
 {
-  fn deep_clone(&self) -> Self {
+  fn clone(&self) -> Self {
     let mut store = Store::new();
     store.propagators = self.propagators.iter()
-      .map(|p| p.boxed_deep_clone())
+      .map(|p| p.boxed_clone())
       .collect();
     store
   }
