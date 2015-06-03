@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use variable::iterator::*;
 use variable::ops::*;
 use variable::store::*;
 use variable::arithmetics::identity::*;
@@ -146,8 +147,8 @@ pub mod test {
   use super::*;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
-  use propagation::event::*;
-  use propagation::event::FDEvent::*;
+  use propagation::events::*;
+  use propagation::events::FDEvent::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
 

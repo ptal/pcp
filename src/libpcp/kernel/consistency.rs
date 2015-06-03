@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::subsumption::Subsumption;
-use kernel::propagator::Propagator;
 use kernel::trilean::Trilean;
 use kernel::trilean::Trilean::*;
+use propagation::subsumption::Subsumption;
+use propagation::propagator::Propagator;
 
 pub trait Consistency<VStore> {
   fn consistency(&mut self, store: &mut VStore) -> Trilean;

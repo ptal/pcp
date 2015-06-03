@@ -16,9 +16,12 @@ pub mod reactor;
 pub mod reactors;
 pub mod scheduler;
 pub mod schedulers;
-pub mod event;
+pub mod events;
 pub mod store;
+pub mod propagator;
+pub mod subsumption;
 
 pub use propagation::reactor::Reactor;
 pub use propagation::scheduler::Scheduler;
-pub use propagation::store::Store;
+pub use propagation::propagator::*;
+pub use propagation::subsumption::*;

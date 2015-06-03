@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use variable::iterator::*;
 use variable::ops::*;
 use variable::arithmetics::identity::*;
 use std::slice;

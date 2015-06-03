@@ -14,7 +14,8 @@
 
 use kernel::*;
 use propagators::cmp::x_eq_y::*;
-use propagation::event::*;
+use propagation::*;
+use propagation::events::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
 
@@ -93,8 +94,8 @@ mod test {
   use super::*;
   use kernel::*;
   use kernel::Trilean::*;
-  use propagation::event::*;
-  use propagation::event::FDEvent::*;
+  use propagation::events::*;
+  use propagation::events::FDEvent::*;
   use interval::interval::*;
   use propagators::test::*;
 

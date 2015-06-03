@@ -13,21 +13,15 @@
 // limitations under the License.
 
 pub mod deep_clone;
-pub mod subsumption;
 pub mod trilean;
-pub mod propagator;
 pub mod consistency;
 pub mod merge;
 pub mod event;
-pub mod iterator;
 pub mod state;
 
 pub use kernel::deep_clone::*;
-pub use kernel::subsumption::*;
 pub use kernel::trilean::*;
-pub use kernel::propagator::*;
 pub use kernel::consistency::*;
 pub use kernel::merge::*;
 pub use kernel::event::*;
-pub use kernel::iterator::*;
 pub use kernel::state::*;

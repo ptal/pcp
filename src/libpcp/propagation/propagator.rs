@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub trait Propagator<Store>
+pub trait Propagator<VStore>
 {
   // Returns `false` if it failed to propagate (a variable has an empty domain after propagation).
-  fn propagate(&mut self, store: &mut Store) -> bool;
+  fn propagate(&mut self, store: &mut VStore) -> bool;
 }
 
 pub trait PropagatorDependencies<Event>

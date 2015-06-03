@@ -16,6 +16,7 @@ use kernel::*;
 use kernel::Trilean::*;
 use propagation::Reactor;
 use propagation::Scheduler;
+use propagation::propagator::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
 
@@ -199,11 +200,11 @@ impl<VStore, Event, R, S> DeepClone for Store<VStore, Event, R, S> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use propagation::event::FDEvent;
   use interval::interval::*;
   use interval::ops::*;
   use kernel::*;
   use kernel::Trilean::*;
+  use propagation::events::*;
   use propagation::reactors::*;
   use propagation::schedulers::*;
   use propagators::cmp::*;

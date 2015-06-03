@@ -81,8 +81,8 @@ impl Reactor for IndexedDeps {
 mod test {
   use super::*;
   use propagation::Reactor;
-  use propagation::event::FDEvent;
-  use propagation::event::FDEvent::*;
+  use propagation::events::FDEvent;
+  use propagation::events::FDEvent::*;
   use kernel::event::EventIndex;
 
   fn make_reactor() -> IndexedDeps {

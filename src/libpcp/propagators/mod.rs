@@ -18,7 +18,8 @@ pub mod distinct;
 #[cfg(test)]
 pub mod test {
   use kernel::*;
-  use propagation::event::*;
+  use propagation::*;
+  use propagation::events::*;
   use interval::interval::*;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
