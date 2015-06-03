@@ -22,7 +22,7 @@ use interval::ncollections::ops::*;
 
 pub trait BoxedDeepClone<VStore, Event>
 {
-  fn boxed_deep_clone(&self) -> Box<PropagatorErasure<VStore, Event>>;
+  fn boxed_deep_clone(&self) -> Box<PropagatorRequirements<VStore, Event>>;
 }
 
 impl<VStore, Event, R> BoxedDeepClone<VStore, Event> for R where
@@ -31,18 +31,18 @@ impl<VStore, Event, R> BoxedDeepClone<VStore, Event> for R where
   R: PropagatorDependencies<Event>,
   R: 'static
 {
-  fn boxed_deep_clone(&self) -> Box<PropagatorErasure<VStore, Event>> {
+  fn boxed_deep_clone(&self) -> Box<PropagatorRequirements<VStore, Event>> {
     Box::new(self.deep_clone())
   }
 }
 
-pub trait PropagatorErasure<VStore, Event> :
+pub trait PropagatorRequirements<VStore, Event> :
     Consistency<VStore>
   + PropagatorDependencies<Event>
   + BoxedDeepClone<VStore, Event>
 {}
 
-impl<VStore, Event, R> PropagatorErasure<VStore, Event> for R where
+impl<VStore, Event, R> PropagatorRequirements<VStore, Event> for R where
  R: Consistency<VStore>,
  R: PropagatorDependencies<Event>,
  R: BoxedDeepClone<VStore, Event>
@@ -50,7 +50,7 @@ impl<VStore, Event, R> PropagatorErasure<VStore, Event> for R where
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
-  propagators: Vec<Box<PropagatorErasure<VStore, Event> + 'static>>,
+  propagators: Vec<Box<PropagatorRequirements<VStore, Event> + 'static>>,
   reactor: Reactor,
   scheduler: Scheduler
 }
@@ -147,7 +147,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
 }
 
 impl<Prop, VStore, Event, R, S> Assign<Prop> for Store<VStore, Event, R, S> where
- Prop: PropagatorErasure<VStore, Event> + 'static
+ Prop: PropagatorRequirements<VStore, Event> + 'static
 {
   type Variable = ();
   fn assign(&mut self, p: Prop) {
