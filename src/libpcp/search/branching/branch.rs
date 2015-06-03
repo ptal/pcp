@@ -14,6 +14,7 @@
 
 use kernel::*;
 use alloc::boxed::FnBox;
+use std::rc::Rc;
 
 // A branch represents an edge between two distinct nodes in the search tree.
 // Each branch store a copy of the label of the current node.
@@ -22,24 +23,29 @@ use alloc::boxed::FnBox;
 // We don't store the propagators but instead a closure that
 // add the propagator(s) to the new space, when available.
 
-pub struct Branch<S: State> {
-  mark: <S as State>::Label,
-  alternative: Box<FnBox(&mut S)>
+pub struct Branch<Space> where
+  Space: State
+{
+  label: Rc<Space::Label>,
+  alternative: Box<FnBox(&mut Space)>
 }
 
-impl<S: Space + State> Branch<S> {
-  pub fn distribute(space: &S, alternatives: Vec<Box<FnBox(&mut S)>>) -> Vec<Branch<S>> {
-    let mark = space.mark();
+impl<Space, L> Branch<Space> where
+  Space: State<Label=L>,
+  L: DeepClone
+{
+  pub fn distribute(space: &Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> Vec<Branch<Space>> {
+    let label = shared_mark(space);
     alternatives.into_iter().map(|alt|
       Branch {
-        mark: mark.clone(),
+        label: label.clone(),
         alternative: alt
       }
     ).collect()
   }
 
-  pub fn commit(self, space_from: S) -> S {
-    let mut new = space_from.restore(self.mark);
+  pub fn commit(self, space_from: Space) -> Space {
+    let mut new = shared_restore(space_from, self.label);
     self.alternative.call_once((&mut new,));
     new
   }

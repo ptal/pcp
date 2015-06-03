@@ -13,19 +13,19 @@
 // limitations under the License.
 
 pub mod branch;
-pub mod brancher;
-pub mod first_smallest_var;
-pub mod binary_split;
+// pub mod brancher;
+// pub mod first_smallest_var;
+// pub mod binary_split;
 
-use search::branching::branch::*;
+// use search::branching::branch::*;
 
-pub trait VarSelection<S> {
-  // Precondition: `space` must have variables not assigned.
-  // Returns the index of the variable selected in `space`.
-  fn select(&mut self, space: &S) -> usize;
-}
+// pub trait VarSelection<S> {
+//   // Precondition: `space` must have variables not assigned.
+//   // Returns the index of the variable selected in `space`.
+//   fn select(&mut self, space: &S) -> usize;
+// }
 
-pub trait Distributor<S> {
-  // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
-  fn distribute(&mut self, space: &S, var_idx: usize) -> Vec<Branch<S>>;
-}
+// pub trait Distributor<S> {
+//   // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
+//   fn distribute(&mut self, space: &S, var_idx: usize) -> Vec<Branch<S>>;
+// }

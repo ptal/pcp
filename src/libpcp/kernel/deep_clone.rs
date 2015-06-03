@@ -16,3 +16,12 @@ pub trait DeepClone
 {
   fn deep_clone(&self) -> Self;
 }
+
+impl<A, B> DeepClone for (A, B) where
+ A: DeepClone,
+ B: DeepClone
+{
+  fn deep_clone(&self) -> (A, B) {
+    (self.0.deep_clone(), self.1.deep_clone())
+  }
+}
