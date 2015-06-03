@@ -20,7 +20,7 @@ pub mod consistency;
 pub mod merge;
 pub mod event;
 pub mod scheduler;
-pub mod dependencies;
+pub mod reactor;
 pub mod iterator;
 pub mod state;
 
@@ -32,6 +32,6 @@ pub use kernel::consistency::*;
 pub use kernel::merge::*;
 pub use kernel::event::*;
 pub use kernel::scheduler::*;
-pub use kernel::dependencies::*;
+pub use kernel::reactor::*;
 pub use kernel::iterator::*;
 pub use kernel::state::*;

@@ -15,8 +15,7 @@
 use kernel::event::*;
 use std::iter::{FromIterator, repeat};
 
-pub trait VarEventDependencies {
-
+pub trait Reactor {
   fn new(num_vars: usize, num_events: usize) -> Self;
   fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
@@ -24,13 +23,15 @@ pub trait VarEventDependencies {
   fn is_empty(&self) -> bool;
 }
 
-pub struct VarEventDepsVector {
+// `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
+
+pub struct IndexedDeps {
   num_events: usize,
   num_subscriptions: usize,
   deps: Vec<Vec<usize>>
 }
 
-impl VarEventDepsVector {
+impl IndexedDeps {
   fn index_of<E>(&self, var: usize, ev: E) -> usize where E: EventIndex {
     self.num_events*var + ev.to_index()
   }
@@ -41,9 +42,9 @@ impl VarEventDepsVector {
   }
 }
 
-impl VarEventDependencies for VarEventDepsVector {
-  fn new(num_vars: usize, num_events: usize) -> VarEventDepsVector {
-    VarEventDepsVector {
+impl Reactor for IndexedDeps {
+  fn new(num_vars: usize, num_events: usize) -> IndexedDeps {
+    IndexedDeps {
       num_events: num_events,
       num_subscriptions: 0,
       deps: FromIterator::from_iter(repeat(vec![]).take(num_vars * num_events))
@@ -90,13 +91,12 @@ mod test {
   use propagators::event::FDEvent::*;
   use kernel::event::EventIndex;
 
-  fn make_deps() -> VarEventDepsVector {
-    let res: VarEventDepsVector = VarEventDependencies::new(3, <FDEvent as EventIndex>::size());
-    res
+  fn make_reactor() -> IndexedDeps {
+    Reactor::new(3, <FDEvent as EventIndex>::size())
   }
 
-  fn iter_deps(deps: &mut VarEventDepsVector, var: usize, ev: FDEvent, expect: Vec<usize>) {
-    let mut it = deps.react(var, ev).into_iter();
+  fn iter_deps(reactor: &mut IndexedDeps, var: usize, ev: FDEvent, expect: Vec<usize>) {
+    let mut it = reactor.react(var, ev).into_iter();
     let mut it_e = expect.into_iter();
     loop {
       let next = it.next();
@@ -110,75 +110,75 @@ mod test {
 
   #[test]
   fn subscribe_test() {
-    let mut deps = make_deps();
-    assert!(deps.is_empty());
-    deps.subscribe(0, Assignment, 4);
-    assert!(!deps.is_empty());
+    let reactor = &mut make_reactor();
+    assert!(reactor.is_empty());
+    reactor.subscribe(0, Assignment, 4);
+    assert!(!reactor.is_empty());
 
-    iter_deps(&mut deps, 0, Assignment, vec![4]);
+    iter_deps(reactor, 0, Assignment, vec![4]);
 
     // Assignment is more precise than Inner, so we don't care.
-    iter_deps(&mut deps, 0, Inner, vec![]);
+    iter_deps(reactor, 0, Inner, vec![]);
 
     // If we subscribe to Inner, we must react on Inner
     // or more precise events.
-    deps.subscribe(0, Inner, 5);
-    iter_deps(&mut deps, 0, Inner, vec![5]);
-    iter_deps(&mut deps, 0, Assignment, vec![4,5]);
+    reactor.subscribe(0, Inner, 5);
+    iter_deps(reactor, 0, Inner, vec![5]);
+    iter_deps(reactor, 0, Assignment, vec![4,5]);
 
-    deps.subscribe(1, Bound, 6);
-    deps.subscribe(1, Assignment, 7);
-    iter_deps(&mut deps, 1, Inner, vec![]);
-    iter_deps(&mut deps, 1, Bound, vec![6]);
-    iter_deps(&mut deps, 1, Assignment, vec![7,6]);
+    reactor.subscribe(1, Bound, 6);
+    reactor.subscribe(1, Assignment, 7);
+    iter_deps(reactor, 1, Inner, vec![]);
+    iter_deps(reactor, 1, Bound, vec![6]);
+    iter_deps(reactor, 1, Assignment, vec![7,6]);
 
-    iter_deps(&mut deps, 2, Assignment, vec![]);
+    iter_deps(reactor, 2, Assignment, vec![]);
 
-    deps.subscribe(2, Assignment, 8);
-    iter_deps(&mut deps, 1, Inner, vec![]);
+    reactor.subscribe(2, Assignment, 8);
+    iter_deps(reactor, 1, Inner, vec![]);
   }
 
   #[test]
   fn unsubscribe_test() {
-    let mut deps = make_deps();
-    deps.subscribe(0, Assignment, 4);
-    deps.subscribe(0, Bound, 5);
+    let reactor = &mut make_reactor();
+    reactor.subscribe(0, Assignment, 4);
+    reactor.subscribe(0, Bound, 5);
 
-    iter_deps(&mut deps, 0, Assignment, vec![4,5]);
+    iter_deps(reactor, 0, Assignment, vec![4,5]);
 
-    deps.unsubscribe(0, Bound, 5);
-    iter_deps(&mut deps, 0, Assignment, vec![4]);
+    reactor.unsubscribe(0, Bound, 5);
+    iter_deps(reactor, 0, Assignment, vec![4]);
 
-    deps.unsubscribe(0, Assignment, 4);
-    iter_deps(&mut deps, 0, Assignment, vec![]);
+    reactor.unsubscribe(0, Assignment, 4);
+    iter_deps(reactor, 0, Assignment, vec![]);
 
-    deps.subscribe(0, Assignment, 4);
-    iter_deps(&mut deps, 0, Assignment, vec![4]);
+    reactor.subscribe(0, Assignment, 4);
+    iter_deps(reactor, 0, Assignment, vec![4]);
   }
 
   #[test]
   #[should_panic]
   fn subscribe_fail_test() {
-    let mut deps = make_deps();
+    let mut reactor = make_reactor();
 
-    deps.subscribe(0, Assignment, 0);
-    deps.subscribe(0, Assignment, 0);
+    reactor.subscribe(0, Assignment, 0);
+    reactor.subscribe(0, Assignment, 0);
   }
 
   #[test]
   #[should_panic]
   fn unsubscribe_fail_test() {
-    let mut deps = make_deps();
+    let mut reactor = make_reactor();
 
-    deps.unsubscribe(0, Assignment, 0);
+    reactor.unsubscribe(0, Assignment, 0);
   }
 
   #[test]
   #[should_panic]
   fn subscribe_two_events_fail_test() {
-    let mut deps = make_deps();
+    let mut reactor = make_reactor();
 
-    deps.subscribe(0, Assignment, 0);
-    deps.subscribe(0, Bound, 0); // already subscribed to this variable
+    reactor.subscribe(0, Assignment, 0);
+    reactor.subscribe(0, Bound, 0); // already subscribed to this variable
   }
 }
