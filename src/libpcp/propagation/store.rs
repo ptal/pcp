@@ -14,6 +14,8 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use propagation::Reactor;
+use propagation::Scheduler;
 use variable::ops::*;
 use interval::ncollections::ops::*;
 
@@ -197,11 +199,13 @@ impl<VStore, Event, R, S> DeepClone for Store<VStore, Event, R, S> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use propagators::event::FDEvent;
+  use propagation::event::FDEvent;
   use interval::interval::*;
   use interval::ops::*;
   use kernel::*;
   use kernel::Trilean::*;
+  use propagation::reactors::*;
+  use propagation::schedulers::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
   use variable::ops::*;
@@ -209,7 +213,7 @@ mod test {
   use variable::delta_store::DeltaStore;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
-  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifoScheduler>;
+  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
 
   #[test]
   fn basic_test() {

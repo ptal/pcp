@@ -12,16 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use propagation::Reactor;
 use kernel::event::*;
 use std::iter::{FromIterator, repeat};
-
-pub trait Reactor {
-  fn new(num_vars: usize, num_events: usize) -> Self;
-  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
-  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
-  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex;
-  fn is_empty(&self) -> bool;
-}
 
 // `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
 
@@ -87,8 +80,9 @@ impl Reactor for IndexedDeps {
 #[cfg(test)]
 mod test {
   use super::*;
-  use propagators::event::FDEvent;
-  use propagators::event::FDEvent::*;
+  use propagation::Reactor;
+  use propagation::event::FDEvent;
+  use propagation::event::FDEvent::*;
   use kernel::event::EventIndex;
 
   fn make_reactor() -> IndexedDeps {

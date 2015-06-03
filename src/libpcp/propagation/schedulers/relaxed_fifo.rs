@@ -12,17 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use propagation::Scheduler;
 use std::collections::VecDeque;
 use std::iter::repeat;
 use std::iter::FromIterator;
-
-pub trait Scheduler {
-  fn new(capacity: usize) -> Self;
-  fn schedule(&mut self, idx: usize);
-  fn unschedule(&mut self, idx: usize);
-  fn pop(&mut self) -> Option<usize>;
-  fn is_empty(&self) -> bool;
-}
 
 // It is a "relaxed FIFO" because the unschedule operation
 // might not preserve the ordering. However, this operation
@@ -31,14 +24,14 @@ pub trait Scheduler {
 // operation is always a good news, it is called when a
 // propagator is entailed, so the problem is less important.
 
-pub struct RelaxedFifoScheduler {
+pub struct RelaxedFifo {
   inside_queue: Vec<bool>,
   queue: VecDeque<usize>
 }
 
-impl Scheduler for RelaxedFifoScheduler {
-  fn new(capacity: usize) -> RelaxedFifoScheduler {
-    RelaxedFifoScheduler {
+impl Scheduler for RelaxedFifo {
+  fn new(capacity: usize) -> RelaxedFifo {
+    RelaxedFifo {
       inside_queue: FromIterator::from_iter(repeat(false).take(capacity)),
       queue: VecDeque::with_capacity(capacity)
     }
@@ -76,10 +69,11 @@ impl Scheduler for RelaxedFifoScheduler {
 #[cfg(test)]
 mod test {
   use super::*;
+  use propagation::Scheduler;
 
   #[test]
   fn schedule_test() {
-    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    let mut scheduler: RelaxedFifo = Scheduler::new(3);
     schedule_21(&mut scheduler);
     assert_eq!(scheduler.pop(), Some(2));
     pop_1(&mut scheduler);
@@ -91,7 +85,7 @@ mod test {
 
   #[test]
   fn unschedule_test() {
-    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    let mut scheduler: RelaxedFifo = Scheduler::new(3);
     schedule_21(&mut scheduler);
     scheduler.unschedule(1);
     assert_eq!(scheduler.pop(), Some(2));
@@ -107,12 +101,12 @@ mod test {
     pop_1(&mut scheduler);
   }
 
-  fn schedule_21(scheduler: &mut RelaxedFifoScheduler) {
+  fn schedule_21(scheduler: &mut RelaxedFifo) {
     scheduler.schedule(2);
     scheduler.schedule(1);
   }
 
-  fn pop_1(scheduler: &mut RelaxedFifoScheduler) {
+  fn pop_1(scheduler: &mut RelaxedFifo) {
     assert_eq!(scheduler.is_empty(), false);
     assert_eq!(scheduler.pop(), Some(1));
     assert_eq!(scheduler.pop(), None);
@@ -122,14 +116,14 @@ mod test {
   #[test]
   #[should_panic]
   fn schedule_outofbound() {
-    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    let mut scheduler: RelaxedFifo = Scheduler::new(3);
     scheduler.schedule(3);
   }
 
   #[test]
   #[should_panic]
   fn unschedule_outofbound() {
-    let mut scheduler: RelaxedFifoScheduler = Scheduler::new(3);
+    let mut scheduler: RelaxedFifo = Scheduler::new(3);
     scheduler.unschedule(3);
   }
 }

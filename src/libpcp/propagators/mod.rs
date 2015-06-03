@@ -14,13 +14,11 @@
 
 pub mod cmp;
 pub mod distinct;
-pub mod event;
-pub mod store;
 
 #[cfg(test)]
 pub mod test {
   use kernel::*;
-  use propagators::event::*;
+  use propagation::event::*;
   use interval::interval::*;
   use variable::ops::*;
   use variable::arithmetics::identity::*;

@@ -12,20 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod indexed_deps;
 
-#![crate_name = "pcp"]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc, unboxed_closures)]
-#![feature(test)]
-
-extern crate test;
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod kernel;
-pub mod propagation;
-pub mod propagators;
-pub mod variable;
-// pub mod search;
+pub use propagation::reactors::indexed_deps::IndexedDeps;

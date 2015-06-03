@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::event::*;
 
-#![crate_name = "pcp"]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc, unboxed_closures)]
-#![feature(test)]
-
-extern crate test;
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod kernel;
-pub mod propagation;
-pub mod propagators;
-pub mod variable;
-// pub mod search;
+pub trait Reactor {
+  fn new(num_vars: usize, num_events: usize) -> Self;
+  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
+  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
+  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex;
+  fn is_empty(&self) -> bool;
+}

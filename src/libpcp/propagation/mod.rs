@@ -12,20 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod reactor;
+pub mod reactors;
+pub mod scheduler;
+pub mod schedulers;
+pub mod event;
+pub mod store;
 
-#![crate_name = "pcp"]
-#![crate_type = "dylib"]
-
-#![feature(core, collections, alloc, unboxed_closures)]
-#![feature(test)]
-
-extern crate test;
-extern crate interval;
-extern crate num;
-extern crate alloc;
-
-pub mod kernel;
-pub mod propagation;
-pub mod propagators;
-pub mod variable;
-// pub mod search;
+pub use propagation::reactor::Reactor;
+pub use propagation::scheduler::Scheduler;
+pub use propagation::store::Store;
