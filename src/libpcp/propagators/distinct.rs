@@ -14,6 +14,7 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
 use propagation::*;

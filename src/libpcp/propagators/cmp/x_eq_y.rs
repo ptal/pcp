@@ -14,6 +14,7 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
 use variable::ops::*;
