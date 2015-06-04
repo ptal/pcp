@@ -16,15 +16,15 @@ use search::branching::*;
 use search::search_tree_visitor::*;
 use kernel::State;
 
-pub struct Brancher<V,D>
+pub struct Brancher<S,D>
 {
-  selector: V,
+  selector: S,
   distributor: D
 }
 
-impl<V,D> Brancher<V,D>
+impl<S,D> Brancher<S,D>
 {
-  pub fn new(selector: V, distributor: D) -> Brancher<V,D> {
+  pub fn new(selector: S, distributor: D) -> Brancher<S,D> {
     Brancher {
       selector: selector,
       distributor: distributor
@@ -32,12 +32,12 @@ impl<V,D> Brancher<V,D>
   }
 }
 
-impl<S,V,D> SearchTreeVisitor<S> for Brancher<V,D> where
-  V: VarSelection<S>,
-  D: Distributor<S>,
-  S: State
+impl<Space,S,D> SearchTreeVisitor<Space> for Brancher<S,D> where
+  Space: State,
+  S: VarSelection<Space>,
+  D: Distributor<Space>
 {
-  fn enter(&mut self, current: S) -> (S, Status<S>) {
+  fn enter(&mut self, current: Space) -> (Space, Status<Space>) {
     let var_idx = self.selector.select(&current);
     let branches = self.distributor.distribute(&current, var_idx);
     (current, Status::Unknown(branches))

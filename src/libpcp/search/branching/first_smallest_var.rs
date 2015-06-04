@@ -14,18 +14,19 @@
 
 use kernel::*;
 use search::branching::*;
+use variable::iterator::VariableIterator;
 use interval::ncollections::ops::*;
 use num::traits::Unsigned;
 
 pub struct FirstSmallestVar;
 
-impl<S, D, Size> VarSelection<S> for FirstSmallestVar where
-  S: VariableIterator<Variable=D>,
-  D: Cardinality<Size=Size>,
+impl<VStore, CStore, Domain, Size> VarSelection<(VStore, CStore)> for FirstSmallestVar where
+  VStore: VariableIterator<Variable=Domain>,
+  Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
-  fn select(&mut self, space: &S) -> usize {
-    space.vars_iter().enumerate()
+  fn select(&mut self, space: &(VStore, CStore)) -> usize {
+    space.0.vars_iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
       .min_by(|&(_, v)| v.size())
       .expect("Cannot select a variable in a space where all variables are assigned.")
@@ -36,68 +37,44 @@ impl<S, D, Size> VarSelection<S> for FirstSmallestVar where
 #[cfg(test)]
 mod test {
   use super::*;
-  use search::branching::VarSelection;
   use interval::interval::*;
   use interval::ops::*;
-  use solver::solver::*;
-  use solver::space::*;
-  use solver::fd::event::*;
-  use variable::ops::VarIndex;
-  use solver::agenda::RelaxedFifoAgenda;
-  use solver::dependencies::VarEventDepsVector;
+  use kernel::*;
+  use propagation::store::Store;
+  use propagation::events::*;
+  use propagation::reactors::*;
+  use propagation::schedulers::*;
+  use variable::ops::*;
+  use variable::delta_store::DeltaStore;
+  use search::branching::VarSelection;
 
-  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+
+  fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
+    S: VarSelection<(VStore, CStore)>
+  {
+    let mut variables: VStore = VStore::new();
+    let constraints: CStore = CStore::new();
+
+    for (l,b) in vars {
+      variables.assign(Interval::new(l,b));
+    }
+
+    assert_eq!(selector.select(&(variables, constraints)), expect);
+  }
 
   #[test]
   fn smallest_var_selection() {
-    let mut solver: FDSolver = Solver::new();
-
-    solver.newvar(Interval::new(1,10));
-    let var2 = solver.newvar(Interval::new(2,4));
-    solver.newvar(Interval::new(1,1));
-
-    let mut var_selector = FirstSmallestVar;
-    assert_eq!(var2.borrow().index(), var_selector.select(&solver));
-  }
-
-  #[test]
-  fn smallest_var_selection_2() {
-    let mut solver: FDSolver = Solver::new();
-
-    solver.newvar(Interval::new(1,1));
-    solver.newvar(Interval::new(1,1));
-    solver.newvar(Interval::new(1,10));
-    solver.newvar(Interval::new(1,1));
-    let var5 = solver.newvar(Interval::new(2,4));
-    solver.newvar(Interval::new(1,1));
-    solver.newvar(Interval::new(1,1));
-
-    let mut var_selector = FirstSmallestVar;
-    assert_eq!(var5.borrow().index(), var_selector.select(&solver));
-  }
-
-  #[test]
-  fn smallest_var_selection_first_if_equals() {
-    let mut solver: FDSolver = Solver::new();
-
-    solver.newvar(Interval::new(1,10));
-    let var2 = solver.newvar(Interval::new(2,4));
-    solver.newvar(Interval::new(2,4));
-
-    let mut var_selector = FirstSmallestVar;
-    assert_eq!(var2.borrow().index(), var_selector.select(&solver));
+    test_selector(FirstSmallestVar, vec![(1,10),(2,4),(1,1)], 1);
+    test_selector(FirstSmallestVar, vec![(1,10),(2,4),(2,4)], 1);
+    test_selector(FirstSmallestVar,
+      vec![(1,1),(1,1),(1,10),(1,1),(2,4),(1,1),(1,1)], 4);
   }
 
   #[should_panic]
   #[test]
   fn smallest_var_selection_all_assigned() {
-    let mut solver: FDSolver = Solver::new();
-
-    solver.newvar(Interval::new(0,0));
-    solver.newvar(Interval::new(2,2));
-    solver.newvar(Interval::new(1,1));
-
-    let mut var_selector = FirstSmallestVar;
-    var_selector.select(&solver);
+    test_selector(FirstSmallestVar, vec![(0, 0),(2,2),(1,1)], 0);
   }
 }
