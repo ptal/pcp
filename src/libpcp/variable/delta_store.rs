@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use kernel::*;
-use variable::iterator::*;
 use variable::ops::*;
 use variable::store::*;
 use variable::arithmetics::identity::*;
@@ -72,11 +71,11 @@ impl<Domain, Event> State for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> VariableIterator for DeltaStore<Domain, Event> {
-  type Variable = Domain;
+impl<Domain, Event> Iterable for DeltaStore<Domain, Event> {
+  type Value = Domain;
 
-  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
-    self.store.vars_iter()
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+    self.store.iter()
   }
 }
 

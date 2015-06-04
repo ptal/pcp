@@ -14,19 +14,19 @@
 
 use kernel::*;
 use search::branching::*;
-use variable::iterator::VariableIterator;
+use variable::ops::Iterable;
 use interval::ncollections::ops::*;
 use num::traits::Unsigned;
 
 pub struct FirstSmallestVar;
 
 impl<VStore, CStore, Domain, Size> VarSelection<(VStore, CStore)> for FirstSmallestVar where
-  VStore: VariableIterator<Variable=Domain>,
+  VStore: Iterable<Value=Domain>,
   Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
   fn select(&mut self, space: &(VStore, CStore)) -> usize {
-    space.0.vars_iter().enumerate()
+    space.0.iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
       .min_by(|&(_, v)| v.size())
       .expect("Cannot select a variable in a space where all variables are assigned.")

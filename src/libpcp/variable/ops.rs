@@ -14,10 +14,18 @@
 
 use interval::ncollections::ops::*;
 use std::collections::vec_map::Drain;
+use std::slice;
 
 pub trait DrainDelta<Event>
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
+}
+
+pub trait Iterable
+{
+  type Value;
+
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Value>;
 }
 
 pub trait VarIndex

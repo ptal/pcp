@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use kernel::*;
-use variable::iterator::*;
 use variable::ops::*;
 use variable::arithmetics::identity::*;
 use std::slice;
@@ -56,10 +55,10 @@ impl<Domain> Cardinality for Store<Domain> {
   }
 }
 
-impl<Domain> VariableIterator for Store<Domain> {
-  type Variable = Domain;
+impl<Domain> Iterable for Store<Domain> {
+  type Value = Domain;
 
-  fn vars_iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
     self.variables.iter()
   }
 }
