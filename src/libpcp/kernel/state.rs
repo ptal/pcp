@@ -12,40 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::rc::*;
-use std::ops::Deref;
-
 pub trait State {
   type Label;
 
   fn mark(&self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self;
-}
-
-impl<A, B> State for (A, B) where
- A: State,
- B: State
-{
-  type Label = (A::Label, B::Label);
-
-  fn mark(&self) -> (A::Label, B::Label) {
-    (self.0.mark(), self.1.mark())
-  }
-
-  fn restore(self, label: (A::Label, B::Label)) -> (A, B) {
-    (self.0.restore(label.0), self.1.restore(label.1))
-  }
-}
-
-pub fn shared_mark<S>(state: &S) -> Rc<S::Label> where
- S: State
-{
-  Rc::new(state.mark())
-}
-
-pub fn shared_restore<S, L>(state: S, label: Rc<S::Label>) -> S where
- S: State<Label=L>,
- L: Clone
-{
-  state.restore(try_unwrap(label).unwrap_or_else(|l| l.deref().clone()))
 }

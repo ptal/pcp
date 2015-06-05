@@ -15,6 +15,7 @@
 use kernel::*;
 use search::branching::*;
 use search::branching::branch::*;
+use search::space::*;
 use variable::ops::*;
 use variable::arithmetics::*;
 use propagators::cmp::*;
@@ -28,7 +29,7 @@ pub type XLessEqC<X, C> = XLessEqY<Identity<X>, Constant<C>, C>;
 pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
-impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<(VStore, CStore)> for BinarySplit where
+impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
   VStore: State<Label = VLabel> + Iterable<Value=Domain>,
   CStore: State<Label = CLabel>,
   CStore: Assign<XLessEqC<Domain, Bound>>,
@@ -38,8 +39,8 @@ impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<(VStore, CStore)
   Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
-  fn distribute(&mut self, space: &(VStore, CStore), var_idx: usize) -> Vec<Branch<(VStore, CStore)>> {
-    let dom = nth_dom(&space.0, var_idx);
+  fn distribute(&mut self, space: &Space<VStore, CStore>, var_idx: usize) -> Vec<Branch<Space<VStore, CStore>>> {
+    let dom = nth_dom(&space.vstore, var_idx);
     assert!(!dom.is_singleton() && !dom.is_empty(),
       "Can not distribute over assigned or failed variables.");
     let mid = (dom.lower() + dom.upper()) / (Bound::one() + Bound::one());
@@ -50,11 +51,11 @@ impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<(VStore, CStore)
 
     Branch::distribute(space,
       vec![
-        Box::new(move |space: &mut (VStore, CStore)| {
-          space.1.assign(x_less_mid);
+        Box::new(move |space: &mut Space<VStore, CStore>| {
+          space.cstore.assign(x_less_mid);
         }),
-        Box::new(move |space: &mut (VStore, CStore)| {
-          space.1.assign(x_geq_mid);
+        Box::new(move |space: &mut Space<VStore, CStore>| {
+          space.cstore.assign(x_geq_mid);
         })
       ]
     )
@@ -75,6 +76,7 @@ pub fn nth_dom<VStore, Domain>(vstore: &VStore, var_idx: usize) -> Domain where
 mod test {
   use super::*;
   use search::branching::Distributor;
+  use search::space::*;
   use interval::interval::*;
   use interval::ops::*;
   use kernel::*;
@@ -88,15 +90,16 @@ mod test {
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type FDSpace = Space<VStore, CStore>;
 
   fn test_distributor<D>(mut distributor: D, distribution_index: usize,
     root: Vec<(i32, i32)>, children: Vec<(i32, i32)>) where
-   D: Distributor<(VStore, CStore)>
+   D: Distributor<FDSpace>
   {
-    let mut space = (VStore::new(), CStore::new());
+    let mut space = FDSpace::default();
 
     for (l,u) in root {
-      space.0.assign(Interval::new(l,u));
+      space.vstore.assign(Interval::new(l,u));
     }
 
     let branches = distributor.distribute(&space, distribution_index);
@@ -105,8 +108,8 @@ mod test {
 
     for (branch, (l,u)) in branches.into_iter().zip(children.into_iter()) {
       space = branch.commit(space);
-      assert_eq!(space.1.consistency(&mut space.0), True);
-      let split_dom = nth_dom(&space.0, distribution_index);
+      assert_eq!(space.consistency(), True);
+      let split_dom = nth_dom(&space.vstore, distribution_index);
       assert_eq!(split_dom, Interval::new(l,u));
     }
   }

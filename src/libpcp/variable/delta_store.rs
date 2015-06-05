@@ -20,6 +20,7 @@ use interval::ncollections::ops::*;
 use std::slice;
 use std::collections::vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
+use std::default::Default;
 
 pub struct DeltaStore<Domain, Event> {
   store: Store<Domain>,
@@ -37,6 +38,13 @@ impl<Domain, Event> DeltaStore<Domain, Event>
       store: store,
       delta: VecMap::new()
     }
+  }
+}
+
+impl<Domain, Event> Default for DeltaStore<Domain, Event>
+{
+  fn default() -> DeltaStore<Domain, Event> {
+    DeltaStore::new()
   }
 }
 

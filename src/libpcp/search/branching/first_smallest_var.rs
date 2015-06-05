@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use search::space::*;
 use search::branching::*;
 use variable::ops::Iterable;
 use interval::ncollections::ops::*;
@@ -20,13 +21,13 @@ use num::traits::Unsigned;
 
 pub struct FirstSmallestVar;
 
-impl<VStore, CStore, Domain, Size> VarSelection<(VStore, CStore)> for FirstSmallestVar where
+impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for FirstSmallestVar where
   VStore: Iterable<Value=Domain>,
   Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
-  fn select(&mut self, space: &(VStore, CStore)) -> usize {
-    space.0.iter().enumerate()
+  fn select(&mut self, space: &Space<VStore, CStore>) -> usize {
+    space.vstore.iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
       .min_by(|&(_, v)| v.size())
       .expect("Cannot select a variable in a space where all variables are assigned.")
@@ -46,22 +47,23 @@ mod test {
   use propagation::schedulers::*;
   use variable::ops::*;
   use variable::delta_store::DeltaStore;
+  use search::space::*;
   use search::branching::VarSelection;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type FDSpace = Space<VStore, CStore>;
 
   fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
-    S: VarSelection<(VStore, CStore)>
+    S: VarSelection<FDSpace>
   {
-    let mut variables: VStore = VStore::new();
-    let constraints: CStore = CStore::new();
+    let mut space = FDSpace::default();
 
     for (l,u) in vars {
-      variables.assign(Interval::new(l,u));
+      space.vstore.assign(Interval::new(l,u));
     }
 
-    assert_eq!(selector.select(&(variables, constraints)), expect);
+    assert_eq!(selector.select(&space), expect);
   }
 
   #[test]

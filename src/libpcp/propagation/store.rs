@@ -19,6 +19,7 @@ use propagation::Scheduler;
 use propagation::propagator::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
+use std::default::Default;
 
 pub trait BoxedClone<VStore, Event>
 {
@@ -66,6 +67,16 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
       reactor: Reactor::new(0,0),
       scheduler: Scheduler::new(0)
     }
+  }
+}
+
+impl<VStore, Event, R, S> Default for Store<VStore, Event, R, S> where
+ Event: EventIndex,
+ R: Reactor,
+ S: Scheduler
+{
+  fn default() -> Store<VStore, Event, R, S> {
+    Store::new()
   }
 }
 

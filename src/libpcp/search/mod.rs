@@ -16,6 +16,7 @@
 //   Search Combinators
 //   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
 
+pub mod space;
 pub mod branching;
 pub mod search_tree_visitor;
 // pub mod propagation;

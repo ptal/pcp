@@ -19,6 +19,7 @@ use std::slice;
 use interval::ncollections::ops::*;
 use std::fmt::{Formatter, Display, Error};
 use std::result::fold;
+use std::default::Default;
 
 #[derive(Clone)]
 pub struct Store<Domain> {
@@ -30,6 +31,12 @@ impl<Domain> Store<Domain> {
     Store {
       variables: vec![]
     }
+  }
+}
+
+impl<Domain> Default for Store<Domain> {
+  fn default() -> Store<Domain> {
+    Store::new()
   }
 }
 
