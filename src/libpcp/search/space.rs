@@ -30,11 +30,9 @@ impl<VStore, CStore> Space<VStore, CStore> where
   }
 }
 
-impl<VStore, CStore, VLabel, CLabel> State for Space<VStore, CStore> where
-  VStore: State<Label=VLabel>,
-  CStore: State<Label=CLabel>,
-  VLabel: Clone,
-  CLabel: Clone
+impl<VStore, CStore> State for Space<VStore, CStore> where
+  VStore: State,
+  CStore: State
 {
   type Label = Rc<(VStore::Label, CStore::Label)>;
 

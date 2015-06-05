@@ -13,7 +13,7 @@
 // limitations under the License.
 
 pub trait State {
-  type Label;
+  type Label : Clone;
 
   fn mark(&self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self;

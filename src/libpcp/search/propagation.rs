@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::search_tree_visitor::*;
 use kernel::*;
 use kernel::Trilean::*;
+use search::space::*;
+use search::search_tree_visitor::*;
 
 pub struct Propagation<C> {
   child: C
@@ -28,16 +29,19 @@ impl<C> Propagation<C> {
   }
 }
 
-impl<S,C> SearchTreeVisitor<S> for Propagation<C> where
-  S: Space + State,
-  C: SearchTreeVisitor<S>
+impl<VStore, CStore, C> SearchTreeVisitor<Space<VStore, CStore>> for Propagation<C> where
+  VStore: State,
+  CStore: State + Consistency<VStore>,
+  C: SearchTreeVisitor<Space<VStore, CStore>>
 {
-  fn start(&mut self, root: &S) {
+  fn start(&mut self, root: &Space<VStore, CStore>) {
     self.child.start(root);
   }
 
-  fn enter(&mut self, mut current: S) -> (S, Status<S>) {
-    let status = current.solve();
+  fn enter(&mut self, mut current: Space<VStore, CStore>)
+    -> (Space<VStore, CStore>, Status<Space<VStore, CStore>>)
+  {
+    let status = current.consistency();
     match status {
       True => (current, Status::Satisfiable),
       False => (current, Status::Unsatisfiable),

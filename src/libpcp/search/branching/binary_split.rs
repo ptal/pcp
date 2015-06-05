@@ -29,13 +29,11 @@ pub type XLessEqC<X, C> = XLessEqY<Identity<X>, Constant<C>, C>;
 pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
-impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
-  VStore: State<Label = VLabel> + Iterable<Value=Domain>,
-  CStore: State<Label = CLabel>,
+impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
+  VStore: State + Iterable<Value=Domain>,
+  CStore: State,
   CStore: Assign<XLessEqC<Domain, Bound>>,
   CStore: Assign<XGreaterC<Domain, Bound>>,
-  VLabel: Clone,
-  CLabel: Clone,
   Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {

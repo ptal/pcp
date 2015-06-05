@@ -29,9 +29,8 @@ pub struct Branch<Space> where
   alternative: Box<FnBox(&mut Space)>
 }
 
-impl<Space, L> Branch<Space> where
-  Space: State<Label=L>,
-  L: Clone
+impl<Space> Branch<Space> where
+  Space: State
 {
   pub fn distribute(space: &Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> Vec<Branch<Space>> {
     let label = space.mark();
