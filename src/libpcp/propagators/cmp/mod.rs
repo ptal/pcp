@@ -23,11 +23,15 @@ pub use propagators::cmp::x_less_y::XLessY;
 pub use propagators::cmp::x_eq_y::XEqY;
 pub use propagators::cmp::x_neq_y::XNeqY;
 
-pub fn x_greater_y<X, Y>(x: X, y: Y) -> XLessY<Y, X> {
+pub type XGreaterY<X, Y> = XLessY<Y, X>;
+pub type XGreaterEqY<X, Y, BX> = XLessY<Y, Addition<X, BX>>;
+pub type XLessEqY<X, Y, BY> = XLessY<X, Addition<Y, BY>>;
+
+pub fn x_greater_y<X, Y>(x: X, y: Y) -> XGreaterY<X, Y> {
   XLessY::new(y, x)
 }
 
-pub fn x_geq_y<X, Y, R, BX>(x: X, y: Y) -> XLessY<Y, Addition<X, BX>> where
+pub fn x_geq_y<X, Y, R, BX>(x: X, y: Y) -> XGreaterEqY<X, Y, BX> where
   X: ExprInference<Output=R>,
   R: Bounded<Bound=BX>,
   BX: PrimInt
@@ -35,7 +39,7 @@ pub fn x_geq_y<X, Y, R, BX>(x: X, y: Y) -> XLessY<Y, Addition<X, BX>> where
   x_greater_y(Addition::new(x, BX::one()), y)
 }
 
-pub fn x_leq_y<X, Y, R, BY>(x: X, y: Y) -> XLessY<X, Addition<Y, BY>> where
+pub fn x_leq_y<X, Y, R, BY>(x: X, y: Y) -> XLessEqY<X, Y, BY> where
   Y: ExprInference<Output=R>,
   R: Bounded<Bound=BY>,
   BY: PrimInt

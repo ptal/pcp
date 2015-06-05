@@ -12,52 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use solver::iterator::*;
+use kernel::*;
 use search::branching::*;
 use search::branching::branch::*;
-use propagators::cmp::*;
+use variable::ops::*;
 use variable::arithmetics::*;
-use solver::solver::*;
-use kernel::Space;
-use solver::fd::event::*;
-use variable::*;
+use propagators::cmp::*;
 use interval::ncollections::ops::*;
 use num::traits::Num;
 use num::PrimInt;
 
 pub struct BinarySplit;
 
-impl<S,B,D,R> Distributor<S> for BinarySplit where
-  S: VariableIterator<Variable=D> + Space<Constraint=Box<PropagatorErasure<FDEvent, D>>>,
-  D: ExprInference<Output=R> + Clone + Cardinality + Bounded<Bound=B> + ShrinkLeft<B> + ShrinkRight<B> + Subset + 'static,
-  R: Bounded<Bound=B>,
-  B: PrimInt + Num + PartialOrd + Clone + 'static
+pub type XLessEqC<X, C> = XLessEqY<Identity<X>, Constant<C>, C>;
+pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
+
+// See discussion about type bounds: https://github.com/ptal/pcp/issues/11
+impl<VStore, CStore, VLabel, CLabel, Domain, Bound> Distributor<(VStore, CStore)> for BinarySplit where
+  VStore: State<Label = VLabel> + Iterable<Value=Domain>,
+  CStore: State<Label = CLabel>,
+  CStore: Assign<XLessEqC<Domain, Bound>>,
+  CStore: Assign<XGreaterC<Domain, Bound>>,
+  VLabel: Clone,
+  CLabel: Clone,
+  Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
+  Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
-  fn distribute(&mut self, space: &S, var_idx: usize) -> Vec<Branch<S>> {
-    let var = nth_var(space, var_idx);
-    assert!(!var.is_singleton() && !var.is_empty(),
+  fn distribute(&mut self, space: &(VStore, CStore), var_idx: usize) -> Vec<Branch<(VStore, CStore)>> {
+    let dom = nth_dom(&space.0, var_idx);
+    assert!(!dom.is_singleton() && !dom.is_empty(),
       "Can not distribute over assigned or failed variables.");
-    let mid = (var.lower() + var.upper()) / (B::one() + B::one());
-    let mid2 = mid.clone();
+    let mid = (dom.lower() + dom.upper()) / (Bound::one() + Bound::one());
+    let mid = Constant::new(mid);
+    let x = Identity::<Domain>::new(var_idx);
+    let x_less_mid = x_leq_y(x.clone(), mid.clone());
+    let x_geq_mid = x_greater_y(x, mid);
 
     Branch::distribute(space,
       vec![
-        Box::new(move |s: &mut S| {
-          s.add(Box::new(x_leq_y(Identity::<D>::new(var_idx), Constant::new(mid))))
+        Box::new(move |space: &mut (VStore, CStore)| {
+          space.1.assign(x_less_mid);
         }),
-        Box::new(move |s: &mut S| {
-          s.add(Box::new(x_greater_y(Identity::<D>::new(var_idx), Constant::new(mid2))))
+        Box::new(move |space: &mut (VStore, CStore)| {
+          space.1.assign(x_geq_mid);
         })
       ]
     )
   }
 }
 
-pub fn nth_var<S, D>(s: &S, var_idx: usize) -> D where
-  S: VariableIterator<Variable=D>,
-  D: Clone
+pub fn nth_dom<VStore, Domain>(vstore: &VStore, var_idx: usize) -> Domain where
+  VStore: Iterable<Value=Domain>,
+  Domain: Clone
 {
-  s.vars_iter()
+  vstore.iter()
   .nth(var_idx)
   .expect("Number of variable in a space can not decrease.")
   .clone()
@@ -69,48 +77,72 @@ mod test {
   use search::branching::Distributor;
   use interval::interval::*;
   use interval::ops::*;
-  use solver::solver::*;
-  use solver::space::*;
-  use solver::fd::event::*;
-  use variable::ops::VarIndex;
-  use solver::agenda::RelaxedFifoAgenda;
-  use solver::dependencies::VarEventDepsVector;
-  use std::ops::Deref;
+  use kernel::*;
+  use kernel::trilean::Trilean::*;
+  use propagation::store::Store;
+  use propagation::events::*;
+  use propagation::reactors::*;
+  use propagation::schedulers::*;
+  use variable::ops::*;
+  use variable::delta_store::DeltaStore;
 
-  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+
+  fn test_distributor<D>(mut distributor: D, distribution_index: usize,
+    root: Vec<(i32, i32)>, children: Vec<(i32, i32)>) where
+   D: Distributor<(VStore, CStore)>
+  {
+    let mut space = (VStore::new(), CStore::new());
+
+    for (l,u) in root {
+      space.0.assign(Interval::new(l,u));
+    }
+
+    let branches = distributor.distribute(&space, distribution_index);
+
+    assert_eq!(branches.len(), children.len());
+
+    for (branch, (l,u)) in branches.into_iter().zip(children.into_iter()) {
+      space = branch.commit(space);
+      assert_eq!(space.1.consistency(&mut space.0), True);
+      let split_dom = nth_dom(&space.0, distribution_index);
+      assert_eq!(split_dom, Interval::new(l,u));
+    }
+  }
 
   #[test]
   fn binary_split_distribution() {
-    let mut space: FDSolver = Solver::new();
-
-    space.newvar(Interval::new(1,10));
-    let var = space.newvar(Interval::new(2,4));
-    space.newvar(Interval::new(1,1));
-
-    let mut distributor = BinarySplit;
-    let branches = distributor.distribute(&space, var.borrow().index());
-
-    assert_eq!(branches.len(), 2);
-
-    let expected_dom = vec![Interval::new(2,3), Interval::new(4,4)];
-    let var_idx = var.borrow().index();
-    for (branch, expected) in branches.into_iter().zip(expected_dom.iter()) {
-      space = branch.commit(space);
-      assert_eq!(space.solve(), Status::Satisfiable);
-      let space_var = nth_var(&space, var_idx);
-      assert_eq!(space_var.borrow().deref().deref(), expected);
-    }
+    let vars = vec![(1,10),(2,4),(1,2)];
+    test_distributor(BinarySplit, 0,
+      vars.clone(),
+      vec![(1,5),(6,10)]
+    );
+    test_distributor(BinarySplit, 1,
+      vars.clone(),
+      vec![(2,3),(4,4)]
+    );
+    test_distributor(BinarySplit, 2,
+      vars.clone(),
+      vec![(1,1),(2,2)]
+    );
   }
 
   #[test]
   #[should_panic]
   fn binary_split_impossible_distribution() {
-    let mut space: FDSolver = Solver::new();
+    test_distributor(BinarySplit, 0,
+      vec![(1,1)],
+      vec![]
+    );
+  }
 
-    let var = space.newvar(Interval::new(1,1));
-
-    let mut distributor = BinarySplit;
-    distributor.distribute(&space, var.borrow().index());
+  #[test]
+  #[should_panic]
+  fn binary_split_impossible_distribution_2() {
+    test_distributor(BinarySplit, 2,
+      vec![(1,5),(2,4),(4,4)],
+      vec![]
+    );
   }
 }
-

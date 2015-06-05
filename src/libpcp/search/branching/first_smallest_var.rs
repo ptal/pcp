@@ -57,8 +57,8 @@ mod test {
     let mut variables: VStore = VStore::new();
     let constraints: CStore = CStore::new();
 
-    for (l,b) in vars {
-      variables.assign(Interval::new(l,b));
+    for (l,u) in vars {
+      variables.assign(Interval::new(l,u));
     }
 
     assert_eq!(selector.select(&(variables, constraints)), expect);
