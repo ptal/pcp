@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
 pub struct XEqY<X, Y>
@@ -32,6 +33,15 @@ impl<X, Y> PropagatorKind for XEqY<X, Y> {}
 impl<X, Y> XEqY<X, Y> {
   pub fn new(x: X, y: Y) -> XEqY<X, Y> {
     XEqY { x: x, y: y }
+  }
+}
+
+impl<X, Y> Debug for XEqY<X, Y> where
+  X: Debug,
+  Y: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("{:?} = {:?}", self.x, self.y))
   }
 }
 

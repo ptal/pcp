@@ -16,8 +16,9 @@ use variable::ops::*;
 use variable::arithmetics::ExprInference;
 use interval::ncollections::ops::*;
 use interval::ncollections::optional::*;
+use std::fmt::{Formatter, Debug, Error};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Constant<V>
 {
   value: V
@@ -36,6 +37,15 @@ impl<V> Constant<V>
     }
   }
 }
+
+impl<V> Debug for Constant<V> where
+  V: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("{:?}", self.value))
+  }
+}
+
 
 impl<V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Constant<V> where
   Domain: Cardinality

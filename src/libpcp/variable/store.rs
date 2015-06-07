@@ -114,7 +114,7 @@ impl<Domain> Display for Store<Domain> where
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let format_vars =
       self.variables.iter()
-      .map(|v| formatter.write_fmt(format_args!("{}\n", v)));
+      .map(|v| formatter.write_fmt(format_args!("{} ", v)));
     fold(format_vars, (), |a,_| a)
   }
 }

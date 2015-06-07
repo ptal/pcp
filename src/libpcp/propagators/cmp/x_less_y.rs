@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
 pub struct XLessY<X, Y>
@@ -32,6 +33,15 @@ impl<X, Y> PropagatorKind for XLessY<X, Y> {}
 impl<X, Y> XLessY<X, Y> {
   pub fn new(x: X, y: Y) -> XLessY<X, Y> {
     XLessY { x: x, y: y }
+  }
+}
+
+impl<X, Y> Debug for XLessY<X, Y> where
+  X: Debug,
+  Y: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("{:?} < {:?}", self.x, self.y))
   }
 }
 

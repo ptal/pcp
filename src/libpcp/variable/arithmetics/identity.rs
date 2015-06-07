@@ -15,8 +15,9 @@
 use variable::ops::*;
 use variable::arithmetics::ExprInference;
 use std::marker::PhantomData;
+use std::fmt::{Formatter, Debug, Error};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>
@@ -32,6 +33,13 @@ impl<Domain> Identity<Domain> {
       idx: idx,
       phantom: PhantomData
     }
+  }
+}
+
+impl<Domain> Debug for Identity<Domain>
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("_{}", self.idx))
   }
 }
 

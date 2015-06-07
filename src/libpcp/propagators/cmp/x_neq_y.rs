@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
 pub struct XNeqY<X, Y>
@@ -32,6 +33,15 @@ impl<X, Y> PropagatorKind for XNeqY<X, Y> {}
 impl<X, Y> XNeqY<X, Y> {
   pub fn new(x: X, y: Y) -> XNeqY<X, Y> {
     XNeqY { x: x, y: y }
+  }
+}
+
+impl<X, Y> Debug for XNeqY<X, Y> where
+  X: Debug,
+  Y: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("{:?} != {:?}", self.x, self.y))
   }
 }
 
@@ -109,6 +119,7 @@ mod test {
     x_neq_y_test_one(6, zero, dom0_10, Unknown, True, vec![(1, Bound)], true);
     x_neq_y_test_one(7, ten, dom0_10, Unknown, True, vec![(1, Bound)], true);
     x_neq_y_test_one(8, one, one, False, False, vec![], false);
+    x_neq_y_test_one(9, zero, one, True, True, vec![], true);
   }
 
   fn x_neq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,

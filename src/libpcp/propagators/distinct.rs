@@ -20,6 +20,8 @@ use propagation::events::*;
 use propagation::*;
 use variable::ops::*;
 use interval::ncollections::ops::*;
+use std::fmt::{Formatter, Debug, Error};
+use std::result::fold;
 
 #[derive(Clone)]
 pub struct Distinct<V>
@@ -45,6 +47,19 @@ impl<V> Distinct<V> where
       props: props,
       vars: vars
     }
+  }
+}
+
+impl<V> Debug for Distinct<V> where
+  V: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    // formatter.write_str("distinct(");
+    let format_vars =
+      self.vars.iter()
+      .map(|v| formatter.write_fmt(format_args!("{:?} ", v)));
+    fold(format_vars, (), |a,_| a)
+    // formatter.write_str(")")
   }
 }
 

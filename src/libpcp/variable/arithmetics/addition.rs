@@ -15,8 +15,9 @@
 use variable::ops::*;
 use variable::arithmetics::ExprInference;
 use std::ops::*;
+use std::fmt::{Formatter, Debug, Error};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Addition<X, V>
 {
   x: X,
@@ -35,6 +36,15 @@ impl<X, V> Addition<X, V> {
       x: x,
       v: v
     }
+  }
+}
+
+impl<X, V> Debug for Addition<X, V> where
+  X: Debug,
+  V: Debug
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_fmt(format_args!("{:?} + {:?}", self.x, self.v))
   }
 }
 
