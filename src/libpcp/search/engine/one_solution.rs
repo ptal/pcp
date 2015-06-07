@@ -12,48 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use search::engine::queue::*;
 use search::engine::PartialExploration;
-use kernel::*;
+use std::marker::PhantomData;
 
-pub struct OneSolution<Q, C> {
-  queue: Q,
+pub struct OneSolution<C, Q, Space> {
   child: C,
-  exploring: bool
+  queue: Q,
+  exploring: bool,
+  phantom_space: PhantomData<Space>
 }
 
-impl<Q,C> PartialExploration for OneSolution<Q,C> {}
+impl<C, Q, Space> PartialExploration for OneSolution<C, Q, Space> {}
 
-impl<Q, C> OneSolution<Q, C>
+impl<C, Q, Space> OneSolution<C, Q, Space> where
+ Space: State,
+ C: SearchTreeVisitor<Space>,
+ Q: Queue<Branch<Space>>
 {
-  pub fn new<S>(child: C) -> OneSolution<Q, C> where
-    S: Space + State,
-    Q: Queue<Branch<S>>,
-    C: SearchTreeVisitor<S>
+  pub fn new(child: C) -> OneSolution<C, Q, Space>
   {
     OneSolution {
       queue: Q::empty(),
       child: child,
-      exploring: false
+      exploring: false,
+      phantom_space: PhantomData
     }
   }
 
-  fn push_branches<S>(&mut self, branches: Vec<Branch<S>>) where
-    S: Space + State,
-    Q: Queue<Branch<S>>
+  fn push_branches(&mut self, branches: Vec<Branch<Space>>)
   {
     for branch in branches {
       self.queue.push(branch);
     }
   }
 
-  fn enter_child<S>(&mut self, current: S, status: &mut Status<S>) -> S where
-    S: Space + State,
-    Q: Queue<Branch<S>>,
-    C: SearchTreeVisitor<S>
+  fn enter_child(&mut self, current: Space, status: &mut Status<Space>) -> Space
   {
     let (current, child_status) = self.child.enter(current);
     match child_status {
@@ -66,10 +64,7 @@ impl<Q, C> OneSolution<Q, C>
   }
 
   // Only visit the root if we didn't visit it before (based on the queue emptiness).
-  fn enter_root<S>(&mut self, root: S, status: &mut Status<S>) -> S where
-    S: Space + State,
-    Q: Queue<Branch<S>>,
-    C: SearchTreeVisitor<S>
+  fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space
   {
     if self.queue.is_empty() && !self.exploring {
       self.exploring = true;
@@ -80,18 +75,18 @@ impl<Q, C> OneSolution<Q, C>
   }
 }
 
-impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
- S: Space + State,
- Q: Queue<Branch<S>>,
- C: SearchTreeVisitor<S>
+impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
+ Space: State,
+ C: SearchTreeVisitor<Space>,
+ Q: Queue<Branch<Space>>
 {
-  fn start(&mut self, root: &S) {
+  fn start(&mut self, root: &Space) {
     self.queue = Q::empty();
     self.exploring = false;
     self.child.start(root);
   }
 
-  fn enter(&mut self, root: S) -> (S, Status<S>) {
+  fn enter(&mut self, root: Space) -> (Space, Status<Space>) {
     let mut status = Unsatisfiable;
     let mut current = self.enter_root(root, &mut status);
     while status != Satisfiable && !self.queue.is_empty() {
@@ -105,24 +100,31 @@ impl<S, Q, C> SearchTreeVisitor<S> for OneSolution<Q, C> where
 
 #[cfg(test)]
 mod test {
+  use super::*;
   use interval::interval::*;
   use interval::ops::*;
-  use solver::solver::*;
-  use solver::space::Space;
-  use solver::fd::event::*;
-  use solver::fd::propagator::*;
-  use solver::agenda::RelaxedFifoAgenda;
-  use solver::dependencies::VarEventDepsVector;
+  use kernel::*;
+  use propagation::store::Store;
+  use propagation::events::*;
+  use propagation::reactors::*;
+  use propagation::schedulers::*;
+  use propagators::cmp::*;
+  use propagators::distinct::*;
+  use variable::ops::*;
+  use variable::delta_store::DeltaStore;
+  use variable::arithmetics::*;
   use search::search_tree_visitor::*;
   use search::search_tree_visitor::Status::*;
+  use search::space::*;
+  use search::propagation::*;
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
-  use search::engine::one_solution::*;
-  use search::propagation::*;
   use test::Bencher;
 
-  type FDSolver = Solver<FDEvent, Interval<i32>, VarEventDepsVector, RelaxedFifoAgenda>;
+  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type FDSpace = Space<VStore, CStore>;
 
   #[test]
   fn example_nqueens() {
@@ -134,19 +136,20 @@ mod test {
     }
   }
 
-  #[bench]
-  fn bench_nqueens10(b: &mut Bencher) {
-    b.iter(|| {
-        nqueens(10, Satisfiable)
-    });
-  }
+  // #[bench]
+  // fn bench_nqueens10(b: &mut Bencher) {
+  //   b.iter(|| {
+  //       nqueens(10, Satisfiable)
+  //   });
+  // }
 
-  fn nqueens(n: usize, expect: Status<FDSolver>) {
-    let mut solver: FDSolver = Solver::new();
+  fn nqueens(n: usize, expect: Status<FDSpace>) {
+    println!("{}-queens test running...", n);
+    let mut space = FDSpace::default();
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {
-      queens.push(solver.newvar((1, n as i32).to_interval()));
+      queens.push(space.vstore.assign((1, n as i32).to_interval()));
     }
     for i in 0..n-1 {
       for j in i + 1..n {
@@ -154,17 +157,17 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), q2 - q1)));
+        space.cstore.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
         // Xi - i != Xj - j
-        solver.add(Box::new(XNotEqualYPlusC::new(queens[i].clone(), queens[j].clone(), -q2 + q1)));
+        space.cstore.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
       }
     }
     // 2 queens can't share the same column.
-    solver.add(Box::new(Distinct::new(queens)));
+    space.cstore.assign(Distinct::new(queens));
 
-    let mut search: OneSolution<Vec<_>, _> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
-    search.start(&solver);
-    let (_, status) = search.enter(solver);
+    let mut search: OneSolution<_, Vec<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    search.start(&space);
+    let (_, status) = search.enter(space);
     assert_eq!(status, expect);
   }
 }
