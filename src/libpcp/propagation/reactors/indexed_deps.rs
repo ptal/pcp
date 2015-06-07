@@ -14,7 +14,10 @@
 
 use propagation::Reactor;
 use kernel::event::*;
+use interval::ncollections::ops::*;
 use std::iter::{FromIterator, repeat};
+use std::fmt::{Formatter, Debug, Error};
+use std::result::fold;
 
 // `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
 
@@ -71,15 +74,29 @@ impl Reactor for IndexedDeps {
       .cloned()
       .collect()
   }
+}
 
-  fn is_empty(&self) -> bool {
-    self.num_subscriptions == 0
+impl Cardinality for IndexedDeps {
+  type Size = usize;
+  fn size(&self) -> usize {
+    self.num_subscriptions
+  }
+}
+
+impl Debug for IndexedDeps
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    let format_deps =
+      self.deps.iter().flat_map(|props| props.iter())
+      .map(|prop| formatter.write_fmt(format_args!("{} ", prop)));
+    fold(format_deps, (), |a,_| a)
   }
 }
 
 #[cfg(test)]
 mod test {
   use super::*;
+  use interval::ncollections::ops::*;
   use propagation::Reactor;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;

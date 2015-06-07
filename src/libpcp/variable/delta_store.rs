@@ -52,6 +52,10 @@ impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
     self.delta.drain()
   }
+
+  fn has_changed(&self) -> bool {
+    !self.delta.is_empty()
+  }
 }
 
 impl<Domain, Event> Clone for DeltaStore<Domain, Event> where

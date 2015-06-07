@@ -19,6 +19,7 @@ use std::slice;
 pub trait DrainDelta<Event>
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
+  fn has_changed(&self) -> bool;
 }
 
 pub trait Iterable

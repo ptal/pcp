@@ -19,5 +19,4 @@ pub trait Reactor {
   fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
   fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex;
-  fn is_empty(&self) -> bool;
 }

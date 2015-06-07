@@ -83,7 +83,7 @@ impl<VStore, Event, R, S> Default for Store<VStore, Event, R, S> where
 impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
- R: Reactor,
+ R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
   fn prepare(&mut self, store: &VStore) {
@@ -96,7 +96,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     for (p_idx, p) in self.propagators.iter().enumerate() {
       let p_deps = p.dependencies();
       for (v, ev) in p_deps {
-        self.reactor.subscribe(v as usize, ev, p_idx);
+        self.reactor.subscribe(v, ev, p_idx);
       }
     }
   }
@@ -134,7 +134,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
   }
 
   fn reschedule_prop(&mut self, p_idx: usize, store: &mut VStore) {
-    if !store.drain_delta().peekable().is_empty() {
+    if store.has_changed() {
       self.scheduler.schedule(p_idx);
     }
   }
@@ -169,7 +169,7 @@ impl<Prop, VStore, Event, R, S> Assign<Prop> for Store<VStore, Event, R, S> wher
 impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
- R: Reactor,
+ R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
   fn consistency(&mut self, store: &mut VStore) -> Trilean {
