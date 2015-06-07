@@ -136,15 +136,14 @@ mod test {
     }
   }
 
-  // #[bench]
-  // fn bench_nqueens10(b: &mut Bencher) {
-  //   b.iter(|| {
-  //       nqueens(10, Satisfiable)
-  //   });
-  // }
+  #[bench]
+  fn bench_nqueens10(b: &mut Bencher) {
+    b.iter(|| {
+        nqueens(10, Satisfiable)
+    });
+  }
 
   fn nqueens(n: usize, expect: Status<FDSpace>) {
-    println!("{}-queens test running...", n);
     let mut space = FDSpace::default();
     let mut queens = vec![];
     // 2 queens can't share the same line.

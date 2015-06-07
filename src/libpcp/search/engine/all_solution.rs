@@ -23,25 +23,22 @@ pub struct AllSolution<C> {
 
 impl<C> AllSolution<C>
 {
-  pub fn new<S>(child: C) -> AllSolution<C> where
-    S: Space,
-    C: SearchTreeVisitor<S>
-  {
+  pub fn new(child: C) -> AllSolution<C> {
     AllSolution {
       child: child
     }
   }
 }
 
-impl<S, C> SearchTreeVisitor<S> for AllSolution<C> where
- S: Space + State,
- C: SearchTreeVisitor<S> + PartialExploration
+impl<Space, C> SearchTreeVisitor<Space> for AllSolution<C> where
+ Space: State,
+ C: SearchTreeVisitor<Space> + PartialExploration
 {
-  fn start(&mut self, root: &S) {
+  fn start(&mut self, root: &Space) {
     self.child.start(root);
   }
 
-  fn enter(&mut self, root: S) -> (S, Status<S>) {
+  fn enter(&mut self, root: Space) -> (Space, Status<Space>) {
     let mut status_sum = Unsatisfiable;
     let mut status = Satisfiable;
     let mut current = root;
