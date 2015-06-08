@@ -113,7 +113,7 @@ impl<Domain, Event> Assign<Domain> for DeltaStore<Domain, Event> where
 }
 
 impl<Domain, Event> MonotonicUpdate<usize, Domain> for DeltaStore<Domain, Event> where
-  Domain: VarDomain+Clone,
+  Domain: Bounded + Cardinality + Subset + Clone,
   Event: MonotonicEvent<Domain> + Merge + Clone
 {
   fn update(&mut self, key: usize, dom: Domain) -> bool {
@@ -156,6 +156,7 @@ impl<Domain, Event> Display for DeltaStore<Domain, Event> where
 #[cfg(test)]
 pub mod test {
   use super::*;
+  use kernel::Assign;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
   use propagation::events::*;

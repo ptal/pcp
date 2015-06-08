@@ -5,7 +5,7 @@
 
 PCP Constraint Programming library will make you feel NP like P.
 
-Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. This library is highly experimental.
+Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. I also explore a "store"-based design where the variables, constraints and spaces are stored in concrete structures – I feel that this design will be clearer but it is highly experimental.
 
 ### References
 

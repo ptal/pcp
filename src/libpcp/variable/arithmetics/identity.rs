@@ -75,6 +75,7 @@ impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
 
 #[cfg(test)]
 mod test {
+  use kernel::Assign;
   use variable::store::*;
   use variable::ops::*;
   use interval::interval::*;

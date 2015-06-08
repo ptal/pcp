@@ -12,41 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::vec_map::Drain;
-use std::slice;
-
-pub use variable::arithmetics::ops::*;
-
-pub trait DrainDelta<Event>
+pub trait Assign<Value>
 {
-  fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
-  fn has_changed(&self) -> bool;
-}
-
-pub trait Iterable
-{
-  type Value;
-
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Value>;
-}
-
-pub trait VarIndex
-{
-  fn index(&self) -> usize;
-}
-
-pub trait Failure
-{
-  fn is_failed(&self) -> bool;
-}
-
-pub trait MonotonicUpdate<Key, Value>
-{
-  fn update(&mut self, key: Key, value: Value) -> bool;
-}
-
-pub trait Read<Key>
-{
-  type Value;
-  fn read(&self, key: Key) -> Self::Value;
+  type Variable;
+  fn assign(&mut self, value: Value) -> Self::Variable;
 }

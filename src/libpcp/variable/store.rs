@@ -84,7 +84,7 @@ impl<Domain> Assign<Domain> for Store<Domain> where
 }
 
 impl<Domain> MonotonicUpdate<usize, Domain> for Store<Domain> where
-  Domain: VarDomain
+  Domain: Cardinality + Subset
 {
   fn update(&mut self, key: usize, dom: Domain) -> bool {
     assert!(dom.is_subset(&self.variables[key]), "Domain update must be monotonic.");
@@ -122,6 +122,7 @@ impl<Domain> Display for Store<Domain> where
 #[cfg(test)]
 mod test {
   use super::*;
+  use kernel::Assign;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
   use interval::interval::*;

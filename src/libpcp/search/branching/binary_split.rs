@@ -83,7 +83,6 @@ mod test {
   use propagation::events::*;
   use propagation::reactors::*;
   use propagation::schedulers::*;
-  use variable::ops::*;
   use variable::delta_store::DeltaStore;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;

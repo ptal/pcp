@@ -85,7 +85,6 @@ mod test {
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
   use variable::delta_store::*;
-  use variable::ops::*;
   use propagators::test::*;
   use propagators::cmp::XLessY;
   use interval::interval::*;

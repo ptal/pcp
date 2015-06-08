@@ -45,7 +45,6 @@ mod test {
   use propagation::events::*;
   use propagation::reactors::*;
   use propagation::schedulers::*;
-  use variable::ops::*;
   use variable::delta_store::DeltaStore;
   use search::space::*;
   use search::branching::VarSelection;

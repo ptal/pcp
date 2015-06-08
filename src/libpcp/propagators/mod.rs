@@ -44,7 +44,6 @@ pub mod test {
   use propagation::*;
   use propagation::events::*;
   use interval::interval::*;
-  use variable::ops::*;
   use variable::arithmetics::identity::*;
   use variable::delta_store::test::consume_delta;
   pub use variable::delta_store::test::FDStore;

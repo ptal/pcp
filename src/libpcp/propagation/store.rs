@@ -220,7 +220,6 @@ mod test {
   use propagation::schedulers::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
-  use variable::ops::*;
   use variable::arithmetics::*;
   use variable::delta_store::DeltaStore;
 

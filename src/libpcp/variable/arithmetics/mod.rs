@@ -16,6 +16,7 @@ pub mod expr_inference;
 pub mod identity;
 pub mod constant;
 pub mod addition;
+pub mod ops;
 
 pub use variable::arithmetics::expr_inference::ExprInference;
 pub use variable::arithmetics::identity::Identity;
