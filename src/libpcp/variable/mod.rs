@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! A variable is a pair `(location, value)` where the value lives inside a block of memory, called a *store*. The store is parametrized by the type of the values it will contain, it is the *domain* of the variables.
+//!
+//! We initialize a variable in the store by providing the associated value and the store gives back a location associated to it. Further read or write operations of the value must be done explicitly through the store with the location returned during the allocation. An important property is that only monotonic updates of a value are allowed, it means that the domains can only become smaller. For example, the variable `x: [1..10]` can be updated to `x: [2..10]` or `x: [5..5]` but not to `x: [1..11]`.
+//!
+//! A subset of arithmetics is provided with *views* on variables. It allows to manipulate an expression such as `x + 5` as if it was a single variable and to avoid implementing specific instances of propagation algorithms such as `x + c < y` which is just `x < y` with `x` being a view. The view acts as a proxy between requested operations and the store. It implies that operations must be called on the views instead of applying them directly to the store.
+
 pub mod variable;
 pub mod ops;
 pub mod store;
