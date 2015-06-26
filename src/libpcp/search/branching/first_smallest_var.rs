@@ -59,7 +59,7 @@ mod test {
     let mut space = FDSpace::default();
 
     for (l,u) in vars {
-      space.vstore.assign(Interval::new(l,u));
+      space.vstore.alloc(Interval::new(l,u));
     }
 
     assert_eq!(selector.select(&space), expect);

@@ -90,7 +90,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let dom0_4 = (0,4).to_interval();
     let mut store: FDStore = DeltaStore::new();
-    let x = store.assign(dom0_10);
+    let x = store.alloc(dom0_10);
     let c: Constant<i32> = Constant::new(5);
 
     let x_less_c = XLessY::new(x, c);
@@ -131,7 +131,7 @@ mod test {
    R: Propagator<FDStore> + Subsumption<FDStore>
   {
     let mut store: FDStore = DeltaStore::new();
-    let x = store.assign(x);
+    let x = store.alloc(x);
     let propagator = make_prop(x, Constant::new(c));
     subsumption_propagate(id, propagator, &mut store, before, after, expected, update_success);
   }

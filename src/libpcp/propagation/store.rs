@@ -157,11 +157,11 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
   }
 }
 
-impl<Prop, VStore, Event, R, S> Assign<Prop> for Store<VStore, Event, R, S> where
+impl<Prop, VStore, Event, R, S> Alloc<Prop> for Store<VStore, Event, R, S> where
  Prop: PropagatorRequirements<VStore, Event> + 'static
 {
-  type Variable = ();
-  fn assign(&mut self, p: Prop) {
+  type Location = ();
+  fn alloc(&mut self, p: Prop) {
     self.propagators.push(Box::new(p));
   }
 }
@@ -233,16 +233,16 @@ mod test {
 
     assert_eq!(constraints.consistency(variables), True);
 
-    let var1 = variables.assign(Interval::new(1,4));
-    let var2 = variables.assign(Interval::new(1,4));
-    let var3 = variables.assign(Interval::new(1,1));
+    let var1 = variables.alloc(Interval::new(1,4));
+    let var2 = variables.alloc(Interval::new(1,4));
+    let var3 = variables.alloc(Interval::new(1,1));
 
     assert_eq!(constraints.consistency(variables), True);
 
-    constraints.assign(XLessY::new(var1.clone(), var2));
+    constraints.alloc(XLessY::new(var1.clone(), var2));
     assert_eq!(constraints.consistency(variables), Unknown);
 
-    constraints.assign(XEqY::new(var1, var3));
+    constraints.alloc(XEqY::new(var1, var3));
     assert_eq!(constraints.consistency(variables), True);
   }
 
@@ -252,10 +252,10 @@ mod test {
     let mut constraints: CStore = CStore::new();
     let mut vars = vec![];
     for _ in 0..n {
-      vars.push(variables.assign(Interval::new(1,10)));
+      vars.push(variables.alloc(Interval::new(1,10)));
     }
     for i in 0..n-1 {
-      constraints.assign(XLessY::new(vars[i].clone(), vars[i+1].clone()));
+      constraints.alloc(XLessY::new(vars[i].clone(), vars[i+1].clone()));
     }
     assert_eq!(constraints.consistency(variables), expect);
   }
@@ -284,7 +284,7 @@ mod test {
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {
-      queens.push(variables.assign((1, n as i32).to_interval()));
+      queens.push(variables.alloc((1, n as i32).to_interval()));
     }
     for i in 0..n-1 {
       for j in i + 1..n {
@@ -292,13 +292,13 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        constraints.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+        constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
         // Xi - i != Xj - j
-        constraints.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+        constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
       }
     }
     // 2 queens can't share the same column.
-    constraints.assign(Distinct::new(queens));
+    constraints.alloc(Distinct::new(queens));
     assert_eq!(constraints.consistency(variables), expect);
   }
 }

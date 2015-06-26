@@ -71,8 +71,8 @@ pub mod test {
    FnProp: FnOnce(FDVar, FDVar) -> P
   {
     let mut store = FDStore::new();
-    let x = store.assign(x);
-    let y = store.assign(y);
+    let x = store.alloc(x);
+    let y = store.alloc(y);
     let propagator = make_prop(x, y);
     subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
   }
@@ -84,7 +84,7 @@ pub mod test {
    FnProp: FnOnce(Vec<FDVar>) -> P
   {
     let mut store = FDStore::new();
-    let vars = doms.into_iter().map(|d| store.assign(d)).collect();
+    let vars = doms.into_iter().map(|d| store.alloc(d)).collect();
     let propagator = make_prop(vars);
     subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
   }

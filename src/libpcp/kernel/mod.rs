@@ -17,11 +17,11 @@ pub mod consistency;
 pub mod merge;
 pub mod event;
 pub mod state;
-pub mod assign;
+pub mod alloc;
 
 pub use kernel::trilean::*;
 pub use kernel::consistency::*;
 pub use kernel::merge::*;
 pub use kernel::event::*;
 pub use kernel::state::*;
-pub use kernel::assign::*;
+pub use kernel::alloc::*;

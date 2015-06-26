@@ -148,7 +148,7 @@ mod test {
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {
-      queens.push(space.vstore.assign((1, n as i32).to_interval()));
+      queens.push(space.vstore.alloc((1, n as i32).to_interval()));
     }
     for i in 0..n-1 {
       for j in i + 1..n {
@@ -156,13 +156,13 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        space.cstore.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+        space.cstore.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
         // Xi - i != Xj - j
-        space.cstore.assign(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+        space.cstore.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
       }
     }
     // 2 queens can't share the same column.
-    space.cstore.assign(Distinct::new(queens));
+    space.cstore.alloc(Distinct::new(queens));
 
     let mut search: OneSolution<_, Vec<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);

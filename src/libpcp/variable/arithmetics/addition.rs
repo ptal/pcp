@@ -110,8 +110,8 @@ mod test {
     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
   {
     let mut store: FDStore = DeltaStore::new();
-    let x = store.assign(x);
-    let y = store.assign(y);
+    let x = store.alloc(x);
+    let y = store.alloc(y);
     let x_less_y_plus_c = XLessY::new(x, Addition::new(y, c));
     subsumption_propagate(id, x_less_y_plus_c, &mut store, before, after, expected, update_success);
   }

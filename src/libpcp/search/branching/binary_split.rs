@@ -32,8 +32,8 @@ pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
   VStore: State + Iterable<Value=Domain>,
   CStore: State,
-  CStore: Assign<XLessEqC<Domain, Bound>>,
-  CStore: Assign<XGreaterC<Domain, Bound>>,
+  CStore: Alloc<XLessEqC<Domain, Bound>>,
+  CStore: Alloc<XGreaterC<Domain, Bound>>,
   Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
@@ -50,10 +50,10 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
     Branch::distribute(space,
       vec![
         Box::new(move |space: &mut Space<VStore, CStore>| {
-          space.cstore.assign(x_less_mid);
+          space.cstore.alloc(x_less_mid);
         }),
         Box::new(move |space: &mut Space<VStore, CStore>| {
-          space.cstore.assign(x_geq_mid);
+          space.cstore.alloc(x_geq_mid);
         })
       ]
     )
@@ -96,7 +96,7 @@ mod test {
     let mut space = FDSpace::default();
 
     for (l,u) in root {
-      space.vstore.assign(Interval::new(l,u));
+      space.vstore.alloc(Interval::new(l,u));
     }
 
     let branches = distributor.distribute(&space, distribution_index);

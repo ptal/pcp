@@ -70,12 +70,12 @@ impl<Domain> Iterable for Store<Domain> {
   }
 }
 
-impl<Domain> Assign<Domain> for Store<Domain> where
+impl<Domain> Alloc<Domain> for Store<Domain> where
   Domain: Cardinality
 {
-  type Variable = Identity<Domain>;
+  type Location = Identity<Domain>;
 
-  fn assign(&mut self, dom: Domain) -> Identity<Domain> {
+  fn alloc(&mut self, dom: Domain) -> Identity<Domain> {
     assert!(!dom.is_empty());
     let var_idx = self.variables.len();
     self.variables.push(dom);
@@ -122,7 +122,7 @@ impl<Domain> Display for Store<Domain> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::Assign;
+  use kernel::Alloc;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
   use interval::interval::*;
@@ -134,7 +134,7 @@ mod test {
     let mut store = Store::new();
 
     for i in 0..10 {
-      assert_eq!(store.assign(dom0_10), Identity::new(i));
+      assert_eq!(store.alloc(dom0_10), Identity::new(i));
     }
   }
 
@@ -144,7 +144,7 @@ mod test {
     let dom5_5 = (5, 5).to_interval();
     let mut store = Store::new();
 
-    let vars: Vec<_> = (0..10).map(|_| store.assign(dom0_10)).collect();
+    let vars: Vec<_> = (0..10).map(|_| store.alloc(dom0_10)).collect();
     for var in vars {
       assert_eq!(var.read(&store), dom0_10);
       assert_eq!(var.update(&mut store, dom5_5), true);
@@ -157,7 +157,7 @@ mod test {
     let mut store = Store::new();
     let dom5_5 = (5, 5).to_interval();
 
-    let var = store.assign(dom5_5);
+    let var = store.alloc(dom5_5);
     assert_eq!(var.update(&mut store, Interval::empty()), false);
   }
 
@@ -165,7 +165,7 @@ mod test {
   #[should_panic]
   fn empty_assign() {
     let mut store = Store::new();
-    store.assign(Interval::<i32>::empty());
+    store.alloc(Interval::<i32>::empty());
   }
 
   #[test]
@@ -175,7 +175,7 @@ mod test {
     let dom11_11 = 11.to_interval();
 
     let mut store = Store::new();
-    let var = store.assign(dom0_10);
+    let var = store.alloc(dom0_10);
     var.update(&mut store, dom11_11);
   }
 
@@ -186,7 +186,7 @@ mod test {
     let domm5_15 = (-5, 15).to_interval();
 
     let mut store = Store::new();
-    let var = store.assign(dom0_10);
+    let var = store.alloc(dom0_10);
     var.update(&mut store, domm5_15);
   }
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub trait Assign<Value>
+pub trait Alloc<Value>
 {
-  type Variable;
-  fn assign(&mut self, value: Value) -> Self::Variable;
+  type Location;
+  fn alloc(&mut self, value: Value) -> Self::Location;
 }

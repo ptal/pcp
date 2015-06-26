@@ -100,13 +100,13 @@ impl<Domain, Event> Cardinality for DeltaStore<Domain, Event>
   }
 }
 
-impl<Domain, Event> Assign<Domain> for DeltaStore<Domain, Event> where
+impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
   Domain: Cardinality
 {
-  type Variable = Identity<Domain>;
+  type Location = Identity<Domain>;
 
-  fn assign(&mut self, dom: Domain) -> Identity<Domain> {
-    let var = self.store.assign(dom);
+  fn alloc(&mut self, dom: Domain) -> Identity<Domain> {
+    let var = self.store.alloc(dom);
     self.delta.reserve_len(var.index());
     var
   }
@@ -156,7 +156,7 @@ impl<Domain, Event> Display for DeltaStore<Domain, Event> where
 #[cfg(test)]
 pub mod test {
   use super::*;
-  use kernel::Assign;
+  use kernel::Alloc;
   use variable::ops::*;
   use variable::arithmetics::identity::*;
   use propagation::events::*;
@@ -170,7 +170,7 @@ pub mod test {
     Op: FnOnce(&FDStore, Identity<Interval<i32>>) -> Interval<i32>
   {
     let mut store = DeltaStore::new();
-    let var = store.assign(source);
+    let var = store.alloc(source);
 
     let new = op(&store, var);
     assert_eq!(var.update(&mut store, new), update_success);
@@ -187,8 +187,8 @@ pub mod test {
     Op: FnOnce(&FDStore, Identity<Interval<i32>>, Identity<Interval<i32>>) -> Interval<i32>
   {
     let mut store = DeltaStore::new();
-    let var1 = store.assign(source1);
-    let var2 = store.assign(source2);
+    let var1 = store.alloc(source1);
+    let var2 = store.alloc(source2);
 
     let new = op(&store, var1, var2);
     assert_eq!(var1.update(&mut store, new), update_success);
