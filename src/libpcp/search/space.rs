@@ -43,7 +43,7 @@ impl<VStore, CStore> State for Space<VStore, CStore> where
 
   fn restore(mut self, label: Rc<(VStore::Label, CStore::Label)>) -> Space<VStore, CStore>
   {
-    let label = try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
+    let label = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
     self.vstore = self.vstore.restore(label.0);
     self.cstore = self.cstore.restore(label.1);
     self
