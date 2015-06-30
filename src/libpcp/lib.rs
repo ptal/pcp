@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Constraint programming is a declarative programming paradigm mainly used to solve combinatorial problems where you state which constraints a solution must respect instead of explaining how to solve it. The difficulty is to find a model that express your problem.
 
 #![crate_name = "pcp"]
 #![crate_type = "dylib"]

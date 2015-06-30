@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Propagators are implementations of constraints, a single constraint can be realized by different propagators.
+//!
+//! We keep the propagator implementations generic over domains implementing specific operations (e.g. intersection or union). Propagators are also implemented to work on variable views, you can always obtain a view from a variable by using the `Identity` view.
+
 pub mod cmp;
 pub mod distinct;
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! The kernel is a set of reusable traits shared among the different modules. It does not provide specific implementations.
+
 pub mod trilean;
 pub mod consistency;
 pub mod merge;

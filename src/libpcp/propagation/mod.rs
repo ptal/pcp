@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Propagation is a set of algorithmic components to verify the consistency of a constraint conjunction, called the *constraints store*.
+//!
+//! The constraints store is parametrized by the type of the variables store to keep both concrete implementation independents. Stores are stacked in a hierarchical manner and they communicate only from top to bottom; the variables store is not aware of the constraints store.
+
+
 pub mod reactor;
 pub mod reactors;
 pub mod scheduler;

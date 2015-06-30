@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Represents the *constraint store* which is a conjunction of constraints, it also comes with an algorithm checking the consistency of the store. It is not a complete method for solving a constraint problem because the output can be `Unknown`. A complete solver is obtained using a search algorithm on top of the consistency algorithm.
+
 use kernel::*;
 use kernel::Trilean::*;
 use propagation::Reactor;

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The combinators for search, implemented with the trait `SearchTreeVisitor` comes from the following article:
-//   Search Combinators
-//   Authors: Tom Schrijvers, Guido Tack, Pieter Wuille, Horst Samulowitz, Peter J. Stuckey
+//! The search explores a tree where nodes are a couple of variables and constraints store, called a *space*.
+
+//! The tree is constructed during the search and backtracking occurs when a node is failed (it does not lead to a solution). The exploration of the tree can be customized by different heuristics combined with *search combinators* implemented with `SearchTreeVisitor`.
 
 pub mod space;
 pub mod branching;
