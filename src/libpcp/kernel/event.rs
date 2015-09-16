@@ -17,7 +17,7 @@ pub trait EventIndex : Copy {
   fn size() -> usize;
 }
 
-pub trait MonotonicEvent<Domain> {
+pub trait MonotonicEvent<Domain> : Sized {
   // precondition: `little` is a subset of `big`.
   // returns `None` if no event occurred.
   fn new(little: &Domain, big: &Domain) -> Option<Self>;

@@ -1,3 +1,3 @@
 % Constraint Programming with PCP
 
-Welcome!
+Welcome! You will love using PCP.

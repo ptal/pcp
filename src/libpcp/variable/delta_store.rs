@@ -18,7 +18,7 @@ use variable::store::*;
 use variable::arithmetics::identity::*;
 use interval::ncollections::ops::*;
 use std::slice;
-use std::collections::vec_map::{Drain, VecMap};
+use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
 use std::default::Default;
 

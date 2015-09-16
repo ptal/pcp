@@ -18,7 +18,6 @@ use variable::arithmetics::identity::*;
 use std::slice;
 use interval::ncollections::ops::*;
 use std::fmt::{Formatter, Display, Error};
-use std::result::fold;
 use std::default::Default;
 
 #[derive(Clone)]
@@ -112,10 +111,10 @@ impl<Domain> Display for Store<Domain> where
  Domain: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    let format_vars =
-      self.variables.iter()
-      .map(|v| formatter.write_fmt(format_args!("{} ", v)));
-    fold(format_vars, (), |a,_| a)
+    for v in &self.variables {
+      try!(formatter.write_fmt(format_args!("{} ", v)));
+    }
+    Ok(())
   }
 }
 

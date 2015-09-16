@@ -17,13 +17,14 @@
 #![crate_name = "pcp"]
 #![crate_type = "dylib"]
 
-#![feature(core, alloc, unboxed_closures, result_fold, deque_extras, append, drain, rc_unique, fnbox, vecmap, iter_cmp)]
+#![feature(core, alloc, unboxed_closures, deque_extras, fnbox, iter_cmp)]
 #![feature(test)]
 
 extern crate test;
 extern crate interval;
 extern crate num;
 extern crate alloc;
+extern crate vec_map;
 
 pub mod kernel;
 pub mod propagation;

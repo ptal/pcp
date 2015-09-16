@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::collections::vec_map::Drain;
+use vec_map::Drain;
 use std::slice;
 
 pub use variable::arithmetics::ops::*;

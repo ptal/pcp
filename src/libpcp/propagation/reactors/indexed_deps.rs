@@ -17,7 +17,6 @@ use kernel::event::*;
 use interval::ncollections::ops::*;
 use std::iter::{FromIterator, repeat};
 use std::fmt::{Formatter, Debug, Error};
-use std::result::fold;
 
 // `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
 
@@ -86,10 +85,10 @@ impl Cardinality for IndexedDeps {
 impl Debug for IndexedDeps
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    let format_deps =
-      self.deps.iter().flat_map(|props| props.iter())
-      .map(|prop| formatter.write_fmt(format_args!("{} ", prop)));
-    fold(format_deps, (), |a,_| a)
+    for prop in self.deps.iter().flat_map(|props| props.iter()) {
+      try!(formatter.write_fmt(format_args!("{} ", prop)));
+    }
+    Ok(())
   }
 }
 
