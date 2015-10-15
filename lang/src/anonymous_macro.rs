@@ -143,13 +143,21 @@ impl<'a> Expander<'a>
       {
         let pound_idx = idx;
         let open_brace_idx = idx + 1;
+        let mut opened_braces = 1;
         idx = idx + 2;
         while idx < self.tokens.len()
-         && self.tokens[idx].tok != rtok::CloseDelim(rust::DelimToken::Brace)
+         && (opened_braces != 1
+         || self.tokens[idx].tok != rtok::CloseDelim(rust::DelimToken::Brace))
         {
+          opened_braces = opened_braces +
+            match self.tokens[idx].tok {
+              rtok::CloseDelim(rust::DelimToken::Brace) => -1,
+              rtok::OpenDelim(rust::DelimToken::Brace) => 1,
+              _ => 0
+            };
           idx = idx + 1;
         }
-        if idx == self.tokens.len() {
+        if idx == self.tokens.len() || opened_braces != 1 {
           self.cx.span_fatal(self.tokens[open_brace_idx].sp,
             "unclosed delimiter of anynomous macro.");
         }

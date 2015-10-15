@@ -36,10 +36,6 @@ fn expand<'cx>(cx: &'cx mut rust::ExtCtxt, _sp: rust::Span,
   parse(cx, tts.iter().cloned().collect())
 }
 
-fn abort_if_errors(cx: &rust::ExtCtxt) {
-  cx.parse_sess.span_diagnostic.handler.abort_if_errors();
-}
-
 fn parse<'cx>(cx: &'cx rust::ExtCtxt,
   tts: Vec<rust::TokenTree>) -> Box<rust::MacResult + 'cx>
 {
