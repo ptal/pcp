@@ -14,7 +14,7 @@
 
 use rust;
 use rust::Token as rtok;
-use rust::{TokenAndSpan, Span};
+use rust::{TokenAndSpan, Span, token_to_string};
 
 /// TokenAndSpanArray is used to feed the parser with tokens.
 pub struct TokenAndSpanArray<'a>
@@ -186,6 +186,11 @@ impl<'a> Expander<'a>
   }
 
   fn compile_anonymous_macro(&self, start: usize, end: usize) -> rtok {
+    let mut text = String::new();
+    for idx in (start+2)..end {
+      text.extend(token_to_string(&self.tokens[idx].tok).chars());
+      text.push(' ');
+    }
     rtok::Interpolated(rust::Nonterminal::NtExpr(quote_expr!(self.cx, {})))
   }
 

@@ -15,32 +15,46 @@
 #![feature(plugin)]
 #![plugin(pcp_lang)]
 
+extern crate interval;
+extern crate pcp;
 
-
-#[test]
-fn test_nqueens()
+#[cfg(test)]
+mod test
 {
-  let n = 10usize;
-  pcp! {
-    let mut queens: Vec<usize> = vec![];
-    for _ in 0..n {
-      assert!(true);
-      queens.push(n);
-      // queens.push(#{1 .. n});
-    }
-    for i in 0..n-1 {
-      for j in i + 1..n {
-        let queen_i = queens[i];
-        let queen_j = queens[j];
-        #{
-          queen_i + i != queen_j + j;
-          queen_i - i != queen_j - j;
+  use interval::interval::*;
+  use pcp::propagation::events::*;
+  use pcp::propagation::reactors::*;
+  use pcp::propagation::schedulers::*;
+  use pcp::propagation::store::*;
+  use pcp::variable::delta_store::DeltaStore;
+
+  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+
+  #[test]
+  fn test_nqueens()
+  {
+    let mut variables: VStore = VStore::new();
+    let mut constraints: CStore = CStore::new();
+    let n = 10usize;
+    pcp! {
+      let mut queens: Vec<usize> = vec![];
+      for _ in 0..n {
+        #{let v = variables <- 1 .. n;}
+        queens.push(0/*v*/);
+      }
+      for i in 0..n-1 {
+        for j in i + 1..n {
+          let queen_i = queens[i];
+          let queen_j = queens[j];
+          #{
+            constraints <- queen_i + i != queen_j + j;
+            constraints <- queen_i - i != queen_j - j;
+          }
         }
       }
+      // #{Distinct(queens)}
     }
-    #{Distinct(queens)}
+    assert!(true);
   }
-
-
-  assert!(true);
 }
