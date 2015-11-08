@@ -16,5 +16,6 @@ intervallum = "0.4.9"
 num = "0.1.27"
 
 [dependencies.vec_map]
+git="https://github.com/ptal/vec-map"
 version = "0.3.0"
 features = ["nightly"]

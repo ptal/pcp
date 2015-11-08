@@ -15,6 +15,8 @@
 #![feature(plugin)]
 #![plugin(pcp_lang)]
 
+
+
 #[test]
 fn test_nqueens()
 {
@@ -30,9 +32,8 @@ fn test_nqueens()
       for j in i + 1..n {
         let queen_i = queens[i];
         let queen_j = queens[j];
-        #             //test
-                         {
-          queen_i + i != queen_j + j;{ anything }
+        #{
+          queen_i + i != queen_j + j;
           queen_i - i != queen_j - j;
         }
       }

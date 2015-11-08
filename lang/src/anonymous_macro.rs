@@ -133,14 +133,26 @@ impl<'a> Expander<'a>
     })
   }
 
+  fn start_of_anon_macro(&self, idx: usize) -> bool {
+       idx + 1 < self.tokens.len()
+    && self.tokens[idx].tok == rtok::Pound
+    && self.tokens[idx + 1].tok == rtok::OpenDelim(rust::DelimToken::Brace)
+  }
+
+  fn span_token(&self, tok: rtok, start_idx: usize, end_idx: usize) -> TokenAndSpan {
+    let mut span = self.tokens[start_idx].sp;
+    span.hi = self.tokens[end_idx].sp.hi;
+    TokenAndSpan {
+      tok: tok,
+      sp: span
+    }
+  }
+
   fn replace_anonymous_macros(&mut self) {
     let mut idx = 0;
     let mut new_tokens = vec![];
     while idx < self.tokens.len() {
-      if idx + 1 < self.tokens.len()
-       && self.tokens[idx].tok == rtok::Pound
-       && self.tokens[idx + 1].tok == rtok::OpenDelim(rust::DelimToken::Brace)
-      {
+      if self.start_of_anon_macro(idx) {
         let pound_idx = idx;
         let open_brace_idx = idx + 1;
         let mut opened_braces = 1;
@@ -162,12 +174,7 @@ impl<'a> Expander<'a>
             "unclosed delimiter of anynomous macro.");
         }
         let interpolated_tok = self.compile_anonymous_macro(pound_idx, idx);
-        let mut interpolated_sp = self.tokens[pound_idx].sp;
-        interpolated_sp.hi = self.tokens[idx].sp.hi;
-        let tok_and_span = TokenAndSpan {
-          tok: interpolated_tok,
-          sp: interpolated_sp
-        };
+        let tok_and_span = self.span_token(interpolated_tok, pound_idx, idx);
         new_tokens.push(tok_and_span);
       }
       else {
