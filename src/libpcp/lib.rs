@@ -17,7 +17,7 @@
 #![crate_name = "pcp"]
 #![crate_type = "dylib"]
 
-#![feature(core, alloc, unboxed_closures, deque_extras, fnbox, iter_cmp)]
+#![feature(core, alloc, unboxed_closures, fnbox, iter_cmp)]
 #![feature(test)]
 
 extern crate test;

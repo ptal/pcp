@@ -50,7 +50,7 @@ impl Scheduler for RelaxedFifo {
     if self.inside_queue[idx] {
       let queue_idx = self.queue.iter().position(|&e| e == idx);
       assert!(queue_idx.is_some());
-      self.queue.swap_front_remove(queue_idx.unwrap());
+      self.queue.swap_remove_front(queue_idx.unwrap());
       self.inside_queue[idx] = false;
     }
   }
