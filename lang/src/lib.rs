@@ -15,6 +15,10 @@
 #![feature(rustc_private, plugin_registrar, quote, convert)]
 #![crate_name = "pcp_lang"]
 
+#![feature(plugin)]
+#![plugin(oak)]
+
+extern crate oak_runtime;
 extern crate rustc;
 extern crate syntax;
 
@@ -22,6 +26,7 @@ use rustc::plugin::Registry;
 
 mod rust;
 mod anonymous_macro;
+mod grammar;
 
 #[plugin_registrar]
 pub fn plugin_registrar(reg: &mut Registry) {

@@ -17,3 +17,8 @@ plugin = true
 [dependencies.pcp]
 path = ".."
 version = "0.1.0"
+
+[dependencies]
+oak = "0.3.5"
+oak_runtime = "0.3.5"
+intervallum = "0.4.9"
