@@ -15,6 +15,8 @@
 use rust;
 use rust::Token as rtok;
 use rust::{TokenAndSpan, Span, token_to_string};
+use grammar::*;
+use oak_runtime::*;
 
 /// TokenAndSpanArray is used to feed the parser with tokens.
 pub struct TokenAndSpanArray<'a>
@@ -192,6 +194,7 @@ impl<'a> Expander<'a>
       text.extend(token_to_string(&self.tokens[idx].tok).chars());
       text.push(' ');
     }
+    let state = pcp::parse_store_placement(text.stream());
     rtok::Interpolated(rust::Nonterminal::NtExpr(quote_expr!(self.cx, {})))
   }
 

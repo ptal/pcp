@@ -31,7 +31,7 @@ grammar! pcp {
     = range > make_store_domain
     / constraint > make_store_constraint
 
-  range = integer dotdot integer > make_pcp_range
+  range = arith_expr dotdot arith_expr > make_pcp_range
 
   constraint
     = arith_expr cmp_op arith_expr > make_rel_constraint
@@ -154,8 +154,8 @@ grammar! pcp {
 
   #[derive(Debug)]
   pub struct Range {
-    min: Lit_,
-    max: Lit_
+    min: AExpr,
+    max: AExpr
   }
 
   #[derive(Debug)]
@@ -239,7 +239,7 @@ grammar! pcp {
     }
   }
 
-  fn make_pcp_range(min_bound: Lit_, max_bound: Lit_) -> Range {
+  fn make_pcp_range(min_bound: AExpr, max_bound: AExpr) -> Range {
     Range {
       min: min_bound,
       max: max_bound
