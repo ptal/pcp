@@ -15,8 +15,7 @@
 use rust;
 use rust::Token as rtok;
 use rust::{TokenAndSpan, Span, token_to_string};
-use grammar::*;
-use oak_runtime::*;
+use code_gen::*;
 
 /// TokenAndSpanArray is used to feed the parser with tokens.
 pub struct TokenAndSpanArray<'a>
@@ -57,8 +56,8 @@ impl<'a> rust::lexer::Reader for TokenAndSpanArray<'a> {
     cur
   }
 
-  fn fatal(&self, m: &str) -> ! {
-    panic!(self.sp_diag.span_fatal(self.current_span(), m));
+  fn fatal(&self, m: &str) -> rust::FatalError {
+    self.sp_diag.span_fatal(self.current_span(), m)
   }
 
   fn err(&self, m: &str) {
@@ -194,8 +193,9 @@ impl<'a> Expander<'a>
       text.extend(token_to_string(&self.tokens[idx].tok).chars());
       text.push(' ');
     }
-    let state = pcp::parse_store_placement(text.stream());
-    rtok::Interpolated(rust::Nonterminal::NtExpr(quote_expr!(self.cx, {})))
+    let code_gen = CodeGenerator::new(self.cx);
+    let expr = code_gen.generate_expr(text);
+    rtok::Interpolated(rust::Nonterminal::NtExpr(expr))
   }
 
   fn into_rust_code(self) -> Box<rust::MacResult> {
@@ -203,7 +203,7 @@ impl<'a> Expander<'a>
       &self.cx.parse_sess().span_diagnostic,
       self.tokens));
     let mut parser = rust::Parser::new(self.cx.parse_sess(), self.cx.cfg(), reader);
-    let expr = parser.parse_expr();
+    let expr = parser.parse_expr_panic();
     self.cx.parse_sess.span_diagnostic.handler.note(
       &rust::expr_to_string(&expr));
     rust::MacEager::expr(expr)

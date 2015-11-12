@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(rustc_private, plugin_registrar, quote, convert)]
+#![feature(rustc_private, plugin_registrar, quote)]
 #![crate_name = "pcp_lang"]
 
 #![feature(plugin)]
@@ -26,6 +26,7 @@ use rustc::plugin::Registry;
 
 mod rust;
 mod anonymous_macro;
+mod code_gen;
 mod grammar;
 
 #[plugin_registrar]

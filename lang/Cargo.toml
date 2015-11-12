@@ -19,6 +19,6 @@ path = ".."
 version = "0.1.0"
 
 [dependencies]
-oak = "0.3.6"
+oak = "0.3.7"
 oak_runtime = "0.3.6"
 intervallum = "0.4.9"
