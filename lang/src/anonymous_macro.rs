@@ -133,10 +133,10 @@ impl<'a> Expander<'a>
     })
   }
 
-  fn start_of_anon_macro(&self, idx: usize) -> bool {
+  fn start_of_anon_macro(&self, idx: usize, delim: rust::DelimToken) -> bool {
        idx + 1 < self.tokens.len()
     && self.tokens[idx].tok == rtok::Pound
-    && self.tokens[idx + 1].tok == rtok::OpenDelim(rust::DelimToken::Brace)
+    && self.tokens[idx + 1].tok == rtok::OpenDelim(delim)
   }
 
   fn span_token(&self, tok: rtok, start_idx: usize, end_idx: usize) -> TokenAndSpan {
@@ -151,20 +151,21 @@ impl<'a> Expander<'a>
   fn replace_anonymous_macros(&mut self) {
     let mut idx = 0;
     let mut new_tokens = vec![];
+    let delim = rust::DelimToken::Paren;
     while idx < self.tokens.len() {
-      if self.start_of_anon_macro(idx) {
+      if self.start_of_anon_macro(idx, delim) {
         let pound_idx = idx;
         let open_brace_idx = idx + 1;
         let mut opened_braces = 1;
         idx = idx + 2;
         while idx < self.tokens.len()
          && (opened_braces != 1
-         || self.tokens[idx].tok != rtok::CloseDelim(rust::DelimToken::Brace))
+         || self.tokens[idx].tok != rtok::CloseDelim(delim))
         {
           opened_braces = opened_braces +
             match self.tokens[idx].tok {
-              rtok::CloseDelim(rust::DelimToken::Brace) => -1,
-              rtok::OpenDelim(rust::DelimToken::Brace) => 1,
+              rtok::CloseDelim(d) if d == delim => -1,
+              rtok::OpenDelim(d) if d == delim => 1,
               _ => 0
             };
           idx = idx + 1;

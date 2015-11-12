@@ -40,17 +40,17 @@ mod test
     pcp! {
       let mut queens: Vec<usize> = vec![];
       for _ in 0..n {
-        #{let v = variables <- 1 .. n;}
-        queens.push(0/*v*/);
+        queens.push(0);
+        #(variables <- 1 .. n);
       }
       for i in 0..n-1 {
         for j in i + 1..n {
           let queen_i = queens[i];
           let queen_j = queens[j];
-          #{
-            constraints <- queen_i + i != queen_j + j;
-            constraints <- queen_i - i != queen_j - j;
-          }
+          // #{
+          //   constraints <- queen_i + i != queen_j + j;
+          //   constraints <- queen_i - i != queen_j - j;
+          // }
         }
       }
       // #{Distinct(queens)}
