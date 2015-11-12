@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(rustc_private, plugin_registrar, quote)]
+#![feature(rustc_private, plugin_registrar, quote, convert)]
 #![crate_name = "pcp_lang"]
 
 #![feature(plugin)]

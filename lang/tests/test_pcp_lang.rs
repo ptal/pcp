@@ -22,11 +22,13 @@ extern crate pcp;
 mod test
 {
   use interval::interval::*;
+  use interval::ops::*;
   use pcp::propagation::events::*;
   use pcp::propagation::reactors::*;
   use pcp::propagation::schedulers::*;
   use pcp::propagation::store::*;
   use pcp::variable::delta_store::DeltaStore;
+  use pcp::kernel::*;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
@@ -34,14 +36,14 @@ mod test
   #[test]
   fn test_nqueens()
   {
-    let mut variables: VStore = VStore::new();
-    let mut constraints: CStore = CStore::new();
-    let n = 10usize;
     pcp! {
-      let mut queens: Vec<usize> = vec![];
+      let mut variables: VStore = VStore::new();
+      let mut constraints: CStore = CStore::new();
+      let n = 10usize;
+      let mut queens = vec![];
       for _ in 0..n {
-        queens.push(0);
-        #(variables <- 1 .. n);
+        let n: i32 = n as i32;
+        queens.push(#(variables <- 0..n));
       }
       for i in 0..n-1 {
         for j in i + 1..n {

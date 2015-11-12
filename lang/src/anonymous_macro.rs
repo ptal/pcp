@@ -17,6 +17,8 @@ use rust::Token as rtok;
 use rust::{TokenAndSpan, Span, token_to_string};
 use code_gen::*;
 
+use std::collections::hash_map::HashMap;
+
 /// TokenAndSpanArray is used to feed the parser with tokens.
 pub struct TokenAndSpanArray<'a>
 {
@@ -140,12 +142,16 @@ impl<'a> Expander<'a>
     && self.tokens[idx + 1].tok == rtok::OpenDelim(delim)
   }
 
-  fn span_token(&self, tok: rtok, start_idx: usize, end_idx: usize) -> TokenAndSpan {
+  fn span_between(&self, start_idx: usize, end_idx: usize) -> Span {
     let mut span = self.tokens[start_idx].sp;
     span.hi = self.tokens[end_idx].sp.hi;
+    span
+  }
+
+  fn span_token(&self, tok: rtok, start_idx: usize, end_idx: usize) -> TokenAndSpan {
     TokenAndSpan {
       tok: tok,
-      sp: span
+      sp: self.span_between(start_idx, end_idx)
     }
   }
 
@@ -189,11 +195,16 @@ impl<'a> Expander<'a>
 
   fn compile_anonymous_macro(&self, start: usize, end: usize) -> rtok {
     let mut text = String::new();
+    let span = self.span_between(start, end);
+    let mut text_to_ident = HashMap::new();
     for idx in (start+2)..end {
+      if let rust::Token::Ident(id, rust::IdentStyle::Plain) = self.tokens[idx].tok {
+        text_to_ident.insert(format!("{}", id), id);
+      }
       text.extend(token_to_string(&self.tokens[idx].tok).chars());
       text.push(' ');
     }
-    let code_gen = CodeGenerator::new(self.cx);
+    let code_gen = CodeGenerator::new(self.cx, text_to_ident, span);
     let expr = code_gen.generate_expr(text);
     rtok::Interpolated(rust::Nonterminal::NtExpr(expr))
   }

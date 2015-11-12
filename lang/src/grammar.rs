@@ -14,7 +14,9 @@
 
 grammar! pcp {
 
-  program = spacing statement_list
+  program = spacing statement_list eof
+
+  expression = spacing store_placement eof
 
   statement_list = (statement semi_colon)+
 
@@ -87,6 +89,7 @@ grammar! pcp {
   neq = "<>" spacing
 
   spacing = [" \n\r\t"]* -> ()
+  eof = !.
 
   integer
     = decimal spacing
@@ -154,15 +157,15 @@ grammar! pcp {
 
   #[derive(Debug)]
   pub struct Range {
-    min: AExpr,
-    max: AExpr
+    pub min: AExpr,
+    pub max: AExpr
   }
 
   #[derive(Debug)]
   pub struct RelConstraint {
-    rel_op: RelationalOp,
-    left: AExpr,
-    right: AExpr
+    pub rel_op: RelationalOp,
+    pub left: AExpr,
+    pub right: AExpr
   }
 
   #[derive(Debug)]
