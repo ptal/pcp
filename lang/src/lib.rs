@@ -19,13 +19,13 @@
 #![plugin(oak)]
 
 extern crate oak_runtime;
+extern crate ama;
 extern crate rustc;
 extern crate syntax;
 
 use rustc::plugin::Registry;
 
 mod rust;
-mod anonymous_macro;
 mod code_gen;
 mod grammar;
 
@@ -45,6 +45,6 @@ fn expand<'cx>(cx: &'cx mut rust::ExtCtxt, _sp: rust::Span,
 fn parse<'cx>(cx: &'cx rust::ExtCtxt,
   tts: Vec<rust::TokenTree>) -> Box<rust::MacResult + 'cx>
 {
-  let expander = anonymous_macro::Expander::new(cx, tts);
-  expander.expand()
+  let mut compiler = code_gen::CodeGenerator::new(cx);
+  ama::compile_anonymous_macro(cx, tts, &mut compiler)
 }
