@@ -86,13 +86,13 @@ impl<'cx> CodeGenerator<'cx>
 
   fn gen_arith_expr(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr {
     match *arith_expr {
-      pcp::ArithExpr::Variable(var) => self.gen_var(unquote, var),
+      pcp::ArithExpr::Variable(var) => self.gen_ident(unquote, var),
       pcp::ArithExpr::Number(n) => self.cx.expr_lit(unquote.span, n),
       x => panic!(format!("gen_arith_expr: {:?}: Not implemented", x))
     }
   }
 
-  fn gen_var(&self, unquote: &Unquote, var: String) -> RExpr {
+  fn gen_ident(&self, unquote: &Unquote, var: String) -> RExpr {
     let var = unquote.text_to_ident[&var];
     quote_expr!(self.cx, $var)
   }
@@ -114,7 +114,19 @@ impl<'cx> CodeGenerator<'cx>
     }
   }
 
-  fn gen_constraint(&self, unquote: &Unquote, constraint: pcp::RelConstraint) -> RExpr {
+  fn gen_constraint(&self, unquote: &Unquote, constraint: pcp::Constraint) -> RExpr {
+    use grammar::pcp::Constraint::*;
+    match constraint {
+      Binary(constraint) => {
+        self.gen_binary_constraint(unquote, constraint)
+      }
+      Nary(constraint) => {
+        self.gen_nary_constraint(unquote, constraint)
+      }
+    }
+  }
+
+  fn gen_binary_constraint(&self, unquote: &Unquote, constraint: pcp::BinaryConstraint) -> RExpr {
     use grammar::pcp::RelationalOp::*;
     let x = self.gen_var_view(unquote, constraint.left);
     let y = self.gen_var_view(unquote, constraint.right);
@@ -131,7 +143,7 @@ impl<'cx> CodeGenerator<'cx>
   fn gen_var_view(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr {
     use grammar::pcp::ArithExpr::*;
     match *arith_expr {
-      Variable(var) => self.gen_var(unquote, var),
+      Variable(var) => self.gen_ident(unquote, var),
       Number(n) => {
         let lit = self.cx.expr_lit(unquote.span, n);
         quote_expr!(self.cx, Constant::new($lit))
@@ -156,5 +168,13 @@ impl<'cx> CodeGenerator<'cx>
       Sub => panic!("gen_bin_arith_expr: Sub: unimplemented."),
       Mul => panic!("gen_bin_arith_expr: Mul: unimplemented.")
     }
+  }
+
+  fn gen_nary_constraint(&self, unquote: &Unquote, constraint: pcp::NaryConstraint) -> RExpr {
+    let fun_name = self.cx.ident_of(constraint.name.as_str());
+    let args: Vec<RExpr> = constraint.args.into_iter()
+      .map(|arg| self.gen_var_view(unquote, arg))
+      .collect();
+    quote_expr!(self.cx, $fun_name::new($args))
   }
 }

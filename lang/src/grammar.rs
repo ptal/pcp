@@ -36,7 +36,14 @@ grammar! pcp {
   range = arith_expr dotdot arith_expr > make_pcp_range
 
   constraint
-    = arith_expr cmp_op arith_expr > make_rel_constraint
+    = bin_constraint > make_store_bin_constraint
+    / nary_constraint > make_store_nary_constraint
+
+  nary_constraint = identifier lparen list_arith_expr rparen > make_nary_constraint
+
+  bin_constraint = arith_expr cmp_op arith_expr > make_bin_constraint
+
+  list_arith_expr = arith_expr (comma arith_expr)* > arith_expr_list
 
   arith_expr
     = term (term_op term)* > fold_left
@@ -77,6 +84,7 @@ grammar! pcp {
   underscore = "_" -> (^)
   dotdot = ".." spacing
   semi_colon = ";" spacing
+  comma = "," spacing
   left_arrow = "<-" spacing
   bind_op = "=" spacing
   add_op = "+" spacing
@@ -148,12 +156,6 @@ grammar! pcp {
     Add, Sub, Mul
   }
 
-  #[derive(Debug, Copy, Clone)]
-  pub enum UnaryArithOp {
-    Minus
-  }
-
-
   #[derive(Debug, Clone, Copy)]
   pub enum RelationalOp {
     Lt, Le, Gt, Ge, Eq, Neq
@@ -162,7 +164,13 @@ grammar! pcp {
   #[derive(Debug, Clone)]
   pub enum StoreExpression {
     Domain(Range),
-    Constraint(RelConstraint)
+    Constraint(Constraint)
+  }
+
+  #[derive(Debug, Clone)]
+  pub enum Constraint {
+    Binary(BinaryConstraint),
+    Nary(NaryConstraint)
   }
 
   #[derive(Debug, Clone)]
@@ -172,7 +180,13 @@ grammar! pcp {
   }
 
   #[derive(Debug, Clone)]
-  pub struct RelConstraint {
+  pub struct NaryConstraint {
+    pub name: String,
+    pub args: Vec<AExpr>
+  }
+
+  #[derive(Debug, Clone)]
+  pub struct BinaryConstraint {
     pub rel_op: RelationalOp,
     pub left: AExpr,
     pub right: AExpr
@@ -297,15 +311,35 @@ grammar! pcp {
     StoreExpression::Domain(range)
   }
 
-  fn make_store_constraint(constraint: RelConstraint) -> StoreExpression {
+  fn make_store_constraint(constraint: Constraint) -> StoreExpression {
     StoreExpression::Constraint(constraint)
   }
 
-  fn make_rel_constraint(left: AExpr, rel_op: RelationalOp, right: AExpr) -> RelConstraint {
-    RelConstraint {
+  fn make_store_bin_constraint(bin_constraint: BinaryConstraint) -> Constraint {
+    Constraint::Binary(bin_constraint)
+  }
+
+  fn make_store_nary_constraint(nary_constraint: NaryConstraint) -> Constraint {
+    Constraint::Nary(nary_constraint)
+  }
+
+  fn make_bin_constraint(left: AExpr, rel_op: RelationalOp, right: AExpr) -> BinaryConstraint {
+    BinaryConstraint {
       rel_op: rel_op,
       left: left,
       right: right
+    }
+  }
+
+  fn arith_expr_list(x: AExpr, mut list: Vec<AExpr>) -> Vec<AExpr> {
+    list.push(x);
+    list
+  }
+
+  fn make_nary_constraint(name: String, args: Vec<AExpr>) -> NaryConstraint {
+    NaryConstraint {
+      name: name,
+      args: args
     }
   }
 }

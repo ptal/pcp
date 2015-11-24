@@ -32,6 +32,7 @@ mod test
   use pcp::kernel::*;
   use pcp::variable::arithmetics::*;
   use pcp::propagators::cmp::*;
+  use pcp::propagators::distinct::*;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
@@ -62,7 +63,7 @@ mod test
           }
         }
       }
-      // #{Distinct(queens)}
+      #(constraints <- Distinct(queens));
     }
     assert!(true);
   }
