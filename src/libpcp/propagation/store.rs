@@ -294,7 +294,7 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        constraints.alloc(XNeqY::new(Addition::new(queens[i].clone(), q1), Addition::new(queens[j].clone(), q2)));
+        constraints.alloc(XNeqY::new(Addition::new(queens[i], q1), Addition::new(queens[j], q2)));
         // constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
         // Xi - i != Xj - j
         constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));

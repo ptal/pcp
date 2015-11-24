@@ -18,9 +18,9 @@ use grammar::*;
 use oak_runtime::*;
 use ama::compiler::*;
 
-pub type RTy = rust::P<rust::Ty>;
-pub type RExpr = rust::P<rust::Expr>;
-pub type RItem = rust::P<rust::Item>;
+type RBlock = rust::P<rust::Block>;
+type RStmt = rust::P<rust::Stmt>;
+type RExpr = rust::P<rust::Expr>;
 
 pub struct CodeGenerator<'cx>
 {
@@ -29,11 +29,11 @@ pub struct CodeGenerator<'cx>
 
 impl<'cx> Compiler for CodeGenerator<'cx>
 {
-  fn compile_expr(&mut self, unquote: Unquote) -> rust::P<rust::Expr> {
+  fn compile_expr(&mut self, unquote: Unquote) -> RExpr {
     let state = pcp::parse_expression(unquote.code.stream());
     match state.into_result() {
       Ok((success, _)) => {
-        self.generate_placement_store(&unquote, success.data)
+        self.gen_placement_store(&unquote, success.data)
       }
       Err(error) => {
         self.cx.span_err(unquote.span, format!("{}", error).as_str());
@@ -42,45 +42,119 @@ impl<'cx> Compiler for CodeGenerator<'cx>
     }
   }
 
-  fn compile_block(&mut self, _unquote: Unquote) -> rust::P<rust::Block> {
-    panic!("compile_block is unimplemented");
+  fn compile_block(&mut self, unquote: Unquote) -> RBlock {
+    let state = pcp::parse_program(unquote.code.stream());
+    match state.into_result() {
+      Ok((success, _)) => {
+        self.gen_statements(&unquote, success.data)
+      }
+      Err(error) => {
+        self.cx.span_err(unquote.span, format!("{}", error).as_str());
+        self.cx.block(unquote.span, vec![], None)
+      }
+    }
   }
 }
 
 impl<'cx> CodeGenerator<'cx>
 {
-  pub fn new(cx: &'cx rust::ExtCtxt)
-    -> CodeGenerator<'cx>
-  {
+  pub fn new(cx: &'cx rust::ExtCtxt) -> CodeGenerator<'cx> {
     CodeGenerator {
       cx: cx
     }
   }
 
-  fn generate_placement_store(&self, unquote: &Unquote, store: pcp::StorePlacement) -> RExpr
-  {
+  fn gen_placement_store(&self, unquote: &Unquote, store: pcp::StorePlacement) -> RExpr {
     let store_name = unquote.text_to_ident[&store.store_name];
     match store.expr {
       pcp::StoreExpression::Domain(range) => {
-        let min = self.generate_arith_expr(unquote, range.min);
-        let max = self.generate_arith_expr(unquote, range.max);
-        quote_expr!(self.cx, $store_name.alloc(Interval::new($min, $max)))
+        let domain = self.gen_domain(unquote, range);
+        quote_expr!(self.cx, $store_name.alloc($domain))
       }
-      x => panic!(format!("generate_placement_store: {:?}: Not implemented", x))
+      pcp::StoreExpression::Constraint(constraint) => {
+        let constraint = self.gen_constraint(unquote, constraint);
+        quote_expr!(self.cx, $store_name.alloc($constraint))
+      }
     }
   }
 
-  fn generate_arith_expr(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr
-  {
+  fn gen_domain(&self, unquote: &Unquote, range: pcp::Range) -> RExpr {
+    let min = self.gen_arith_expr(unquote, range.min);
+    let max = self.gen_arith_expr(unquote, range.max);
+    quote_expr!(self.cx, Interval::new($min, $max))
+  }
+
+  fn gen_arith_expr(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr {
     match *arith_expr {
-      pcp::ArithExpr::Variable(var) => {
-        let var = unquote.text_to_ident[&var];
-        quote_expr!(self.cx, $var)
+      pcp::ArithExpr::Variable(var) => self.gen_var(unquote, var),
+      pcp::ArithExpr::Number(n) => self.cx.expr_lit(unquote.span, n),
+      x => panic!(format!("gen_arith_expr: {:?}: Not implemented", x))
+    }
+  }
+
+  fn gen_var(&self, unquote: &Unquote, var: String) -> RExpr {
+    let var = unquote.text_to_ident[&var];
+    quote_expr!(self.cx, $var)
+  }
+
+  fn gen_statements(&self, unquote: &Unquote, statements: Vec<pcp::Statement>) -> RBlock {
+    let rust_stmt = statements.into_iter()
+      .map(|stmt| self.gen_statement(unquote, stmt)).collect();
+    self.cx.block(unquote.span, rust_stmt, None)
+  }
+
+  fn gen_statement(&self, unquote: &Unquote, statement: pcp::Statement) -> RStmt {
+    use grammar::pcp::Statement::*;
+    match statement {
+      Local(_) => panic!("gen_statement: Let binding: Not implemented"),
+      Tell(store) => {
+        let expr = self.gen_placement_store(unquote, store);
+        self.cx.stmt_expr(expr)
       }
-      pcp::ArithExpr::Number(n) => {
-        self.cx.expr_lit(unquote.span, n)
+    }
+  }
+
+  fn gen_constraint(&self, unquote: &Unquote, constraint: pcp::RelConstraint) -> RExpr {
+    use grammar::pcp::RelationalOp::*;
+    let x = self.gen_var_view(unquote, constraint.left);
+    let y = self.gen_var_view(unquote, constraint.right);
+    match constraint.rel_op {
+      Lt => quote_expr!(self.cx, XLessY::new($x, $y)),
+      Le => quote_expr!(self.cx, x_leq_y($x, $y)),
+      Gt => quote_expr!(self.cx, x_greater_y($x, $y)),
+      Ge => quote_expr!(self.cx, x_geq_y($x, $y)),
+      Eq => quote_expr!(self.cx, XEqY::new($x, $y)),
+      Neq => quote_expr!(self.cx, XNeqY::new($x, $y)),
+    }
+  }
+
+  fn gen_var_view(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr {
+    use grammar::pcp::ArithExpr::*;
+    match *arith_expr {
+      Variable(var) => self.gen_var(unquote, var),
+      Number(n) => {
+        let lit = self.cx.expr_lit(unquote.span, n);
+        quote_expr!(self.cx, Constant::new($lit))
+      },
+      SignedArithExpr(..) => {
+        panic!("gen_var_view: SignedArithExpr: unimplemented.")
       }
-      x => panic!(format!("generate_arith_expr: {:?}: Not implemented", x))
+      BinaryArithExpr(op, ref x, ref y) => {
+        self.gen_bin_arith_expr(unquote, op, x.clone(), y.clone())
+      }
+    }
+  }
+
+  fn gen_bin_arith_expr(&self, unquote: &Unquote, op: pcp::BinArithOp,
+    x: pcp::AExpr, y: pcp::AExpr) -> RExpr
+  {
+    use grammar::pcp::BinArithOp::*;
+    let x = self.gen_var_view(unquote, x);
+    let y = self.gen_var_view(unquote, y);
+    match op {
+      Add => quote_expr!(self.cx, Addition::new($x, $y)),
+      Sub => panic!("gen_bin_arith_expr: Sub: unimplemented."),
+      Mul => panic!("gen_bin_arith_expr: Mul: unimplemented.")
     }
   }
 }

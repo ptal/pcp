@@ -23,12 +23,15 @@ mod test
 {
   use interval::interval::*;
   use interval::ops::*;
+  use interval::ncollections::ops::*;
   use pcp::propagation::events::*;
   use pcp::propagation::reactors::*;
   use pcp::propagation::schedulers::*;
   use pcp::propagation::store::*;
   use pcp::variable::delta_store::DeltaStore;
   use pcp::kernel::*;
+  use pcp::variable::arithmetics::*;
+  use pcp::propagators::cmp::*;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
@@ -49,10 +52,14 @@ mod test
         for j in i + 1..n {
           let queen_i = queens[i];
           let queen_j = queens[j];
-          // #{
-          //   constraints <- queen_i + i != queen_j + j;
-          //   constraints <- queen_i - i != queen_j - j;
-          // }
+          let i = i as i32;
+          let j = j as i32;
+          let mi = -i;
+          let mj = -j;
+          #{
+            constraints <- queen_i + i != queen_j + j;
+            constraints <- queen_i + mi != queen_j + mj;
+          }
         }
       }
       // #{Distinct(queens)}

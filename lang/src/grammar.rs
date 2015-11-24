@@ -47,7 +47,10 @@ grammar! pcp {
   factor
     = integer > number_arith_expr
     / identifier > variable_arith_expr
+    / signed_arith_expr
     / lparen arith_expr rparen
+
+  signed_arith_expr = sign factor > make_signed_factor
 
   term_op
     = add_op > add_bin_op
@@ -62,6 +65,7 @@ grammar! pcp {
     / gt > gt_bin_op
     / ge > ge_bin_op
     / eq > eq_bin_op
+    / neq > neq_bin_op
 
   identifier = !digit !keyword ident_char+ spacing > to_string
   ident_char = ["a-zA-Z0-9_"]
@@ -86,7 +90,7 @@ grammar! pcp {
   gt = ">" spacing
   ge = ">=" spacing
   eq = "==" spacing
-  neq = "<>" spacing
+  neq = "!=" spacing
 
   spacing = [" \n\r\t"]* -> ()
   eof = !.
@@ -97,8 +101,8 @@ grammar! pcp {
   decimal = sign? number integer_suffix? > make_decimal
 
   sign
-    = "-" > make_minus_sign
-    / "+" > make_plus_sign
+    = sub_op > make_minus_sign
+    / add_op > make_plus_sign
 
   number = digits > make_number
   digits = digit+ (underscore* digit)* > concat
@@ -121,57 +125,64 @@ grammar! pcp {
   use self::ArithExpr::*;
   use self::BinArithOp::*;
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub enum Statement {
     Local(LetBinding),
     Tell(StorePlacement)
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub struct LetBinding {
     pub var_name: String,
     pub store_placement: StorePlacement
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub struct StorePlacement {
     pub store_name: String,
     pub expr: StoreExpression
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Copy, Clone)]
   pub enum BinArithOp {
     Add, Sub, Mul
   }
 
-  #[derive(Debug)]
-  pub enum RelationalOp {
-    Lt, Le, Gt, Ge, Eq
+  #[derive(Debug, Copy, Clone)]
+  pub enum UnaryArithOp {
+    Minus
   }
 
-  #[derive(Debug)]
+
+  #[derive(Debug, Clone, Copy)]
+  pub enum RelationalOp {
+    Lt, Le, Gt, Ge, Eq, Neq
+  }
+
+  #[derive(Debug, Clone)]
   pub enum StoreExpression {
     Domain(Range),
     Constraint(RelConstraint)
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub struct Range {
     pub min: AExpr,
     pub max: AExpr
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub struct RelConstraint {
     pub rel_op: RelationalOp,
     pub left: AExpr,
     pub right: AExpr
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Clone)]
   pub enum ArithExpr {
     Variable(String),
     Number(Lit_),
+    SignedArithExpr(Sign, AExpr),
     BinaryArithExpr(BinArithOp, AExpr, AExpr)
   }
 
@@ -242,6 +253,10 @@ grammar! pcp {
     }
   }
 
+  fn make_signed_factor(sign: Sign, expr: AExpr) -> AExpr {
+    Box::new(SignedArithExpr(sign, expr))
+  }
+
   fn make_pcp_range(min_bound: AExpr, max_bound: AExpr) -> Range {
     Range {
       min: min_bound,
@@ -254,6 +269,7 @@ grammar! pcp {
   fn gt_bin_op() -> RelationalOp { RelationalOp::Gt }
   fn ge_bin_op() -> RelationalOp { RelationalOp::Ge }
   fn eq_bin_op() -> RelationalOp { RelationalOp::Eq }
+  fn neq_bin_op() -> RelationalOp { RelationalOp::Neq }
 
   fn make_let_binding_stmt(let_binding: LetBinding) -> Statement {
     Statement::Local(let_binding)
