@@ -60,15 +60,13 @@ mod test
       }
       for i in 0..n-1 {
         for j in i + 1..n {
-          let queen_i = queens[i];
-          let queen_j = queens[j];
-          let i = i as i32;
-          let j = j as i32;
-          let mi = -i;
-          let mj = -j;
+          let a = i as i32;
+          let b = j as i32;
+          let ma = -a;
+          let mb = -b;
           #{
-            constraints <- queen_i + i != queen_j + j;
-            constraints <- queen_i + mi != queen_j + mj;
+            constraints <- queens[i] + a != queens[j] + b;
+            constraints <- queens[i] + ma != queens[j] + mb;
           }
         }
       }

@@ -53,9 +53,12 @@ grammar! pcp {
 
   factor
     = integer > number_arith_expr
+    / indexed_expr
     / identifier > variable_arith_expr
     / signed_arith_expr
     / lparen arith_expr rparen
+
+  indexed_expr = identifier lbracket arith_expr rbracket > make_indexed_expr
 
   signed_arith_expr = sign factor > make_signed_factor
 
@@ -92,6 +95,8 @@ grammar! pcp {
   mul_op = "*" spacing
   lparen = "(" spacing
   rparen = ")" spacing
+  lbracket = "[" spacing
+  rbracket = "]" spacing
 
   lt = "<" spacing
   le = "<=" spacing
@@ -196,6 +201,7 @@ grammar! pcp {
   pub enum ArithExpr {
     Variable(String),
     Number(Lit_),
+    IndexedExpr(String, AExpr),
     SignedArithExpr(Sign, AExpr),
     BinaryArithExpr(BinArithOp, AExpr, AExpr)
   }
@@ -208,6 +214,10 @@ grammar! pcp {
 
   fn variable_arith_expr(ident: String) -> AExpr {
     Box::new(Variable(ident))
+  }
+
+  fn make_indexed_expr(ident: String, index: AExpr) -> AExpr {
+    Box::new(IndexedExpr(ident, index))
   }
 
   fn fold_left(head: AExpr, rest: Vec<(BinArithOp, AExpr)>) -> AExpr {

@@ -85,9 +85,13 @@ impl<'cx> CodeGenerator<'cx>
   }
 
   fn gen_arith_expr(&self, unquote: &Unquote, arith_expr: pcp::AExpr) -> RExpr {
+    use grammar::pcp::ArithExpr::*;
     match *arith_expr {
-      pcp::ArithExpr::Variable(var) => self.gen_ident(unquote, var),
-      pcp::ArithExpr::Number(n) => self.cx.expr_lit(unquote.span, n),
+      Variable(var) => self.gen_ident(unquote, var),
+      Number(n) => self.cx.expr_lit(unquote.span, n),
+      IndexedExpr(ref var, ref index) => {
+        self.gen_indexed_expr(unquote, var.clone(), index.clone())
+      },
       x => panic!(format!("gen_arith_expr: {:?}: Not implemented", x))
     }
   }
@@ -148,6 +152,9 @@ impl<'cx> CodeGenerator<'cx>
         let lit = self.cx.expr_lit(unquote.span, n);
         quote_expr!(self.cx, Constant::new($lit))
       },
+      IndexedExpr(ref var, ref index) => {
+        self.gen_indexed_expr(unquote, var.clone(), index.clone())
+      }
       SignedArithExpr(..) => {
         panic!("gen_var_view: SignedArithExpr: unimplemented.")
       }
@@ -176,5 +183,11 @@ impl<'cx> CodeGenerator<'cx>
       .map(|arg| self.gen_var_view(unquote, arg))
       .collect();
     quote_expr!(self.cx, $fun_name::new($args))
+  }
+
+  fn gen_indexed_expr(&self, unquote: &Unquote, var: String, index: pcp::AExpr) -> RExpr {
+    let index = self.gen_arith_expr(unquote, index);
+    let var = self.gen_ident(unquote, var);
+    quote_expr!(self.cx, $var[$index])
   }
 }
