@@ -34,8 +34,17 @@ mod test
   use pcp::propagators::cmp::*;
   use pcp::propagators::distinct::*;
 
+  use pcp::search::search_tree_visitor::*;
+  use pcp::search::space::*;
+  use pcp::search::propagation::*;
+  use pcp::search::branching::binary_split::*;
+  use pcp::search::branching::brancher::*;
+  use pcp::search::branching::first_smallest_var::*;
+  use pcp::search::engine::one_solution::*;
+
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type FDSpace = Space<VStore, CStore>;
 
   #[test]
   fn test_nqueens()
@@ -64,6 +73,13 @@ mod test
         }
       }
       #(constraints <- Distinct(queens));
+
+      let space = FDSpace::new(variables, constraints);
+      let mut search: OneSolution<_, Vec<_>, FDSpace> =
+        OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+      search.start(&space);
+      let (_, status) = search.enter(space);
+      assert_eq!(status, Status::Satisfiable);
     }
     assert!(true);
   }

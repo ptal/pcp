@@ -22,6 +22,16 @@ pub struct Space<VStore, CStore> {
   pub cstore: CStore
 }
 
+impl<VStore, CStore> Space<VStore, CStore>
+{
+  pub fn new(vstore: VStore, cstore: CStore) -> Space<VStore, CStore> {
+    Space {
+      vstore: vstore,
+      cstore: cstore
+    }
+  }
+}
+
 impl<VStore, CStore> Space<VStore, CStore> where
   CStore: Consistency<VStore>
 {
