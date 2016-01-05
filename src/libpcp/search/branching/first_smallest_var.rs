@@ -29,7 +29,7 @@ impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for First
   fn select(&mut self, space: &Space<VStore, CStore>) -> usize {
     space.vstore.iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
-      .min_by(|&(_, v)| v.size())
+      .min_by_key(|&(_, v)| v.size())
       .expect("Cannot select a variable in a space where all variables are assigned.")
       .0
   }
