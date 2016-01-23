@@ -3,6 +3,8 @@
 [travis-image]: https://travis-ci.org/ptal/pcp.png
 [travis]: https://travis-ci.org/ptal/pcp
 
+Compiled with `rustc 1.8.0-nightly (18b851bc5 2016-01-22)`.
+
 PCP Constraint Programming library will make you feel NP like P.
 
 Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. I also explore a "store"-based design where the variables, constraints and spaces are stored in concrete structures – I feel that this design will be clearer but it is highly experimental.

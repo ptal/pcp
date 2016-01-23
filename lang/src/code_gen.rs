@@ -18,9 +18,9 @@ use grammar::*;
 use oak_runtime::*;
 use ama::compiler::*;
 
-type RBlock = rust::P<rust::Block>;
-type RStmt = rust::P<rust::Stmt>;
-type RExpr = rust::P<rust::Expr>;
+pub type RBlock = rust::P<rust::Block>;
+pub type RStmt = rust::P<rust::Stmt>;
+pub type RExpr = rust::P<rust::Expr>;
 
 pub struct CodeGenerator<'cx>
 {

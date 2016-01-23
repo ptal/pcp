@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(rustc_private, plugin_registrar, quote, convert)]
+#![feature(rustc_private, plugin_registrar, quote)]
 #![crate_name = "pcp_lang"]
 
 #![feature(plugin)]
@@ -21,9 +21,10 @@
 extern crate oak_runtime;
 extern crate ama;
 extern crate rustc;
+extern crate rustc_plugin;
 extern crate syntax;
 
-use rustc::plugin::Registry;
+use rustc_plugin::Registry;
 
 mod rust;
 mod code_gen;

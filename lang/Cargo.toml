@@ -1,6 +1,6 @@
 [package]
 name = "pcp_lang"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Pierre Talbot <ptalbot@hyc.io>"]
 
 description = "Language for constraint programming with PCP."
@@ -19,9 +19,9 @@ git = "https://github.com/ptal/ama.git"
 
 [dependencies.pcp]
 path = ".."
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
-oak = "0.3.10"
-oak_runtime = "0.3.6"
+oak = "0.3.12"
+oak_runtime = "0.3.7"
 intervallum = "0.4.10"

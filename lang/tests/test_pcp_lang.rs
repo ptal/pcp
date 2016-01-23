@@ -23,7 +23,6 @@ mod test
 {
   use interval::interval::*;
   use interval::ops::*;
-  use interval::ncollections::ops::*;
   use pcp::propagation::events::*;
   use pcp::propagation::reactors::*;
   use pcp::propagation::schedulers::*;

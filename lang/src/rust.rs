@@ -39,4 +39,3 @@ pub use syntax::parse::token::gensym_ident;
 
 pub use syntax::parse::lexer;
 pub use syntax::parse::lexer::TokenAndSpan;
-pub use syntax::diagnostic::{SpanHandler, FatalError};
