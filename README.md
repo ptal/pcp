@@ -3,7 +3,7 @@
 [travis-image]: https://travis-ci.org/ptal/pcp.png
 [travis]: https://travis-ci.org/ptal/pcp
 
-Compiled with `rustc 1.8.0-nightly (18b851bc5 2016-01-22)`.
+Compiled with `rustc 1.8.0-nightly (0ef8d4260 2016-02-24)`.
 
 PCP Constraint Programming library will make you feel NP like P.
 

@@ -12,7 +12,7 @@ crate_type = ["rlib", "dylib"]
 
 [dependencies]
 
-intervallum = "0.4.10"
+intervallum = "0.4.11"
 num = "0.1.29"
 
 [dependencies.vec_map]

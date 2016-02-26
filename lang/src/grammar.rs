@@ -55,12 +55,14 @@ grammar! pcp {
     = integer > number_arith_expr
     / indexed_expr
     / identifier > variable_arith_expr
-    / signed_arith_expr
+    / unary_arith_expr
     / lparen arith_expr rparen
 
   indexed_expr = identifier lbracket arith_expr rbracket > make_indexed_expr
 
-  signed_arith_expr = sign factor > make_signed_factor
+  unary_arith_expr
+    = add_op factor
+    / unary_neg_op factor > make_unary_expr
 
   term_op
     = add_op > add_bin_op
@@ -109,13 +111,9 @@ grammar! pcp {
   eof = !.
 
   integer
-    = decimal spacing
+    = number integer_suffix? spacing > make_integer
 
-  decimal = sign? number integer_suffix? > make_decimal
-
-  sign
-    = sub_op > make_minus_sign
-    / add_op > make_plus_sign
+  unary_neg_op = sub_op > make_neg_unary_op
 
   number = digits > make_number
   digits = digit+ (underscore* digit)* > concat
@@ -200,15 +198,15 @@ grammar! pcp {
   #[derive(Debug, Clone)]
   pub enum ArithExpr {
     Variable(String),
-    Number(Lit_),
+    Number(LitKind),
     IndexedExpr(String, AExpr),
-    SignedArithExpr(Sign, AExpr),
+    UnaryArithExpr(UnOp, AExpr),
     BinaryArithExpr(BinArithOp, AExpr, AExpr)
   }
 
   pub type AExpr = Box<ArithExpr>;
 
-  fn number_arith_expr(value: Lit_) -> AExpr {
+  fn number_arith_expr(value: LitKind) -> AExpr {
     Box::new(Number(value))
   }
 
@@ -243,31 +241,25 @@ grammar! pcp {
     raw_text.into_iter().collect()
   }
 
-  fn make_u8() -> LitIntType { UnsignedIntLit(TyU8) }
-  fn make_u16() -> LitIntType { UnsignedIntLit(TyU16) }
-  fn make_u32() -> LitIntType { UnsignedIntLit(TyU32) }
-  fn make_u64() -> LitIntType { UnsignedIntLit(TyU64) }
-  fn make_usize() -> LitIntType { UnsignedIntLit(TyUs) }
-  fn make_i8() -> LitIntType { SignedIntLit(TyI8, Sign::Plus) }
-  fn make_i16() -> LitIntType { SignedIntLit(TyI16, Sign::Plus) }
-  fn make_i32() -> LitIntType { SignedIntLit(TyI32, Sign::Plus) }
-  fn make_i64() -> LitIntType { SignedIntLit(TyI64, Sign::Plus) }
-  fn make_isize() -> LitIntType { SignedIntLit(TyIs, Sign::Plus) }
+  fn make_u8() -> LitIntType { LitIntType::Unsigned(UintTy::U8) }
+  fn make_u16() -> LitIntType { LitIntType::Unsigned(UintTy::U16) }
+  fn make_u32() -> LitIntType { LitIntType::Unsigned(UintTy::U32) }
+  fn make_u64() -> LitIntType { LitIntType::Unsigned(UintTy::U64) }
+  fn make_usize() -> LitIntType { LitIntType::Unsigned(UintTy::Us) }
+  fn make_i8() -> LitIntType { LitIntType::Signed(IntTy::I8) }
+  fn make_i16() -> LitIntType { LitIntType::Signed(IntTy::I16) }
+  fn make_i32() -> LitIntType { LitIntType::Signed(IntTy::I32) }
+  fn make_i64() -> LitIntType { LitIntType::Signed(IntTy::I64) }
+  fn make_isize() -> LitIntType { LitIntType::Signed(IntTy::Is) }
 
-  fn make_minus_sign() -> Sign { Sign::Minus }
-  fn make_plus_sign() -> Sign { Sign::Plus }
+  fn make_neg_unary_op() -> UnOp { UnOp::Neg }
 
-  fn make_decimal(sign: Option<Sign>, number: u64, suffix: Option<LitIntType>) -> Lit_ {
-    let sign = sign.unwrap_or(Sign::Plus);
+  fn make_integer(number: u64, suffix: Option<LitIntType>) -> LitKind {
     let ty = match suffix {
-      None => UnsuffixedIntLit(sign),
-      Some(SignedIntLit(ty, _)) => SignedIntLit(ty, sign),
-      Some(UnsignedIntLit(_)) if sign == Sign::Minus => {
-        panic!("unary negation of unsigned integers is forbidden.");
-      },
+      None => LitIntType::Unsuffixed,
       Some(x) => x
     };
-    Lit_::LitInt(number, ty)
+    LitKind::Int(number, ty)
   }
 
   fn make_number(raw_number: Vec<char>) -> u64 {
@@ -277,8 +269,8 @@ grammar! pcp {
     }
   }
 
-  fn make_signed_factor(sign: Sign, expr: AExpr) -> AExpr {
-    Box::new(SignedArithExpr(sign, expr))
+  fn make_unary_expr(op: UnOp, expr: AExpr) -> AExpr {
+    Box::new(UnaryArithExpr(op, expr))
   }
 
   fn make_pcp_range(min_bound: AExpr, max_bound: AExpr) -> Range {

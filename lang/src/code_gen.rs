@@ -107,7 +107,7 @@ impl<'cx> CodeGenerator<'cx>
     self.cx.block(unquote.span, rust_stmt, None)
   }
 
-  fn gen_statement(&self, unquote: &Unquote, statement: pcp::Statement) -> RStmt {
+  fn gen_statement(&self, unquote: &Unquote, statement: pcp::Statement) -> rust::Stmt {
     use grammar::pcp::Statement::*;
     match statement {
       Local(_) => panic!("gen_statement: Let binding: Not implemented"),
@@ -155,8 +155,8 @@ impl<'cx> CodeGenerator<'cx>
       IndexedExpr(ref var, ref index) => {
         self.gen_indexed_expr(unquote, var.clone(), index.clone())
       }
-      SignedArithExpr(..) => {
-        panic!("gen_var_view: SignedArithExpr: unimplemented.")
+      UnaryArithExpr(..) => {
+        panic!("gen_var_view: UnaryArithExpr: unimplemented.")
       }
       BinaryArithExpr(op, ref x, ref y) => {
         self.gen_bin_arith_expr(unquote, op, x.clone(), y.clone())
