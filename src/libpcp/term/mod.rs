@@ -18,7 +18,7 @@ pub mod constant;
 pub mod addition;
 pub mod ops;
 
-pub use variable::arithmetics::expr_inference::ExprInference;
-pub use variable::arithmetics::identity::Identity;
-pub use variable::arithmetics::constant::Constant;
-pub use variable::arithmetics::addition::Addition;
+pub use term::expr_inference::ExprInference;
+pub use term::identity::Identity;
+pub use term::constant::Constant;
+pub use term::addition::Addition;

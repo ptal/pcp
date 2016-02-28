@@ -29,5 +29,6 @@ extern crate vec_map;
 pub mod kernel;
 pub mod propagation;
 pub mod propagators;
+pub mod term;
 pub mod variable;
 pub mod search;

@@ -222,7 +222,7 @@ mod test {
   use propagation::schedulers::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
-  use variable::arithmetics::*;
+  use term::*;
   use variable::delta_store::DeltaStore;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;

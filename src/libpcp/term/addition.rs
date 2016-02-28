@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use variable::ops::*;
-use variable::arithmetics::ExprInference;
+use term::ExprInference;
 use std::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 

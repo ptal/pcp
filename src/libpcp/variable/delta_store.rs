@@ -15,7 +15,7 @@
 use kernel::*;
 use variable::ops::*;
 use variable::store::*;
-use variable::arithmetics::identity::*;
+use term::identity::*;
 use interval::ncollections::ops::*;
 use std::slice;
 use vec_map::{Drain, VecMap};
@@ -158,7 +158,7 @@ pub mod test {
   use super::*;
   use kernel::Alloc;
   use variable::ops::*;
-  use variable::arithmetics::identity::*;
+  use term::identity::*;
   use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;

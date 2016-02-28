@@ -17,7 +17,7 @@ use search::branching::*;
 use search::branching::branch::*;
 use search::space::*;
 use variable::ops::*;
-use variable::arithmetics::*;
+use term::*;
 use propagators::cmp::*;
 use interval::ncollections::ops::*;
 use num::traits::Num;

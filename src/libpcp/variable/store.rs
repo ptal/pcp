@@ -14,7 +14,7 @@
 
 use kernel::*;
 use variable::ops::*;
-use variable::arithmetics::identity::*;
+use term::identity::*;
 use std::slice;
 use interval::ncollections::ops::*;
 use std::fmt::{Formatter, Display, Error};
@@ -123,7 +123,7 @@ mod test {
   use super::*;
   use kernel::Alloc;
   use variable::ops::*;
-  use variable::arithmetics::identity::*;
+  use term::identity::*;
   use interval::interval::*;
   use interval::ncollections::ops::*;
 

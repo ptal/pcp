@@ -15,7 +15,7 @@
 use vec_map::Drain;
 use std::slice;
 
-pub use variable::arithmetics::ops::*;
+pub use term::ops::*;
 
 pub trait DrainDelta<Event>
 {

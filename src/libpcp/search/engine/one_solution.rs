@@ -112,7 +112,7 @@ mod test {
   use propagators::distinct::*;
   use variable::ops::*;
   use variable::delta_store::DeltaStore;
-  use variable::arithmetics::*;
+  use term::*;
   use search::search_tree_visitor::*;
   use search::search_tree_visitor::Status::*;
   use search::space::*;

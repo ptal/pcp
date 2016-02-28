@@ -29,7 +29,7 @@ mod test
   use pcp::propagation::store::*;
   use pcp::variable::delta_store::DeltaStore;
   use pcp::kernel::*;
-  use pcp::variable::arithmetics::*;
+  use pcp::term::*;
   use pcp::propagators::cmp::*;
   use pcp::propagators::distinct::*;
 

@@ -22,7 +22,6 @@ pub mod variable;
 pub mod ops;
 pub mod store;
 pub mod delta_store;
-pub mod arithmetics;
 
 pub use variable::variable::*;
 pub use variable::ops::Iterable;
