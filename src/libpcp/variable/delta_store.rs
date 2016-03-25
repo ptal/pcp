@@ -21,6 +21,7 @@ use std::slice;
 use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
 use std::default::Default;
+use std::ops::Index;
 
 pub struct DeltaStore<Domain, Event> {
   store: Store<Domain>,
@@ -117,10 +118,10 @@ impl<Domain, Event> MonotonicUpdate<usize, Domain> for DeltaStore<Domain, Event>
   Event: MonotonicEvent<Domain> + Merge + Clone
 {
   fn update(&mut self, key: usize, dom: Domain) -> bool {
-    assert!(dom.is_subset(&self.store.read(key)), "Domain update must be monotonic.");
+    assert!(dom.is_subset(&self.store[key]), "Domain update must be monotonic.");
     if dom.is_empty() { false }
     else {
-      if let Some(event) = Event::new(&dom, &self.store.read(key)) {
+      if let Some(event) = Event::new(&dom, &self.store[key]) {
         let mut updated = false;
         if let Some(old) = self.delta.get_mut(&key) {
           *old = Merge::merge(old.clone(), event.clone());
@@ -136,12 +137,11 @@ impl<Domain, Event> MonotonicUpdate<usize, Domain> for DeltaStore<Domain, Event>
   }
 }
 
-impl<Domain, Event> Read<usize> for DeltaStore<Domain, Event> where
-  Domain: Clone
+impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event>
 {
-  type Value = Domain;
-  fn read(&self, key: usize) -> Domain {
-    self.store.read(key)
+  type Output = Domain;
+  fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    &self.store[index]
   }
 }
 

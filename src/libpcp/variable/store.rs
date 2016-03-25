@@ -19,6 +19,7 @@ use std::slice;
 use interval::ncollections::ops::*;
 use std::fmt::{Formatter, Display, Error};
 use std::default::Default;
+use std::ops::Index;
 
 #[derive(Clone)]
 pub struct Store<Domain> {
@@ -97,13 +98,13 @@ impl<Domain> MonotonicUpdate<usize, Domain> for Store<Domain> where
   }
 }
 
-impl<Domain> Read<usize> for Store<Domain> where
-  Domain: Clone
+impl<Domain> Index<usize> for Store<Domain>
 {
-  type Value = Domain;
-  fn read(&self, key: usize) -> Domain {
-    assert!(key < self.variables.len(), "Variable not registered in the store. Variable index must be obtained with `assign`.");
-    self.variables[key].clone()
+  type Output = Domain;
+  fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    assert!(index < self.variables.len(),
+      "Variable not registered in the store. Variable index must be obtained with `alloc`.");
+    &self.variables[index]
   }
 }
 

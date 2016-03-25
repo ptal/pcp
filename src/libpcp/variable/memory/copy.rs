@@ -36,21 +36,6 @@ impl<Domain> CopyStore<Domain>
   }
 }
 
-impl<Domain> Deref for CopyStore<Domain>
-{
-  type Target = Vec<Domain>;
-  fn deref(&self) -> &Vec<Domain> {
-    &self.variables
-  }
-}
-
-impl<Domain> DerefMut for CopyStore<Domain>
-{
-  fn deref_mut<'a>(&'a mut self) -> &'a mut Vec<Domain> {
-    &mut self.variables
-  }
-}
-
 impl<Domain> Freeze for CopyStore<Domain> where
  Domain: Clone
 {

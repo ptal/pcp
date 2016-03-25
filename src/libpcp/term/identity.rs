@@ -16,6 +16,7 @@ use variable::ops::*;
 use term::ExprInference;
 use std::marker::PhantomData;
 use std::fmt::{Formatter, Debug, Error};
+use std::ops::Index;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Identity<Domain> {
@@ -58,11 +59,12 @@ impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Identity<Domain> whe
 }
 
 impl<Domain, Store> StoreRead<Store> for Identity<Domain> where
-  Store: Read<usize, Value=Domain>
+  Store: Index<usize, Output=Domain>,
+  Domain: Clone
 {
   type Value = Domain;
   fn read(&self, store: &Store) -> Domain {
-    store.read(self.idx)
+    store[self.idx].clone()
   }
 }
 

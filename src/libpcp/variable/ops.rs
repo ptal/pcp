@@ -44,9 +44,3 @@ pub trait MonotonicUpdate<Key, Value>
 {
   fn update(&mut self, key: Key, value: Value) -> bool;
 }
-
-pub trait Read<Key>
-{
-  type Value;
-  fn read(&self, key: Key) -> Self::Value;
-}
