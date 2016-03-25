@@ -42,6 +42,25 @@ impl<Domain, Event> DeltaStore<Domain, Event>
   }
 }
 
+impl<Domain, Event> DeltaStore<Domain, Event> where
+  Domain: Bounded + Cardinality + Subset,
+  Event: MonotonicEvent<Domain> + Merge + Clone
+{
+  // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
+  fn merge_delta(&mut self, key: usize, old_dom: Domain) {
+    if let Some(delta) = Event::new(&self.store[key], &old_dom) {
+      let mut updated = false;
+      if let Some(old_delta) = self.delta.get_mut(&key) {
+        *old_delta = Merge::merge(old_delta.clone(), delta.clone());
+        updated = true;
+      }
+      if !updated {
+        self.delta.insert(key, delta);
+      }
+    }
+  }
+}
+
 impl<Domain, Event> Default for DeltaStore<Domain, Event>
 {
   fn default() -> DeltaStore<Domain, Event> {
@@ -113,27 +132,17 @@ impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> MonotonicUpdate<usize, Domain> for DeltaStore<Domain, Event> where
+impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
   Domain: Bounded + Cardinality + Subset + Clone,
   Event: MonotonicEvent<Domain> + Merge + Clone
 {
   fn update(&mut self, key: usize, dom: Domain) -> bool {
-    assert!(dom.is_subset(&self.store[key]), "Domain update must be monotonic.");
-    if dom.is_empty() { false }
-    else {
-      if let Some(event) = Event::new(&dom, &self.store[key]) {
-        let mut updated = false;
-        if let Some(old) = self.delta.get_mut(&key) {
-          *old = Merge::merge(old.clone(), event.clone());
-          updated = true;
-        }
-        if !updated {
-          self.delta.insert(key, event);
-        }
-        self.store.update(key, dom);
-      }
-      true
+    let old_dom = self.store[key].clone();
+    let update_success = self.store.update(key, dom);
+    if update_success {
+      self.merge_delta(key, old_dom);
     }
+    update_success
   }
 }
 

@@ -51,7 +51,7 @@ impl<Domain> VarIndex for Identity<Domain> {
 }
 
 impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Identity<Domain> where
-  Store: MonotonicUpdate<usize, Domain>
+  Store: Update<usize, Domain>
 {
   fn update(&self, store: &mut Store, value: Domain) -> bool {
     store.update(self.idx, value)

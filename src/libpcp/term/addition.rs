@@ -59,7 +59,7 @@ impl<X, V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Addition<X, V>
 }
 
 impl<X, V, Domain, Store> StoreRead<Store> for Addition<X, V> where
-  Domain: Add<V, Output=Domain> + Clone,
+  Domain: Add<V, Output=Domain>,
   V: Clone,
   X: StoreRead<Store, Value=Domain>
 {

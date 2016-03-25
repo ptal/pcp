@@ -40,7 +40,7 @@ pub trait Failure
   fn is_failed(&self) -> bool;
 }
 
-pub trait MonotonicUpdate<Key, Value>
+pub trait Update<Key, Value>
 {
   fn update(&mut self, key: Key, value: Value) -> bool;
 }

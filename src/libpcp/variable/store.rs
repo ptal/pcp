@@ -83,7 +83,7 @@ impl<Domain> Alloc<Domain> for Store<Domain> where
   }
 }
 
-impl<Domain> MonotonicUpdate<usize, Domain> for Store<Domain> where
+impl<Domain> Update<usize, Domain> for Store<Domain> where
   Domain: Cardinality + Subset
 {
   fn update(&mut self, key: usize, dom: Domain) -> bool {
