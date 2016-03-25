@@ -17,53 +17,37 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use search::engine::PartialExploration;
-use gcollections::ops::sequence::*;
+use gcollections::ops::multiset::*;
 use std::marker::PhantomData;
 
-struct PhantomData3<T1,T2,T3> {
-  t1: PhantomData<T1>,
-  t2: PhantomData<T2>,
-  t3: PhantomData<T3>
-}
-
-impl<T1,T2,T3> PhantomData3<T1,T2,T3> {
-  fn new() -> PhantomData3<T1,T2,T3> {
-    PhantomData3 {
-      t1: PhantomData,
-      t2: PhantomData,
-      t3: PhantomData
-    }
-  }
-}
-
-pub struct OneSolution<C, Q, Space, OrderPush, OrderPop> {
+pub struct OneSolution<C, Q, Space> {
   child: C,
   queue: Q,
   exploring: bool,
-  phantom_types: PhantomData3<Space, OrderPush, OrderPop>
+  phantom_space: PhantomData<Space>
 }
 
-impl<C, Q, Space, OrderPush, OrderPop> PartialExploration for OneSolution<C, Q, Space, OrderPush, OrderPop> {}
+impl<C, Q, Space> PartialExploration for OneSolution<C, Q, Space> {}
 
-impl<C, Q, Space, OrderPush, OrderPop> OneSolution<C, Q, Space, OrderPush, OrderPop> where
+impl<C, Q, Space> OneSolution<C, Q, Space> where
  Space: State,
  C: SearchTreeVisitor<Space>,
- Q: Sequence<OrderPush, OrderPop, Branch<Space>>
+ Q: Multiset<Branch<Space>>
 {
-  pub fn new(child: C) -> OneSolution<C, Q, Space, OrderPush, OrderPop>
+  pub fn new(child: C) -> OneSolution<C, Q, Space>
   {
     OneSolution {
       queue: Q::empty(),
       child: child,
       exploring: false,
-      phantom_types: PhantomData3::new()
+      phantom_space: PhantomData
     }
   }
 
   fn push_branches(&mut self, branches: Vec<Branch<Space>>)
   {
     for branch in branches {
-      self.queue.push(branch);
+      self.queue.insert(branch);
     }
   }
 
@@ -91,10 +75,10 @@ impl<C, Q, Space, OrderPush, OrderPop> OneSolution<C, Q, Space, OrderPush, Order
   }
 }
 
-impl<C, Q, Space, OrderPush, OrderPop> SearchTreeVisitor<Space> for OneSolution<C, Q, Space, OrderPush, OrderPop> where
+impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
  Space: State,
  C: SearchTreeVisitor<Space>,
- Q: Sequence<OrderPush, OrderPop, Branch<Space>>
+ Q: Multiset<Branch<Space>>
 {
   fn start(&mut self, root: &Space) {
     self.queue = Q::empty();
@@ -106,7 +90,7 @@ impl<C, Q, Space, OrderPush, OrderPop> SearchTreeVisitor<Space> for OneSolution<
     let mut status = Unsatisfiable;
     let mut current = self.enter_root(root, &mut status);
     while status != Satisfiable && !self.queue.is_empty() {
-      let branch = self.queue.pop().unwrap();
+      let branch = self.queue.extract().unwrap();
       let child = branch.commit(current);
       current = self.enter_child(child, &mut status);
     }
@@ -119,8 +103,7 @@ mod test {
   use super::*;
   use interval::interval::*;
   use interval::ops::*;
-  use gcollections::wrappers::vector::*;
-  use gcollections::ops::sequence::ordering::*;
+  use gcollections::wrappers::Vector;
   use kernel::*;
   use propagation::store::Store;
   use propagation::events::*;
@@ -182,7 +165,7 @@ mod test {
     // 2 queens can't share the same column.
     space.cstore.alloc(Distinct::new(queens));
 
-    let mut search: OneSolution<_, Vector<_>, FDSpace, Back, Back> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    let mut search: OneSolution<_, Vector<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);
     let (_, status) = search.enter(space);
     assert_eq!(status, expect);
