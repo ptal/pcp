@@ -111,6 +111,15 @@ impl<Domain, Event> Iterable for DeltaStore<Domain, Event> {
   }
 }
 
+impl<'a, Domain, Event> IntoIterator for &'a DeltaStore<Domain, Event> {
+  type Item = <&'a Store<Domain> as IntoIterator>::Item;
+  type IntoIter = <&'a Store<Domain> as IntoIterator>::IntoIter;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.store.into_iter()
+  }
+}
+
 impl<Domain, Event> Cardinality for DeltaStore<Domain, Event>
 {
   type Size = usize;

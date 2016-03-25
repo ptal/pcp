@@ -70,6 +70,15 @@ impl<Domain> Iterable for Store<Domain> {
   }
 }
 
+impl<'a, Domain> IntoIterator for &'a Store<Domain> {
+  type Item = &'a Domain;
+  type IntoIter = ::std::slice::Iter<'a, Domain>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.variables.iter()
+  }
+}
+
 impl<Domain> Alloc<Domain> for Store<Domain> where
   Domain: Cardinality
 {
