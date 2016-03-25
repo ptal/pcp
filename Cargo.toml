@@ -12,9 +12,12 @@ crate_type = ["rlib", "dylib"]
 
 [dependencies]
 
-intervallum = "0.4.11"
+intervallum = "0.4.12"
 num = "0.1.29"
 
 [dependencies.vec_map]
 version = "0.4.0"
 features = ["nightly"]
+
+[dependencies.gcollections]
+git = "https://github.com/ptal/gcollections.git"

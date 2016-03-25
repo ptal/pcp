@@ -18,7 +18,7 @@ use alloc::boxed::FnBox;
 // A branch represents an edge between two distinct nodes in the search tree.
 // Each branch store a copy of the label of the current node.
 // However, depending on the `clone` method of the `Space::Label` type,
-// several branches can share the same data until calling `goto`.
+// several branches can share the same data until calling `restore`.
 // We don't store the propagators but instead a closure that
 // add the propagator(s) to the new space, when available.
 
@@ -33,10 +33,9 @@ impl<Space> Branch<Space> where
   Space: State
 {
   pub fn distribute(space: &Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> Vec<Branch<Space>> {
-    let label = space.mark();
     alternatives.into_iter().map(|alt|
       Branch {
-        label: label.clone(),
+        label: space.mark(),
         alternative: alt
       }
     ).collect()

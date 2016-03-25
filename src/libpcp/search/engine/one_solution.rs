@@ -16,31 +16,47 @@ use kernel::*;
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
-use search::engine::queue::*;
 use search::engine::PartialExploration;
+use gcollections::ops::sequence::*;
 use std::marker::PhantomData;
 
-pub struct OneSolution<C, Q, Space> {
+struct PhantomData3<T1,T2,T3> {
+  t1: PhantomData<T1>,
+  t2: PhantomData<T2>,
+  t3: PhantomData<T3>
+}
+
+impl<T1,T2,T3> PhantomData3<T1,T2,T3> {
+  fn new() -> PhantomData3<T1,T2,T3> {
+    PhantomData3 {
+      t1: PhantomData,
+      t2: PhantomData,
+      t3: PhantomData
+    }
+  }
+}
+
+pub struct OneSolution<C, Q, Space, OrderPush, OrderPop> {
   child: C,
   queue: Q,
   exploring: bool,
-  phantom_space: PhantomData<Space>
+  phantom_types: PhantomData3<Space, OrderPush, OrderPop>
 }
 
-impl<C, Q, Space> PartialExploration for OneSolution<C, Q, Space> {}
+impl<C, Q, Space, OrderPush, OrderPop> PartialExploration for OneSolution<C, Q, Space, OrderPush, OrderPop> {}
 
-impl<C, Q, Space> OneSolution<C, Q, Space> where
+impl<C, Q, Space, OrderPush, OrderPop> OneSolution<C, Q, Space, OrderPush, OrderPop> where
  Space: State,
  C: SearchTreeVisitor<Space>,
- Q: Queue<Branch<Space>>
+ Q: Sequence<OrderPush, OrderPop, Branch<Space>>
 {
-  pub fn new(child: C) -> OneSolution<C, Q, Space>
+  pub fn new(child: C) -> OneSolution<C, Q, Space, OrderPush, OrderPop>
   {
     OneSolution {
       queue: Q::empty(),
       child: child,
       exploring: false,
-      phantom_space: PhantomData
+      phantom_types: PhantomData3::new()
     }
   }
 
@@ -75,10 +91,10 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
   }
 }
 
-impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
+impl<C, Q, Space, OrderPush, OrderPop> SearchTreeVisitor<Space> for OneSolution<C, Q, Space, OrderPush, OrderPop> where
  Space: State,
  C: SearchTreeVisitor<Space>,
- Q: Queue<Branch<Space>>
+ Q: Sequence<OrderPush, OrderPop, Branch<Space>>
 {
   fn start(&mut self, root: &Space) {
     self.queue = Q::empty();
@@ -103,6 +119,8 @@ mod test {
   use super::*;
   use interval::interval::*;
   use interval::ops::*;
+  use gcollections::wrappers::vector::*;
+  use gcollections::ops::sequence::ordering::*;
   use kernel::*;
   use propagation::store::Store;
   use propagation::events::*;
@@ -164,7 +182,7 @@ mod test {
     // 2 queens can't share the same column.
     space.cstore.alloc(Distinct::new(queens));
 
-    let mut search: OneSolution<_, Vec<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    let mut search: OneSolution<_, Vector<_>, FDSpace, Back, Back> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);
     let (_, status) = search.enter(space);
     assert_eq!(status, expect);

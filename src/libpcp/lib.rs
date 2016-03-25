@@ -22,6 +22,7 @@
 
 extern crate test;
 extern crate interval;
+extern crate gcollections;
 extern crate num;
 extern crate alloc;
 extern crate vec_map;

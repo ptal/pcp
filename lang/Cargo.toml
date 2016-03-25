@@ -24,4 +24,4 @@ version = "0.1.1"
 [dependencies]
 oak = "0.3.15"
 oak_runtime = "0.3.7"
-intervallum = "0.4.11"
+intervallum = "0.4.12"
