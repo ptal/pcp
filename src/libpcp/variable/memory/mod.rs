@@ -14,3 +14,20 @@
 
 pub mod ops;
 pub mod copy;
+
+use variable::memory::ops::*;
+use gcollections::ops::cardinality::*;
+use gcollections::ops::sequence::*;
+use gcollections::ops::sequence::ordering::*;
+use std::ops::Index;
+use std::fmt::Display;
+
+pub trait MemoryConcept<Domain> :
+   Cardinality<Size=usize>
+ + IntoIterator
+ + Push<Back, Domain>
+ + Update<usize, Domain>
+ + Index<usize, Output=Domain>
+ + Freeze
+ + Display
+{}

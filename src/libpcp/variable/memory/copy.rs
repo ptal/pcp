@@ -13,8 +13,13 @@
 // limitations under the License.
 
 use variable::memory::ops::*;
-use std::ops::{DerefMut, Deref};
+use gcollections::ops::cardinality::*;
+use gcollections::ops::sequence::*;
+use gcollections::ops::sequence::ordering::*;
+use std::ops::{DerefMut, Deref, Index};
+use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
+use std::mem;
 
 pub struct CopyStore<Domain>
 {
@@ -33,6 +38,57 @@ impl<Domain> CopyStore<Domain>
     CopyStore {
       variables: variables
     }
+  }
+}
+
+impl<Domain> Cardinality for CopyStore<Domain> {
+  type Size = usize;
+
+  fn size(&self) -> usize {
+    self.variables.len()
+  }
+}
+
+
+impl<'a, Domain> IntoIterator for &'a CopyStore<Domain> {
+  type Item = &'a Domain;
+  type IntoIter = ::std::slice::Iter<'a, Domain>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.variables.iter()
+  }
+}
+
+impl<Domain> Push<Back, Domain> for CopyStore<Domain> {
+  fn push(&mut self, value: Domain) {
+    self.variables.push(value);
+  }
+}
+
+impl<Domain> Update<usize, Domain> for CopyStore<Domain>
+{
+  fn update(&mut self, key: usize, mut dom: Domain) -> Option<Domain> {
+    mem::swap(&mut dom, &mut self.variables[key]);
+    Some(dom)
+  }
+}
+
+impl<Domain> Index<usize> for CopyStore<Domain>
+{
+  type Output = Domain;
+  fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    &self.variables[index]
+  }
+}
+
+impl<Domain> Display for CopyStore<Domain> where
+ Domain: Display
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    for v in &self.variables {
+      try!(formatter.write_fmt(format_args!("{} ", v)));
+    }
+    Ok(())
   }
 }
 

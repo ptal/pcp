@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use term::ops::*;
-
 pub trait Freeze
 {
   type FrozenState : Snapshot;
@@ -26,4 +24,11 @@ pub trait Snapshot {
 
   fn snapshot(&mut self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self::UnfrozenState;
+}
+
+pub trait Update<Key, Value>
+{
+  // `None` if the update operation failed.
+  // `Some(value)` if it succeeded, where `value` is the old one.
+  fn update(&mut self, key: Key, value: Value) -> Option<Value>;
 }
