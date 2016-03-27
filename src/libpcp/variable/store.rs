@@ -14,22 +14,24 @@
 
 use kernel::*;
 use variable::ops::*;
+use variable::memory::copy::*;
 use term::identity::*;
-use std::slice;
 use interval::ncollections::ops::*;
+use gcollections::ops::sequence::*;
+use std::slice;
 use std::fmt::{Formatter, Display, Error};
 use std::default::Default;
 use std::ops::Index;
 
 #[derive(Clone)]
 pub struct Store<Domain> {
-  variables: Vec<Domain>
+  variables: CopyStore<Domain>
 }
 
 impl<Domain> Store<Domain> {
   pub fn new() -> Store<Domain> {
     Store {
-      variables: vec![]
+      variables: CopyStore::new()
     }
   }
 }
@@ -75,7 +77,7 @@ impl<'a, Domain> IntoIterator for &'a Store<Domain> {
   type IntoIter = ::std::slice::Iter<'a, Domain>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.variables.iter()
+    self.variables.into_iter()
   }
 }
 
@@ -101,9 +103,7 @@ impl<Domain> Update<usize, Domain> for Store<Domain> where
       None
     }
     else {
-      let old = self.variables[key].clone();
-      self.variables[key] = dom;
-      Some(old)
+      self.variables.update(key, dom)
     }
   }
 }
@@ -122,10 +122,7 @@ impl<Domain> Display for Store<Domain> where
  Domain: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    for v in &self.variables {
-      try!(formatter.write_fmt(format_args!("{} ", v)));
-    }
-    Ok(())
+    self.variables.fmt(formatter)
   }
 }
 

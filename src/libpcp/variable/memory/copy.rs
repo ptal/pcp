@@ -13,14 +13,17 @@
 // limitations under the License.
 
 use variable::ops::*;
+use gcollections::ops::constructor::*;
 use gcollections::ops::cardinality::*;
 use gcollections::ops::sequence::*;
 use gcollections::ops::sequence::ordering::*;
+use std::slice;
 use std::ops::{Deref, Index};
 use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
 
+#[derive(Clone)]
 pub struct CopyStore<Domain>
 {
   variables: Vec<Domain>
@@ -29,9 +32,11 @@ pub struct CopyStore<Domain>
 impl<Domain> CopyStore<Domain>
 {
   pub fn new() -> CopyStore<Domain> {
-    CopyStore {
-      variables: vec![]
-    }
+    CopyStore::empty()
+  }
+
+  pub fn len(&self) -> usize {
+    self.size()
   }
 
   fn restore(variables: Vec<Domain>) -> CopyStore<Domain> {
@@ -41,7 +46,17 @@ impl<Domain> CopyStore<Domain>
   }
 }
 
-impl<Domain> Cardinality for CopyStore<Domain> {
+impl<Domain> Empty for CopyStore<Domain>
+{
+  fn empty() -> CopyStore<Domain> {
+    CopyStore {
+      variables: vec![]
+    }
+  }
+}
+
+impl<Domain> Cardinality for CopyStore<Domain>
+{
   type Size = usize;
 
   fn size(&self) -> usize {
@@ -49,7 +64,17 @@ impl<Domain> Cardinality for CopyStore<Domain> {
   }
 }
 
-impl<'a, Domain> IntoIterator for &'a CopyStore<Domain> {
+impl<Domain> Iterable for CopyStore<Domain>
+{
+  type Value = Domain;
+
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+    self.variables.iter()
+  }
+}
+
+impl<'a, Domain> IntoIterator for &'a CopyStore<Domain>
+{
   type Item = &'a Domain;
   type IntoIter = ::std::slice::Iter<'a, Domain>;
 
@@ -58,7 +83,8 @@ impl<'a, Domain> IntoIterator for &'a CopyStore<Domain> {
   }
 }
 
-impl<Domain> Push<Back, Domain> for CopyStore<Domain> {
+impl<Domain> Push<Back, Domain> for CopyStore<Domain>
+{
   fn push(&mut self, value: Domain) {
     self.variables.push(value);
   }
