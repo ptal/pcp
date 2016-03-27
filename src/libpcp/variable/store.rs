@@ -93,16 +93,17 @@ impl<Domain> Alloc<Domain> for Store<Domain> where
 }
 
 impl<Domain> Update<usize, Domain> for Store<Domain> where
-  Domain: Cardinality + Subset
+  Domain: Cardinality + Subset + Clone
 {
-  fn update(&mut self, key: usize, dom: Domain) -> bool {
+  fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
     assert!(dom.is_subset(&self.variables[key]), "Domain update must be monotonic.");
     if dom.is_empty() {
-      false
+      None
     }
     else {
+      let old = self.variables[key].clone();
       self.variables[key] = dom;
-      true
+      Some(old)
     }
   }
 }

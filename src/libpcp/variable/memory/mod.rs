@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod ops;
 pub mod copy;
 
-use variable::memory::ops::*;
+use variable::ops::*;
 use gcollections::ops::cardinality::*;
 use gcollections::ops::sequence::*;
 use gcollections::ops::sequence::ordering::*;

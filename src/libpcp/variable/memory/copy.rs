@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use variable::memory::ops::*;
+use variable::ops::*;
 use gcollections::ops::cardinality::*;
 use gcollections::ops::sequence::*;
 use gcollections::ops::sequence::ordering::*;
-use std::ops::{DerefMut, Deref, Index};
+use std::ops::{Deref, Index};
 use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
@@ -48,7 +48,6 @@ impl<Domain> Cardinality for CopyStore<Domain> {
     self.variables.len()
   }
 }
-
 
 impl<'a, Domain> IntoIterator for &'a CopyStore<Domain> {
   type Item = &'a Domain;

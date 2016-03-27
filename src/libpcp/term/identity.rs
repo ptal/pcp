@@ -54,7 +54,7 @@ impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Identity<Domain> whe
   Store: Update<usize, Domain>
 {
   fn update(&self, store: &mut Store, value: Domain) -> bool {
-    store.update(self.idx, value)
+    store.update(self.idx, value).is_some()
   }
 }
 
