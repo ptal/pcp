@@ -14,8 +14,8 @@
 
 use variable::ops::*;
 use term::ExprInference;
-use interval::ncollections::ops::*;
-use interval::ncollections::optional::*;
+use gcollections::ops::*;
+use gcollections::wrappers::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy, PartialEq, Eq)]

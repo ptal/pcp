@@ -20,7 +20,7 @@ use propagation::Reactor;
 use propagation::Scheduler;
 use propagation::propagator::*;
 use variable::ops::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::default::Default;
 
 pub trait BoxedClone<VStore, Event>

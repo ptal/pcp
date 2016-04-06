@@ -19,7 +19,7 @@ use search::space::*;
 use variable::ops::*;
 use term::*;
 use propagators::cmp::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use num::traits::Num;
 use num::PrimInt;
 

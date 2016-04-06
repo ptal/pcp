@@ -18,7 +18,7 @@ use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
 use variable::ops::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]

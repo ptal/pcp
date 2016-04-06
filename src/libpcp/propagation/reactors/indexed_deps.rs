@@ -14,12 +14,11 @@
 
 use propagation::Reactor;
 use kernel::event::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::iter::{FromIterator, repeat};
 use std::fmt::{Formatter, Debug, Error};
 
-// `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
-
+/// `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
 pub struct IndexedDeps {
   num_events: usize,
   num_subscriptions: usize,
@@ -95,7 +94,7 @@ impl Debug for IndexedDeps
 #[cfg(test)]
 mod test {
   use super::*;
-  use interval::ncollections::ops::*;
+  use gcollections::ops::*;
   use propagation::Reactor;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;

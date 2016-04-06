@@ -16,7 +16,7 @@ use kernel::*;
 use variable::ops::*;
 use variable::store::*;
 use term::identity::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::slice;
 use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
@@ -47,8 +47,8 @@ impl<Domain, Event> DeltaStore<Domain, Event> where
   Event: MonotonicEvent<Domain> + Merge + Clone
 {
   // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
-  fn merge_delta(&mut self, key: usize, old_dom: &Domain) {
-    if let Some(delta) = Event::new(&self.store[key], old_dom) {
+  fn update_delta(&mut self, key: usize, old_dom: Domain) -> Domain {
+    if let Some(delta) = Event::new(&self.store[key], &old_dom) {
       let mut updated = false;
       if let Some(old_delta) = self.delta.get_mut(&key) {
         *old_delta = Merge::merge(old_delta.clone(), delta.clone());
@@ -58,6 +58,7 @@ impl<Domain, Event> DeltaStore<Domain, Event> where
         self.delta.insert(key, delta);
       }
     }
+    old_dom
   }
 }
 
@@ -147,10 +148,7 @@ impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
 {
   fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
     self.store.update(key, dom)
-      .map(|old_dom| {
-        self.merge_delta(key, &old_dom);
-        old_dom
-      })
+      .map(|old_dom| self.update_delta(key, old_dom))
   }
 }
 
@@ -179,7 +177,7 @@ pub mod test {
   use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
-  use interval::ncollections::ops::*;
+  use gcollections::ops::*;
 
   pub type FDStore = DeltaStore<Interval<i32>, FDEvent>;
 

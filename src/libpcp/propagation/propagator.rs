@@ -14,12 +14,12 @@
 
 pub trait Propagator<VStore>
 {
-  // Returns `false` if it failed to propagate (a variable has an empty domain after propagation).
+  /// Returns `false` if it failed to propagate (a variable has an empty domain after propagation).
   fn propagate(&mut self, store: &mut VStore) -> bool;
 }
 
 pub trait PropagatorDependencies<Event>
 {
-  // Each event on a variable that can change the result of the `is_subsumed` method should be listed here.
+  /// Each event on a variable that can change the result of the `is_subsumed` method should be listed here.
   fn dependencies(&self) -> Vec<(usize, Event)>;
 }

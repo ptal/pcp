@@ -16,7 +16,7 @@ use kernel::*;
 use search::space::*;
 use search::branching::*;
 use variable::ops::Iterable;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use num::traits::Unsigned;
 
 pub struct FirstSmallestVar;

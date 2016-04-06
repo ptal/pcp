@@ -17,7 +17,7 @@ pub mod x_eq_y;
 pub mod x_neq_y;
 
 use num::PrimInt;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use term::*;
 pub use propagators::cmp::x_less_y::XLessY;
 pub use propagators::cmp::x_eq_y::XEqY;

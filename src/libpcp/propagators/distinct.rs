@@ -19,7 +19,7 @@ use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
 use propagation::*;
 use variable::ops::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone)]

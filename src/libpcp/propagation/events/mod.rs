@@ -15,11 +15,10 @@
 use kernel::Merge;
 use kernel::event::*;
 use propagation::events::FDEvent::*;
-use interval::ncollections::ops::*;
+use gcollections::ops::*;
 use std::cmp::min;
 
-// Failure or Nothing events are absents on purpose because they are not events that propagators should subscribe to. If a failure occurs, it's over. If nothing occurs, we don't care.
-
+/// Failure or Nothing events are absents on purpose because they are not events that propagators should subscribe to. If a failure occurs, it's over. If nothing occurs, we don't care.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum FDEvent {
   Assignment = 0,

@@ -16,8 +16,7 @@ use kernel::*;
 use variable::ops::*;
 use variable::memory::copy::*;
 use term::identity::*;
-use interval::ncollections::ops::*;
-use gcollections::ops::sequence::*;
+use gcollections::ops::*;
 use std::slice;
 use std::fmt::{Formatter, Display, Error};
 use std::default::Default;
@@ -133,7 +132,7 @@ mod test {
   use variable::ops::*;
   use term::identity::*;
   use interval::interval::*;
-  use interval::ncollections::ops::*;
+  use gcollections::ops::*;
 
   #[test]
   fn ordered_assign_10_vars() {

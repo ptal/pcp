@@ -16,6 +16,7 @@
 #![plugin(pcp_lang)]
 
 extern crate interval;
+extern crate gcollections;
 extern crate pcp;
 
 #[cfg(test)]
@@ -23,6 +24,7 @@ mod test
 {
   use interval::interval::*;
   use interval::ops::*;
+  use gcollections::wrappers::*;
   use pcp::propagation::events::*;
   use pcp::propagation::reactors::*;
   use pcp::propagation::schedulers::*;
@@ -72,7 +74,7 @@ mod test
       #(constraints <- Distinct(queens));
 
       let space = FDSpace::new(variables, constraints);
-      let mut search: OneSolution<_, Vec<_>, FDSpace> =
+      let mut search: OneSolution<_, Vector<_>, FDSpace> =
         OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
       search.start(&space);
       let (_, status) = search.enter(space);
