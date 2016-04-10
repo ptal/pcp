@@ -22,7 +22,7 @@ use num::traits::Unsigned;
 pub struct FirstSmallestVar;
 
 impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for FirstSmallestVar where
-  VStore: Iterable<Value=Domain>,
+  VStore: Iterable<Item=Domain>,
   Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned
 {
@@ -38,8 +38,6 @@ impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for First
 #[cfg(test)]
 mod test {
   use super::*;
-  use interval::interval::*;
-  use interval::ops::*;
   use kernel::*;
   use propagation::store::Store;
   use propagation::events::*;
@@ -48,6 +46,9 @@ mod test {
   use variable::delta_store::DeltaStore;
   use search::space::*;
   use search::branching::VarSelection;
+  use gcollections::ops::*;
+  use interval::interval::*;
+  use interval::ops::*;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
@@ -56,7 +57,7 @@ mod test {
   fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
     S: VarSelection<FDSpace>
   {
-    let mut space = FDSpace::default();
+    let mut space = FDSpace::empty();
 
     for (l,u) in vars {
       space.vstore.alloc(Interval::new(l,u));

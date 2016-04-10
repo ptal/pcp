@@ -101,9 +101,6 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use interval::interval::*;
-  use interval::ops::*;
-  use gcollections::wrappers::Vector;
   use kernel::*;
   use propagation::store::Store;
   use propagation::events::*;
@@ -121,6 +118,10 @@ mod test {
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
+  use interval::interval::*;
+  use interval::ops::*;
+  use gcollections::wrappers::Vector;
+  use gcollections::ops::*;
   use test::Bencher;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
@@ -145,7 +146,7 @@ mod test {
   }
 
   fn nqueens(n: usize, expect: Status<FDSpace>) {
-    let mut space = FDSpace::default();
+    let mut space = FDSpace::empty();
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {

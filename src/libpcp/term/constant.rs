@@ -74,6 +74,7 @@ impl<V, Event> ViewDependencies<Event> for Constant<V>
 #[cfg(test)]
 mod test {
   use super::*;
+  use gcollections::ops::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
   use propagation::*;
@@ -89,7 +90,7 @@ mod test {
   fn x_less_constant() {
     let dom0_10 = (0,10).to_interval();
     let dom0_4 = (0,4).to_interval();
-    let mut store: FDStore = DeltaStore::new();
+    let mut store: FDStore = DeltaStore::empty();
     let x = store.alloc(dom0_10);
     let c: Constant<i32> = Constant::new(5);
 
@@ -130,7 +131,7 @@ mod test {
    P: FnOnce(FDVar, Constant<i32>) -> R,
    R: Propagator<FDStore> + Subsumption<FDStore>
   {
-    let mut store: FDStore = DeltaStore::new();
+    let mut store: FDStore = DeltaStore::empty();
     let x = store.alloc(x);
     let propagator = make_prop(x, Constant::new(c));
     subsumption_propagate(id, propagator, &mut store, before, after, expected, update_success);

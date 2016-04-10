@@ -30,7 +30,7 @@ pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
 impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
-  VStore: State + Iterable<Value=Domain>,
+  VStore: State + Iterable<Item=Domain>,
   CStore: State,
   CStore: Alloc<XLessEqC<Domain, Bound>>,
   CStore: Alloc<XGreaterC<Domain, Bound>>,
@@ -61,7 +61,7 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
 }
 
 pub fn nth_dom<VStore, Domain>(vstore: &VStore, var_idx: usize) -> Domain where
-  VStore: Iterable<Value=Domain>,
+  VStore: Iterable<Item=Domain>,
   Domain: Clone
 {
   vstore.iter()
@@ -75,8 +75,6 @@ mod test {
   use super::*;
   use search::branching::Distributor;
   use search::space::*;
-  use interval::interval::*;
-  use interval::ops::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
   use propagation::store::Store;
@@ -84,6 +82,9 @@ mod test {
   use propagation::reactors::*;
   use propagation::schedulers::*;
   use variable::delta_store::DeltaStore;
+  use gcollections::ops::*;
+  use interval::interval::*;
+  use interval::ops::*;
 
   type VStore = DeltaStore<Interval<i32>, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
@@ -93,7 +94,7 @@ mod test {
     root: Vec<(i32, i32)>, children: Vec<(i32, i32)>) where
    D: Distributor<FDSpace>
   {
-    let mut space = FDSpace::default();
+    let mut space = FDSpace::empty();
 
     for (l,u) in root {
       space.vstore.alloc(Interval::new(l,u));

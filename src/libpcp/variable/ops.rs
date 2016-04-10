@@ -25,9 +25,9 @@ pub trait DrainDelta<Event>
 
 pub trait Iterable
 {
-  type Value;
+  type Item;
 
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Value>;
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
 }
 
 pub trait VarIndex

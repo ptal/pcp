@@ -44,6 +44,7 @@ impl<VStore, R> Consistency<VStore> for R where
 
 #[cfg(test)]
 pub mod test {
+  use gcollections::ops::*;
   use kernel::*;
   use propagation::*;
   use propagation::events::*;
@@ -74,7 +75,7 @@ pub mod test {
    P: Propagator<FDStore> + Subsumption<FDStore>,
    FnProp: FnOnce(FDVar, FDVar) -> P
   {
-    let mut store = FDStore::new();
+    let mut store = FDStore::empty();
     let x = store.alloc(x);
     let y = store.alloc(y);
     let propagator = make_prop(x, y);
@@ -87,7 +88,7 @@ pub mod test {
    P: Propagator<FDStore> + Subsumption<FDStore>,
    FnProp: FnOnce(Vec<FDVar>) -> P
   {
-    let mut store = FDStore::new();
+    let mut store = FDStore::empty();
     let vars = doms.into_iter().map(|d| store.alloc(d)).collect();
     let propagator = make_prop(vars);
     subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);

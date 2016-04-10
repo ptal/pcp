@@ -77,16 +77,20 @@ impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
 
 #[cfg(test)]
 mod test {
+  use gcollections::ops::*;
   use kernel::Alloc;
   use variable::store::*;
+  use variable::memory::*;
   use variable::ops::*;
   use interval::interval::*;
+
+  type Domain = Interval<i32>;
 
   #[test]
   fn identity_read_update() {
     let dom0_10 = (0,10).to_interval();
     let dom0_5 = (0,5).to_interval();
-    let mut store: Store<Interval<i32>> = Store::new();
+    let mut store: Store<CopyStore<Domain>, Domain> = Store::empty();
     let v = store.alloc(dom0_10);
 
     assert_eq!(v.read(&store), dom0_10);

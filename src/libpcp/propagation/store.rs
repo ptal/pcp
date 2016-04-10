@@ -21,7 +21,6 @@ use propagation::Scheduler;
 use propagation::propagator::*;
 use variable::ops::*;
 use gcollections::ops::*;
-use std::default::Default;
 
 pub trait BoxedClone<VStore, Event>
 {
@@ -58,27 +57,17 @@ pub struct Store<VStore, Event, Reactor, Scheduler>
   scheduler: Scheduler
 }
 
-impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
+impl<VStore, Event, R, S> Empty for Store<VStore, Event, R, S> where
  Event: EventIndex,
  R: Reactor,
  S: Scheduler
 {
-  pub fn new() -> Store<VStore, Event, R, S> {
+  fn empty() -> Store<VStore, Event, R, S> {
     Store {
       propagators: vec![],
       reactor: Reactor::new(0,0),
       scheduler: Scheduler::new(0)
     }
-  }
-}
-
-impl<VStore, Event, R, S> Default for Store<VStore, Event, R, S> where
- Event: EventIndex,
- R: Reactor,
- S: Scheduler
-{
-  fn default() -> Store<VStore, Event, R, S> {
-    Store::new()
   }
 }
 
@@ -202,7 +191,7 @@ impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
  S: Scheduler
 {
   fn clone(&self) -> Self {
-    let mut store = Store::new();
+    let mut store = Store::empty();
     store.propagators = self.propagators.iter()
       .map(|p| p.boxed_clone())
       .collect();
@@ -215,6 +204,7 @@ mod test {
   use super::*;
   use interval::interval::*;
   use interval::ops::*;
+  use gcollections::ops::*;
   use kernel::*;
   use kernel::Trilean::*;
   use propagation::events::*;
@@ -230,8 +220,8 @@ mod test {
 
   #[test]
   fn basic_test() {
-    let variables: &mut VStore = &mut VStore::new();
-    let mut constraints: CStore = CStore::new();
+    let variables: &mut VStore = &mut VStore::empty();
+    let mut constraints: CStore = CStore::empty();
 
     assert_eq!(constraints.consistency(variables), True);
 
@@ -250,8 +240,8 @@ mod test {
 
   fn chained_lt(n: usize, expect: Trilean) {
     // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
-    let variables: &mut VStore = &mut VStore::new();
-    let mut constraints: CStore = CStore::new();
+    let variables: &mut VStore = &mut VStore::empty();
+    let mut constraints: CStore = CStore::empty();
     let mut vars = vec![];
     for _ in 0..n {
       vars.push(variables.alloc(Interval::new(1,10)));
@@ -281,8 +271,8 @@ mod test {
   }
 
   fn nqueens(n: usize, expect: Trilean) {
-    let variables: &mut VStore = &mut VStore::new();
-    let mut constraints: CStore = CStore::new();
+    let variables: &mut VStore = &mut VStore::empty();
+    let mut constraints: CStore = CStore::empty();
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {

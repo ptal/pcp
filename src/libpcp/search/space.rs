@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use kernel::*;
-use std::default::Default;
 use std::rc::*;
 use std::ops::Deref;
+use gcollections::ops::*;
 
 pub struct Space<VStore, CStore> {
   pub vstore: VStore,
@@ -60,14 +60,14 @@ impl<VStore, CStore> State for Space<VStore, CStore> where
   }
 }
 
-impl<VStore, CStore> Default for Space<VStore, CStore> where
-  VStore: Default,
-  CStore: Default
+impl<VStore, CStore> Empty for Space<VStore, CStore> where
+  VStore: Empty,
+  CStore: Empty
 {
-  fn default() -> Space<VStore, CStore> {
+  fn empty() -> Space<VStore, CStore> {
     Space {
-      vstore: VStore::default(),
-      cstore: CStore::default()
+      vstore: VStore::empty(),
+      cstore: CStore::empty()
     }
   }
 }

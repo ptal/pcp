@@ -14,19 +14,45 @@
 
 pub mod copy;
 
+pub use variable::memory::copy::*;
+
 use variable::ops::*;
-use gcollections::ops::cardinality::*;
-use gcollections::ops::sequence::*;
+use gcollections::ops::*;
 use gcollections::ops::sequence::ordering::*;
 use std::ops::Index;
 use std::fmt::Display;
 
+pub trait DomainConcept :
+  Clone + Display + Bounded + Cardinality + Subset
+{}
+
+impl<R> DomainConcept for R where
+  R: Clone + Display + Bounded + Cardinality + Subset
+{}
+
 pub trait MemoryConcept<Domain> :
    Cardinality<Size=usize>
- + IntoIterator
+ + Iterable<Item=Domain>
+ + Empty
  + Push<Back, Domain>
  + Update<usize, Domain>
  + Index<usize, Output=Domain>
  + Freeze
  + Display
+ + Clone // TO DELETE
+where
+ Domain: DomainConcept
+{}
+
+impl<Domain, R> MemoryConcept<Domain> for R where
+ R: Cardinality<Size=usize>
+ + Iterable<Item=Domain>
+ + Empty
+ + Push<Back, Domain>
+ + Update<usize, Domain>
+ + Index<usize, Output=Domain>
+ + Freeze
+ + Display
+ + Clone, // TO DELETE
+ Domain: DomainConcept
 {}

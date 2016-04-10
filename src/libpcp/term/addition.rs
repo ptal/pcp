@@ -80,6 +80,7 @@ impl<X, V, Event> ViewDependencies<Event> for Addition<X, V> where
 #[cfg(test)]
 mod test {
   use super::*;
+  use gcollections::ops::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
   use propagation::events::FDEvent;
@@ -109,7 +110,7 @@ mod test {
   fn x_less_y_plus_c_test_one(id: u32, x: Interval<i32>, y: Interval<i32>, c: i32,
     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
   {
-    let mut store: FDStore = DeltaStore::new();
+    let mut store: FDStore = DeltaStore::empty();
     let x = store.alloc(x);
     let y = store.alloc(y);
     let x_less_y_plus_c = XLessY::new(x, Addition::new(y, c));

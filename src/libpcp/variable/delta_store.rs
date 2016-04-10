@@ -15,26 +15,25 @@
 use kernel::*;
 use variable::ops::*;
 use variable::store::*;
+use variable::memory::*;
 use term::identity::*;
 use gcollections::ops::*;
 use std::slice;
 use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
-use std::default::Default;
 use std::ops::Index;
 
-pub struct DeltaStore<Domain, Event> {
-  store: Store<Domain>,
+pub struct DeltaStore<Domain, Event> where
+ Domain: DomainConcept
+{
+  store: Store<CopyStore<Domain>, Domain>,
   delta: VecMap<Event>
 }
 
-impl<Domain, Event> DeltaStore<Domain, Event>
+impl<Domain, Event> DeltaStore<Domain, Event> where
+ Domain: DomainConcept
 {
-  pub fn new() -> DeltaStore<Domain, Event> {
-    DeltaStore::from_store(Store::new())
-  }
-
-  fn from_store(store: Store<Domain>) -> DeltaStore<Domain, Event> {
+  fn from_store(store: Store<CopyStore<Domain>, Domain>) -> DeltaStore<Domain, Event> {
     DeltaStore {
       store: store,
       delta: VecMap::new()
@@ -42,9 +41,18 @@ impl<Domain, Event> DeltaStore<Domain, Event>
   }
 }
 
+impl<Domain, Event> Empty for DeltaStore<Domain, Event> where
+ Domain: DomainConcept
+{
+  fn empty() -> DeltaStore<Domain, Event> {
+    DeltaStore::from_store(Store::empty())
+  }
+}
+
 impl<Domain, Event> DeltaStore<Domain, Event> where
-  Domain: Bounded + Cardinality + Subset,
-  Event: MonotonicEvent<Domain> + Merge + Clone
+ Domain: DomainConcept,
+ Domain: Bounded + Cardinality + Subset,
+ Event: MonotonicEvent<Domain> + Merge + Clone
 {
   // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
   fn update_delta(&mut self, key: usize, old_dom: Domain) -> Domain {
@@ -62,14 +70,9 @@ impl<Domain, Event> DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Default for DeltaStore<Domain, Event>
+impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> where
+ Domain: DomainConcept
 {
-  fn default() -> DeltaStore<Domain, Event> {
-    DeltaStore::new()
-  }
-}
-
-impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
     self.delta.drain()
   }
@@ -80,7 +83,7 @@ impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> {
 }
 
 impl<Domain, Event> Clone for DeltaStore<Domain, Event> where
-  Domain: Clone
+ Domain: DomainConcept
 {
   fn clone(&self) -> Self {
     DeltaStore {
@@ -91,37 +94,31 @@ impl<Domain, Event> Clone for DeltaStore<Domain, Event> where
 }
 
 impl<Domain, Event> State for DeltaStore<Domain, Event> where
- Domain: Clone
+ Domain: DomainConcept
 {
-  type Label = Store<Domain>;
+  type Label = Store<CopyStore<Domain>, Domain>;
 
-  fn mark(&self) -> Store<Domain> {
+  fn mark(&self) -> Store<CopyStore<Domain>, Domain> {
     self.store.mark()
   }
 
-  fn restore(self, label: Store<Domain>) -> Self {
+  fn restore(self, label: Store<CopyStore<Domain>, Domain>) -> Self {
     DeltaStore::from_store(label)
   }
 }
 
-impl<Domain, Event> Iterable for DeltaStore<Domain, Event> {
-  type Value = Domain;
+impl<Domain, Event> Iterable for DeltaStore<Domain, Event> where
+ Domain: DomainConcept
+{
+  type Item = Domain;
 
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
     self.store.iter()
   }
 }
 
-impl<'a, Domain, Event> IntoIterator for &'a DeltaStore<Domain, Event> {
-  type Item = <&'a Store<Domain> as IntoIterator>::Item;
-  type IntoIter = <&'a Store<Domain> as IntoIterator>::IntoIter;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.store.into_iter()
-  }
-}
-
-impl<Domain, Event> Cardinality for DeltaStore<Domain, Event>
+impl<Domain, Event> Cardinality for DeltaStore<Domain, Event> where
+ Domain: DomainConcept
 {
   type Size = usize;
 
@@ -131,7 +128,8 @@ impl<Domain, Event> Cardinality for DeltaStore<Domain, Event>
 }
 
 impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
-  Domain: Cardinality
+ Domain: DomainConcept,
+ Domain: Cardinality
 {
   type Location = Identity<Domain>;
 
@@ -143,8 +141,9 @@ impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
 }
 
 impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
-  Domain: Bounded + Cardinality + Subset + Clone,
-  Event: MonotonicEvent<Domain> + Merge + Clone
+ Domain: DomainConcept,
+ Domain: Bounded + Cardinality + Subset + Clone,
+ Event: MonotonicEvent<Domain> + Merge + Clone
 {
   fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
     self.store.update(key, dom)
@@ -152,7 +151,8 @@ impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event>
+impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event> where
+ Domain: DomainConcept
 {
   type Output = Domain;
   fn index<'a>(&'a self, index: usize) -> &'a Domain {
@@ -161,6 +161,7 @@ impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event>
 }
 
 impl<Domain, Event> Display for DeltaStore<Domain, Event> where
+ Domain: DomainConcept,
  Domain: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -184,7 +185,7 @@ pub mod test {
   fn test_op<Op>(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
     Op: FnOnce(&FDStore, Identity<Interval<i32>>) -> Interval<i32>
   {
-    let mut store = DeltaStore::new();
+    let mut store = DeltaStore::empty();
     let var = store.alloc(source);
 
     let new = op(&store, var);
@@ -201,7 +202,7 @@ pub mod test {
   fn test_binary_op<Op>(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expected: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
     Op: FnOnce(&FDStore, Identity<Interval<i32>>, Identity<Interval<i32>>) -> Interval<i32>
   {
-    let mut store = DeltaStore::new();
+    let mut store = DeltaStore::empty();
     let var1 = store.alloc(source1);
     let var2 = store.alloc(source2);
 

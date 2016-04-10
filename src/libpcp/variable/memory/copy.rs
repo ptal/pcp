@@ -31,14 +31,6 @@ pub struct CopyStore<Domain>
 
 impl<Domain> CopyStore<Domain>
 {
-  pub fn new() -> CopyStore<Domain> {
-    CopyStore::empty()
-  }
-
-  pub fn len(&self) -> usize {
-    self.size()
-  }
-
   fn restore(variables: Vec<Domain>) -> CopyStore<Domain> {
     CopyStore {
       variables: variables
@@ -66,19 +58,9 @@ impl<Domain> Cardinality for CopyStore<Domain>
 
 impl<Domain> Iterable for CopyStore<Domain>
 {
-  type Value = Domain;
+  type Item = Domain;
 
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
-    self.variables.iter()
-  }
-}
-
-impl<'a, Domain> IntoIterator for &'a CopyStore<Domain>
-{
-  type Item = &'a Domain;
-  type IntoIter = ::std::slice::Iter<'a, Domain>;
-
-  fn into_iter(self) -> Self::IntoIter {
+  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
     self.variables.iter()
   }
 }
