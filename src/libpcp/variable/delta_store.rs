@@ -23,17 +23,19 @@ use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
 use std::ops::Index;
 
-pub struct DeltaStore<Domain, Event> where
+pub struct DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  store: Store<CopyStore<Domain>, Domain>,
+  store: Store<Memory, Domain>,
   delta: VecMap<Event>
 }
 
-impl<Domain, Event> DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  fn from_store(store: Store<CopyStore<Domain>, Domain>) -> DeltaStore<Domain, Event> {
+  fn from_store(store: Store<Memory, Domain>) -> DeltaStore<Memory, Domain, Event> {
     DeltaStore {
       store: store,
       delta: VecMap::new()
@@ -41,17 +43,18 @@ impl<Domain, Event> DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Empty for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Empty for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  fn empty() -> DeltaStore<Domain, Event> {
+  fn empty() -> DeltaStore<Memory, Domain, Event> {
     DeltaStore::from_store(Store::empty())
   }
 }
 
-impl<Domain, Event> DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept,
- Domain: Bounded + Cardinality + Subset,
  Event: MonotonicEvent<Domain> + Merge + Clone
 {
   // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
@@ -70,7 +73,8 @@ impl<Domain, Event> DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> DrainDelta<Event> for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
@@ -82,7 +86,8 @@ impl<Domain, Event> DrainDelta<Event> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Clone for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Clone for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   fn clone(&self) -> Self {
@@ -93,21 +98,23 @@ impl<Domain, Event> Clone for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> State for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> State for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  type Label = Store<CopyStore<Domain>, Domain>;
+  type Label = Store<Memory, Domain>;
 
-  fn mark(&self) -> Store<CopyStore<Domain>, Domain> {
+  fn mark(&self) -> Store<Memory, Domain> {
     self.store.mark()
   }
 
-  fn restore(self, label: Store<CopyStore<Domain>, Domain>) -> Self {
+  fn restore(self, label: Store<Memory, Domain>) -> Self {
     DeltaStore::from_store(label)
   }
 }
 
-impl<Domain, Event> Iterable for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Iterable for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   type Item = Domain;
@@ -117,7 +124,8 @@ impl<Domain, Event> Iterable for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Cardinality for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Cardinality for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   type Size = usize;
@@ -127,9 +135,9 @@ impl<Domain, Event> Cardinality for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
- Domain: DomainConcept,
- Domain: Cardinality
+impl<Memory, Domain, Event> Alloc<Domain> for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
 {
   type Location = Identity<Domain>;
 
@@ -140,9 +148,9 @@ impl<Domain, Event> Alloc<Domain> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Update<usize, Domain> for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept,
- Domain: Bounded + Cardinality + Subset + Clone,
  Event: MonotonicEvent<Domain> + Merge + Clone
 {
   fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
@@ -151,7 +159,8 @@ impl<Domain, Event> Update<usize, Domain> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event> where
+impl<Memory, Domain, Event> Index<usize> for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   type Output = Domain;
@@ -160,9 +169,9 @@ impl<Domain, Event> Index<usize> for DeltaStore<Domain, Event> where
   }
 }
 
-impl<Domain, Event> Display for DeltaStore<Domain, Event> where
- Domain: DomainConcept,
- Domain: Display
+impl<Memory, Domain, Event> Display for DeltaStore<Memory, Domain, Event> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     self.store.fmt(formatter)
@@ -174,16 +183,18 @@ pub mod test {
   use super::*;
   use kernel::Alloc;
   use variable::ops::*;
+  use variable::memory::*;
   use term::identity::*;
   use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use gcollections::ops::*;
 
-  pub type FDStore = DeltaStore<Interval<i32>, FDEvent>;
+  pub type Domain = Interval<i32>;
+  pub type FDStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
 
-  fn test_op<Op>(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
-    Op: FnOnce(&FDStore, Identity<Interval<i32>>) -> Interval<i32>
+  fn test_op<Op>(source: Domain, target: Domain, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
+    Op: FnOnce(&FDStore, Identity<Domain>) -> Domain
   {
     let mut store = DeltaStore::empty();
     let var = store.alloc(source);
@@ -199,8 +210,8 @@ pub mod test {
     }
   }
 
-  fn test_binary_op<Op>(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expected: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
-    Op: FnOnce(&FDStore, Identity<Interval<i32>>, Identity<Interval<i32>>) -> Interval<i32>
+  fn test_binary_op<Op>(source1: Domain, source2: Domain, target: Domain, delta_expected: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
+    Op: FnOnce(&FDStore, Identity<Domain>, Identity<Domain>) -> Domain
   {
     let mut store = DeltaStore::empty();
     let var1 = store.alloc(source1);
@@ -241,7 +252,7 @@ pub mod test {
     var_update_test_one(dom0_10, dom1_9, vec![Bound], true);
   }
 
-  fn var_update_test_one(source: Interval<i32>, target: Interval<i32>, delta_expected: Vec<FDEvent>, update_success: bool) {
+  fn var_update_test_one(source: Domain, target: Domain, delta_expected: Vec<FDEvent>, update_success: bool) {
     test_op(source, target, delta_expected, update_success, |_,_| target);
   }
 
@@ -260,14 +271,14 @@ pub mod test {
     var_shrink_ub_test_one(dom0_10, -1, vec![], false);
   }
 
-  fn var_shrink_lb_test_one(source: Interval<i32>, target_lb: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
+  fn var_shrink_lb_test_one(source: Domain, target_lb: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
     let expected_dom = (target_lb, source.upper()).to_interval();
 
     test_op(source, expected_dom, delta_expected, update_success,
       |store, var| var.read(store).shrink_left(target_lb));
   }
 
-  fn var_shrink_ub_test_one(source: Interval<i32>, target_ub: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
+  fn var_shrink_ub_test_one(source: Domain, target_ub: i32, delta_expected: Vec<FDEvent>, update_success: bool) {
     let expected_dom = (source.lower(), target_ub).to_interval();
 
     test_op(source, expected_dom, delta_expected, update_success,
@@ -288,7 +299,7 @@ pub mod test {
     var_intersection_test_one(dom0_10, dom11_20, Interval::empty(), vec![], false);
   }
 
-  fn var_intersection_test_one(source1: Interval<i32>, source2: Interval<i32>, target: Interval<i32>, delta_expected: Vec<(usize, FDEvent)>, update_success: bool) {
+  fn var_intersection_test_one(source1: Domain, source2: Domain, target: Domain, delta_expected: Vec<(usize, FDEvent)>, update_success: bool) {
     test_binary_op(source1, source2, target, delta_expected, update_success,
       |store, v1, v2| v1.read(store).intersection(&v2.read(store)));
   }

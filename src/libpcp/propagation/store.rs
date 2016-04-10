@@ -202,9 +202,6 @@ impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use interval::interval::*;
-  use interval::ops::*;
-  use gcollections::ops::*;
   use kernel::*;
   use kernel::Trilean::*;
   use propagation::events::*;
@@ -214,8 +211,13 @@ mod test {
   use propagators::distinct::*;
   use term::*;
   use variable::delta_store::DeltaStore;
+  use variable::memory::*;
+  use interval::interval::*;
+  use interval::ops::*;
+  use gcollections::ops::*;
 
-  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  type Domain = Interval<i32>;
+  type VStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
 
   #[test]
