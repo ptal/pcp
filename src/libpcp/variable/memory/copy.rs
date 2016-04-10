@@ -103,7 +103,7 @@ impl<Domain> Freeze for CopyStore<Domain> where
  Domain: Clone
 {
   type FrozenState = FrozenCopyStore<Domain>;
-  fn freeze(self) -> FrozenCopyStore<Domain>
+  fn freeze(self) -> Self::FrozenState
   {
     FrozenCopyStore::new(self)
   }
@@ -129,11 +129,11 @@ impl<Domain> Snapshot for FrozenCopyStore<Domain> where
   type Label = Rc<Vec<Domain>>;
   type UnfrozenState = CopyStore<Domain>;
 
-  fn snapshot(&mut self) -> Rc<Vec<Domain>> {
+  fn snapshot(&mut self) -> Self::Label {
     self.variables.clone()
   }
 
-  fn restore(self, label: Rc<Vec<Domain>>) -> CopyStore<Domain> {
+  fn restore(self, label: Self::Label) -> Self::UnfrozenState {
     let variables = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
     CopyStore::restore(variables)
   }

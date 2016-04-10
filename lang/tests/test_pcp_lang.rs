@@ -22,14 +22,12 @@ extern crate pcp;
 #[cfg(test)]
 mod test
 {
-  use interval::interval::*;
-  use interval::ops::*;
-  use gcollections::wrappers::*;
   use pcp::propagation::events::*;
   use pcp::propagation::reactors::*;
   use pcp::propagation::schedulers::*;
   use pcp::propagation::store::*;
   use pcp::variable::delta_store::DeltaStore;
+  use pcp::variable::memory::*;
   use pcp::kernel::*;
   use pcp::term::*;
   use pcp::propagators::cmp::*;
@@ -43,7 +41,13 @@ mod test
   use pcp::search::branching::first_smallest_var::*;
   use pcp::search::engine::one_solution::*;
 
-  type VStore = DeltaStore<Interval<i32>, FDEvent>;
+  use interval::interval::*;
+  use interval::ops::*;
+  use gcollections::wrappers::*;
+  use gcollections::ops::*;
+
+  type Domain = Interval<i32>;
+  type VStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
   type FDSpace = Space<VStore, CStore>;
 
@@ -51,8 +55,8 @@ mod test
   fn test_nqueens()
   {
     pcp! {
-      let mut variables: VStore = VStore::new();
-      let mut constraints: CStore = CStore::new();
+      let mut variables: VStore = VStore::empty();
+      let mut constraints: CStore = CStore::empty();
       let n = 10usize;
       let mut queens = vec![];
       for _ in 0..n {
