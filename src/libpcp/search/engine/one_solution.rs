@@ -109,8 +109,7 @@ mod test {
   use propagators::cmp::*;
   use propagators::distinct::*;
   use variable::ops::*;
-  use variable::delta_store::DeltaStore;
-  use variable::memory::*;
+  use variable::test::*;
   use term::*;
   use search::search_tree_visitor::*;
   use search::search_tree_visitor::Status::*;
@@ -125,8 +124,8 @@ mod test {
   use gcollections::ops::*;
   use test::Bencher;
 
-  type Domain = Interval<i32>;
-  type VStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
+  type Domain = DomainI32;
+  type VStore = DeltaStoreI32;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
   type FDSpace = Space<VStore, CStore>;
 

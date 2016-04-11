@@ -210,14 +210,13 @@ mod test {
   use propagators::cmp::*;
   use propagators::distinct::*;
   use term::*;
-  use variable::delta_store::DeltaStore;
-  use variable::memory::*;
+  use variable::test::*;
   use interval::interval::*;
   use interval::ops::*;
   use gcollections::ops::*;
 
-  type Domain = Interval<i32>;
-  type VStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
+  type Domain = DomainI32;
+  type VStore = DeltaStoreI32;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
 
   #[test]

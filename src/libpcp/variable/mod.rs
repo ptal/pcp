@@ -19,8 +19,22 @@
 //! A subset of arithmetics is provided with *views* on variables. It allows to manipulate an expression such as `x + 5` as if it was a single variable and to avoid implementing specific instances of propagation algorithms such as `x + c < y` which is just `x < y` with `x` being a view. The view acts as a proxy between operations on variable and the store. It implies that operations must be called on the views instead of applying them directly to the store.
 
 pub mod memory;
+pub mod concept;
 pub mod ops;
 pub mod store;
 pub mod delta_store;
 
 pub use variable::ops::Iterable;
+
+#[cfg(test)]
+pub mod test {
+  use variable::store::*;
+  use variable::delta_store::*;
+  use variable::memory::*;
+  use propagation::events::FDEvent;
+  use interval::interval::*;
+
+  pub type DomainI32 = Interval<i32>;
+  pub type StoreI32 = Store<CopyStore<DomainI32>, DomainI32>;
+  pub type DeltaStoreI32 = DeltaStore<StoreI32, DomainI32, FDEvent>;
+}

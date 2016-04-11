@@ -14,46 +14,47 @@
 
 use kernel::*;
 use variable::ops::*;
-use variable::store::*;
-use variable::memory::*;
-use term::identity::*;
+use variable::concept::*;
 use gcollections::ops::*;
 use std::slice;
 use vec_map::{Drain, VecMap};
 use std::fmt::{Formatter, Display, Error};
 use std::ops::Index;
+use std::marker::PhantomData;
 
-pub struct DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+pub struct DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
-  store: Store<Memory, Domain>,
-  delta: VecMap<Event>
+  store: Store,
+  delta: VecMap<Event>,
+  phantom: PhantomData<Domain>
 }
 
-impl<Memory, Domain, Event> DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
-  fn from_store(store: Store<Memory, Domain>) -> DeltaStore<Memory, Domain, Event> {
+  fn from_store(store: Store) -> DeltaStore<Store, Domain, Event> {
     DeltaStore {
       store: store,
-      delta: VecMap::new()
+      delta: VecMap::new(),
+      phantom: PhantomData
     }
   }
 }
 
-impl<Memory, Domain, Event> Empty for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Empty for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
-  fn empty() -> DeltaStore<Memory, Domain, Event> {
+  fn empty() -> DeltaStore<Store, Domain, Event> {
     DeltaStore::from_store(Store::empty())
   }
 }
 
-impl<Memory, Domain, Event> DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept,
  Event: MonotonicEvent<Domain> + Merge + Clone
 {
@@ -73,8 +74,8 @@ impl<Memory, Domain, Event> DeltaStore<Memory, Domain, Event> where
   }
 }
 
-impl<Memory, Domain, Event> DrainDelta<Event> for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> DrainDelta<Event> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
@@ -86,35 +87,32 @@ impl<Memory, Domain, Event> DrainDelta<Event> for DeltaStore<Memory, Domain, Eve
   }
 }
 
-impl<Memory, Domain, Event> Clone for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Clone for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   fn clone(&self) -> Self {
-    DeltaStore {
-      store: self.store.clone(),
-      delta: VecMap::new()
-    }
+    DeltaStore::from_store(self.store.clone())
   }
 }
 
-impl<Memory, Domain, Event> State for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> State for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
-  type Label = Store<Memory, Domain>;
+  type Label = <Store as State>::Label;
 
-  fn mark(&self) -> Store<Memory, Domain> {
+  fn mark(&self) -> Self::Label {
     self.store.mark()
   }
 
-  fn restore(self, label: Store<Memory, Domain>) -> Self {
-    DeltaStore::from_store(label)
+  fn restore(self, label: Self::Label) -> Self {
+    DeltaStore::from_store(self.store.restore(label))
   }
 }
 
-impl<Memory, Domain, Event> Iterable for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Iterable for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   type Item = Domain;
@@ -124,8 +122,8 @@ impl<Memory, Domain, Event> Iterable for DeltaStore<Memory, Domain, Event> where
   }
 }
 
-impl<Memory, Domain, Event> Cardinality for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Cardinality for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   type Size = usize;
@@ -135,21 +133,23 @@ impl<Memory, Domain, Event> Cardinality for DeltaStore<Memory, Domain, Event> wh
   }
 }
 
-impl<Memory, Domain, Event> Alloc<Domain> for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Location, Domain, Event> Alloc<Domain> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Store: Alloc<Domain, Location=Location>,
+ Location: VarIndex,
  Domain: DomainConcept
 {
-  type Location = Identity<Domain>;
+  type Location = <Store as Alloc<Domain>>::Location;
 
-  fn alloc(&mut self, dom: Domain) -> Identity<Domain> {
+  fn alloc(&mut self, dom: Domain) -> Self::Location {
     let var = self.store.alloc(dom);
     self.delta.reserve_len(var.index());
     var
   }
 }
 
-impl<Memory, Domain, Event> Update<usize, Domain> for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Update<usize, Domain> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept,
  Event: MonotonicEvent<Domain> + Merge + Clone
 {
@@ -159,8 +159,8 @@ impl<Memory, Domain, Event> Update<usize, Domain> for DeltaStore<Memory, Domain,
   }
 }
 
-impl<Memory, Domain, Event> Index<usize> for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Index<usize> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   type Output = Domain;
@@ -169,8 +169,8 @@ impl<Memory, Domain, Event> Index<usize> for DeltaStore<Memory, Domain, Event> w
   }
 }
 
-impl<Memory, Domain, Event> Display for DeltaStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
+impl<Store, Domain, Event> Display for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
  Domain: DomainConcept
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -183,15 +183,16 @@ pub mod test {
   use super::*;
   use kernel::Alloc;
   use variable::ops::*;
-  use variable::memory::*;
+  use variable::test::DomainI32;
+  use variable::test::DeltaStoreI32;
   use term::identity::*;
   use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use gcollections::ops::*;
 
-  pub type Domain = Interval<i32>;
-  pub type FDStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
+  pub type Domain = DomainI32;
+  pub type FDStore = DeltaStoreI32;
 
   fn test_op<Op>(source: Domain, target: Domain, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
     Op: FnOnce(&FDStore, Identity<Domain>) -> Domain

@@ -14,7 +14,7 @@
 
 use kernel::*;
 use variable::ops::*;
-use variable::memory::*;
+use variable::concept::*;
 use term::identity::*;
 use gcollections::ops::*;
 use std::marker::PhantomData;

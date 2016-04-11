@@ -43,16 +43,15 @@ mod test {
   use propagation::events::*;
   use propagation::reactors::*;
   use propagation::schedulers::*;
-  use variable::delta_store::DeltaStore;
-  use variable::memory::*;
+  use variable::test::*;
   use search::space::*;
   use search::branching::VarSelection;
   use gcollections::ops::*;
   use interval::interval::*;
   use interval::ops::*;
 
-  type Domain = Interval<i32>;
-  type VStore = DeltaStore<CopyStore<Domain>, Domain, FDEvent>;
+  type Domain = DomainI32;
+  type VStore = DeltaStoreI32;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
   type FDSpace = Space<VStore, CStore>;
 
