@@ -27,7 +27,7 @@ pub struct Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  variables: Memory,
+  memory: Memory,
   phantom: PhantomData<Domain>
 }
 
@@ -41,15 +41,24 @@ impl<Memory, Domain> StoreConcept<Domain> for Store<Memory, Domain> where
  Domain: DomainConcept
 {}
 
+impl<Memory, Domain> Store<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{
+  fn from_memory(memory: Memory) -> Self {
+    Store {
+      memory: memory,
+      phantom: PhantomData
+    }
+  }
+}
+
 impl<Memory, Domain> Empty for Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   fn empty() -> Store<Memory, Domain> {
-    Store {
-      variables: Memory::empty(),
-      phantom: PhantomData
-    }
+    Store::from_memory(Memory::empty())
   }
 }
 
@@ -68,6 +77,53 @@ impl<Memory, Domain> State for Store<Memory, Domain> where
   }
 }
 
+impl<Memory, Domain> Freeze for Store<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{
+  type ImmutableState = ImmutableStore<Memory, Domain>;
+  fn freeze(self) -> Self::ImmutableState
+  {
+    ImmutableStore::new(self)
+  }
+}
+
+pub struct ImmutableStore<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{
+  immutable_memory: Memory::ImmutableState,
+  phantom: PhantomData<Domain>
+}
+
+impl<Memory, Domain> ImmutableStore<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{
+  fn new(store: Store<Memory, Domain>) -> Self {
+    ImmutableStore {
+      immutable_memory: store.memory.freeze(),
+      phantom: PhantomData
+    }
+  }
+}
+
+impl<Memory, Domain> Snapshot for ImmutableStore<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{
+  type Label = <Memory::ImmutableState as Snapshot>::Label;
+  type MutableState = Store<Memory, Domain>;
+
+  fn label(&mut self) -> Self::Label {
+    self.immutable_memory.label()
+  }
+
+  fn restore(self, label: Self::Label) -> Self::MutableState {
+    Store::from_memory(self.immutable_memory.restore(label))
+  }
+}
+
 impl<Memory, Domain> Cardinality for Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
@@ -75,7 +131,7 @@ impl<Memory, Domain> Cardinality for Store<Memory, Domain> where
   type Size = usize;
 
   fn size(&self) -> usize {
-    self.variables.size()
+    self.memory.size()
   }
 }
 
@@ -86,7 +142,7 @@ impl<Memory, Domain> Iterable for Store<Memory, Domain> where
   type Item = Domain;
 
   fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
-    self.variables.iter()
+    self.memory.iter()
   }
 }
 
@@ -98,8 +154,8 @@ impl<Memory, Domain> Alloc<Domain> for Store<Memory, Domain> where
 
   fn alloc(&mut self, dom: Domain) -> Identity<Domain> {
     assert!(!dom.is_empty());
-    let var_idx = self.variables.size();
-    self.variables.push(dom);
+    let var_idx = self.memory.size();
+    self.memory.push(dom);
     Identity::new(var_idx)
   }
 }
@@ -109,12 +165,12 @@ impl<Memory, Domain> Update<usize, Domain> for Store<Memory, Domain> where
  Domain: DomainConcept
 {
   fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
-    assert!(dom.is_subset(&self.variables[key]), "Domain update must be monotonic.");
+    assert!(dom.is_subset(&self.memory[key]), "Domain update must be monotonic.");
     if dom.is_empty() {
       None
     }
     else {
-      self.variables.update(key, dom)
+      self.memory.update(key, dom)
     }
   }
 }
@@ -125,9 +181,9 @@ impl<Memory, Domain> Index<usize> for Store<Memory, Domain> where
 {
   type Output = Domain;
   fn index<'a>(&'a self, index: usize) -> &'a Domain {
-    assert!(index < self.variables.size(),
+    assert!(index < self.memory.size(),
       "Variable not registered in the store. Variable index must be obtained with `alloc`.");
-    &self.variables[index]
+    &self.memory[index]
   }
 }
 
@@ -136,7 +192,7 @@ impl<Memory, Domain> Display for Store<Memory, Domain> where
  Domain: DomainConcept
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    self.variables.fmt(formatter)
+    self.memory.fmt(formatter)
   }
 }
 
@@ -145,18 +201,15 @@ mod test {
   use super::*;
   use kernel::Alloc;
   use variable::ops::*;
-  use variable::memory::*;
+  use variable::test::*;
   use term::identity::*;
   use interval::interval::*;
   use gcollections::ops::*;
 
-  type Domain = Interval<i32>;
-  type CopyFDStore = Store<CopyStore<Domain>, Domain>;
-
   #[test]
   fn ordered_assign_10_vars() {
     let dom0_10 = (0, 10).to_interval();
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
 
     for i in 0..10 {
       assert_eq!(store.alloc(dom0_10), Identity::new(i));
@@ -167,7 +220,7 @@ mod test {
   fn valid_read_update() {
     let dom0_10 = (0, 10).to_interval();
     let dom5_5 = (5, 5).to_interval();
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
 
     let vars: Vec<_> = (0..10).map(|_| store.alloc(dom0_10)).collect();
     for var in vars {
@@ -179,7 +232,7 @@ mod test {
 
   #[test]
   fn empty_update() {
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
     let dom5_5 = (5, 5).to_interval();
 
     let var = store.alloc(dom5_5);
@@ -189,7 +242,7 @@ mod test {
   #[test]
   #[should_panic]
   fn empty_assign() {
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
     store.alloc(Interval::<i32>::empty());
   }
 
@@ -199,7 +252,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let dom11_11 = 11.to_interval();
 
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
     let var = store.alloc(dom0_10);
     var.update(&mut store, dom11_11);
   }
@@ -210,7 +263,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let domm5_15 = (-5, 15).to_interval();
 
-    let mut store: CopyFDStore = Store::empty();
+    let mut store: StoreI32 = Store::empty();
     let var = store.alloc(dom0_10);
     var.update(&mut store, domm5_15);
   }

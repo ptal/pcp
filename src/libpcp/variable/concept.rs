@@ -34,13 +34,13 @@ pub trait ImmutableMemoryConcept<Domain> :
  + Index<usize, Output=Domain>
  + Display
  + Clone // TO DELETE
+ + Freeze
 {}
 
 pub trait MemoryConcept<Domain> :
    ImmutableMemoryConcept<Domain>
  + Push<Back, Domain>
  + Update<usize, Domain>
- + Freeze
  where
   Domain: DomainConcept
 {}

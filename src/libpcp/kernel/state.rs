@@ -19,15 +19,16 @@ pub trait State {
   fn restore(self, label: Self::Label) -> Self;
 }
 
-pub trait Freeze
+pub trait Freeze : Sized
 {
-  type ImmutableState : Snapshot;
+  type ImmutableState : Snapshot<MutableState=Self>;
   fn freeze(self) -> Self::ImmutableState;
 }
 
-pub trait Snapshot {
+pub trait Snapshot : Sized
+{
   type Label;
-  type MutableState : Freeze;
+  type MutableState : Freeze<ImmutableState=Self>;
 
   fn label(&mut self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self::MutableState;

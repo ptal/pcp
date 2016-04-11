@@ -124,6 +124,55 @@ impl<Store, Domain, Event> State for DeltaStore<Store, Domain, Event> where
   }
 }
 
+impl<Store, Domain, Event> Freeze for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept
+{
+  type ImmutableState = ImmutableDeltaStore<Store, Domain, Event>;
+  fn freeze(self) -> Self::ImmutableState
+  {
+    ImmutableDeltaStore::new(self)
+  }
+}
+
+pub struct ImmutableDeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept
+{
+  immutable_store: Store::ImmutableState,
+  phantom_domain: PhantomData<Domain>,
+  phantom_event: PhantomData<Event>
+}
+
+impl<Store, Domain, Event> ImmutableDeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept
+{
+  fn new(delta_store: DeltaStore<Store, Domain, Event>) -> Self {
+    ImmutableDeltaStore {
+      immutable_store: delta_store.store.freeze(),
+      phantom_domain: PhantomData,
+      phantom_event: PhantomData
+    }
+  }
+}
+
+impl<Store, Domain, Event> Snapshot for ImmutableDeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept
+{
+  type Label = <Store::ImmutableState as Snapshot>::Label;
+  type MutableState = DeltaStore<Store, Domain, Event>;
+
+  fn label(&mut self) -> Self::Label {
+    self.immutable_store.label()
+  }
+
+  fn restore(self, label: Self::Label) -> Self::MutableState {
+    DeltaStore::from_store(self.immutable_store.restore(label))
+  }
+}
+
 impl<Store, Domain, Event> Iterable for DeltaStore<Store, Domain, Event> where
  Store: StoreConcept<Domain>,
  Domain: DomainConcept
