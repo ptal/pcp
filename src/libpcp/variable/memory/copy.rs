@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::state::*;
+use variable::concept::*;
 use variable::ops::*;
 use gcollections::ops::constructor::*;
 use gcollections::ops::cardinality::*;
@@ -28,6 +30,14 @@ pub struct CopyStore<Domain>
 {
   variables: Vec<Domain>
 }
+
+impl<Domain> MemoryConcept<Domain> for CopyStore<Domain> where
+ Domain: DomainConcept
+{}
+
+impl<Domain> ImmutableMemoryConcept<Domain> for CopyStore<Domain> where
+ Domain: DomainConcept
+{}
 
 impl<Domain> CopyStore<Domain>
 {
@@ -102,38 +112,38 @@ impl<Domain> Display for CopyStore<Domain> where
 impl<Domain> Freeze for CopyStore<Domain> where
  Domain: Clone
 {
-  type FrozenState = FrozenCopyStore<Domain>;
-  fn freeze(self) -> Self::FrozenState
+  type ImmutableState = ImmutableCopyStore<Domain>;
+  fn freeze(self) -> Self::ImmutableState
   {
-    FrozenCopyStore::new(self)
+    ImmutableCopyStore::new(self)
   }
 }
 
-pub struct FrozenCopyStore<Domain>
+pub struct ImmutableCopyStore<Domain>
 {
   variables: Rc<Vec<Domain>>
 }
 
-impl<Domain> FrozenCopyStore<Domain>
+impl<Domain> ImmutableCopyStore<Domain>
 {
-  fn new(store: CopyStore<Domain>) -> FrozenCopyStore<Domain> {
-    FrozenCopyStore {
+  fn new(store: CopyStore<Domain>) -> ImmutableCopyStore<Domain> {
+    ImmutableCopyStore {
       variables: Rc::new(store.variables)
     }
   }
 }
 
-impl<Domain> Snapshot for FrozenCopyStore<Domain> where
+impl<Domain> Snapshot for ImmutableCopyStore<Domain> where
  Domain: Clone
 {
   type Label = Rc<Vec<Domain>>;
-  type UnfrozenState = CopyStore<Domain>;
+  type MutableState = CopyStore<Domain>;
 
-  fn snapshot(&mut self) -> Self::Label {
+  fn label(&mut self) -> Self::Label {
     self.variables.clone()
   }
 
-  fn restore(self, label: Self::Label) -> Self::UnfrozenState {
+  fn restore(self, label: Self::Label) -> Self::MutableState {
     let variables = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
     CopyStore::restore(variables)
   }
@@ -145,7 +155,7 @@ impl<Domain> Snapshot for FrozenCopyStore<Domain> where
 //   use variable::memory::ops::*;
 //   use std::ops::Deref;
 
-//   fn make_frozen_store(initial_data: Vec<u32>) -> FrozenCopyStore<u32> {
+//   fn make_Immutable_store(initial_data: Vec<u32>) -> FrozenCopyStore<u32> {
 //     let mut copy_store = CopyStore::new();
 //     copy_store.extend(initial_data);
 //     copy_store.freeze()

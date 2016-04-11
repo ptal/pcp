@@ -46,17 +46,3 @@ pub trait Update<Key, Value>
   // `Some(value)` if it succeeded, where `value` is the old one.
   fn update(&mut self, key: Key, value: Value) -> Option<Value>;
 }
-
-pub trait Freeze
-{
-  type FrozenState : Snapshot;
-  fn freeze(self) -> Self::FrozenState;
-}
-
-pub trait Snapshot {
-  type Label;
-  type UnfrozenState;
-
-  fn snapshot(&mut self) -> Self::Label;
-  fn restore(self, label: Self::Label) -> Self::UnfrozenState;
-}

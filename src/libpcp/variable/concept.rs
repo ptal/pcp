@@ -27,7 +27,7 @@ impl<R> DomainConcept for R where
   R: Clone + Display + Bounded + Cardinality + Subset
 {}
 
-pub trait ReadOnlyMemoryConcept<Domain> :
+pub trait ImmutableMemoryConcept<Domain> :
    Cardinality<Size=usize>
  + Iterable<Item=Domain>
  + Empty
@@ -36,17 +36,8 @@ pub trait ReadOnlyMemoryConcept<Domain> :
  + Clone // TO DELETE
 {}
 
-impl<Domain, R> ReadOnlyMemoryConcept<Domain> for R where
- R: Cardinality<Size=usize>
- + Iterable<Item=Domain>
- + Empty
- + Index<usize, Output=Domain>
- + Display
- + Clone // TO DELETE
-{}
-
 pub trait MemoryConcept<Domain> :
-   ReadOnlyMemoryConcept<Domain>
+   ImmutableMemoryConcept<Domain>
  + Push<Back, Domain>
  + Update<usize, Domain>
  + Freeze
@@ -54,27 +45,11 @@ pub trait MemoryConcept<Domain> :
   Domain: DomainConcept
 {}
 
-impl<Domain, R> MemoryConcept<Domain> for R where
- R: ReadOnlyMemoryConcept<Domain>
- + Push<Back, Domain>
- + Update<usize, Domain>
- + Freeze,
- Domain: DomainConcept
-{}
-
 pub trait StoreConcept<Domain> :
-   ReadOnlyMemoryConcept<Domain>
+   ImmutableMemoryConcept<Domain>
  + Alloc<Domain>
  + Update<usize, Domain>
  + State
 where
- Domain: DomainConcept
-{}
-
-impl<Domain, R> StoreConcept<Domain> for R where
- R: ReadOnlyMemoryConcept<Domain>
- + Alloc<Domain>
- + Update<usize, Domain>
- + State,
  Domain: DomainConcept
 {}

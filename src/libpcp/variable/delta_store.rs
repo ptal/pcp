@@ -31,6 +31,19 @@ pub struct DeltaStore<Store, Domain, Event> where
   phantom: PhantomData<Domain>
 }
 
+impl<Store, Domain, Event> ImmutableMemoryConcept<Domain> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept
+{}
+
+impl<Location, Store, Domain, Event> StoreConcept<Domain> for DeltaStore<Store, Domain, Event> where
+ Store: StoreConcept<Domain>,
+ Domain: DomainConcept,
+ Event: MonotonicEvent<Domain> + Merge + Clone,
+ Store: Alloc<Domain, Location=Location>,
+ Location: VarIndex,
+{}
+
 impl<Store, Domain, Event> DeltaStore<Store, Domain, Event> where
  Store: StoreConcept<Domain>,
  Domain: DomainConcept

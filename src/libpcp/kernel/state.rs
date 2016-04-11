@@ -18,3 +18,18 @@ pub trait State {
   fn mark(&self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self;
 }
+
+pub trait Freeze
+{
+  type ImmutableState : Snapshot;
+  fn freeze(self) -> Self::ImmutableState;
+}
+
+pub trait Snapshot {
+  type Label;
+  type MutableState : Freeze;
+
+  fn label(&mut self) -> Self::Label;
+  fn restore(self, label: Self::Label) -> Self::MutableState;
+}
+

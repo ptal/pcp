@@ -31,6 +31,16 @@ pub struct Store<Memory, Domain> where
   phantom: PhantomData<Domain>
 }
 
+impl<Memory, Domain> ImmutableMemoryConcept<Domain> for Store<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{}
+
+impl<Memory, Domain> StoreConcept<Domain> for Store<Memory, Domain> where
+ Memory: MemoryConcept<Domain>,
+ Domain: DomainConcept
+{}
+
 impl<Memory, Domain> Empty for Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
