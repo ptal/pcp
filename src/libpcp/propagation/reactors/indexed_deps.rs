@@ -19,6 +19,7 @@ use std::iter::{FromIterator, repeat};
 use std::fmt::{Formatter, Debug, Error};
 
 /// `deps[num_events*v + e]` contains the propagators dependent to the event `e` on the variable `v`.
+#[derive(Clone)]
 pub struct IndexedDeps {
   num_events: usize,
   num_subscriptions: usize,

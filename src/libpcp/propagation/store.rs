@@ -22,6 +22,8 @@ use propagation::ops::*;
 use propagation::concept::*;
 use variable::ops::*;
 use gcollections::ops::*;
+use std::rc::*;
+use std::marker::PhantomData;
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
@@ -169,6 +171,65 @@ impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
       .map(|p| p.boxed_clone())
       .collect();
     store
+  }
+}
+
+impl<VStore, Event, R, S> Freeze for Store<VStore, Event, R, S> where
+ Event: EventIndex,
+ R: Reactor + Clone,
+ S: Scheduler
+{
+  type ImmutableState = ImmutableStore<VStore, Event, R, S>;
+  fn freeze(self) -> Self::ImmutableState
+  {
+    ImmutableStore::new(self)
+  }
+}
+
+pub struct ImmutableStore<VStore, Event, R, S> where
+ Event: EventIndex,
+ R: Reactor + Clone,
+ S: Scheduler
+{
+  cstore: Rc<(Vec<Box<PropagatorConcept<VStore, Event> + 'static>>, R)>,
+  phantom_scheduler: PhantomData<S>
+}
+
+impl<VStore, Event, R, S> ImmutableStore<VStore, Event, R, S> where
+ Event: EventIndex,
+ R: Reactor + Clone,
+ S: Scheduler
+{
+  fn new(store: Store<VStore, Event, R, S>) -> Self {
+    ImmutableStore {
+      cstore: Rc::new((store.propagators, store.reactor)),
+      phantom_scheduler: PhantomData
+    }
+  }
+}
+
+impl<VStore, Event, R, S> Snapshot for ImmutableStore<VStore, Event, R, S> where
+ Event: EventIndex,
+ R: Reactor + Clone,
+ S: Scheduler
+{
+  type Label = Rc<(Vec<Box<PropagatorConcept<VStore, Event> + 'static>>, R)>;
+  type MutableState = Store<VStore, Event, R, S>;
+
+  fn label(&mut self) -> Self::Label {
+    self.cstore.clone()
+  }
+
+  fn restore(self, label: Self::Label) -> Self::MutableState {
+    let (props, reactor) = Rc::try_unwrap(label).unwrap_or_else(|l| {
+      let props = l.0.iter().map(|p| p.boxed_clone()).collect();
+      (props, l.1.clone())
+    });
+    Store {
+      propagators: props,
+      reactor: reactor,
+      scheduler: Scheduler::new(0)
+    }
   }
 }
 
