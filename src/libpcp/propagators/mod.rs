@@ -22,8 +22,7 @@ pub mod distinct;
 use kernel::trilean::Trilean;
 use kernel::trilean::Trilean::*;
 use kernel::Consistency;
-use propagation::subsumption::Subsumption;
-use propagation::propagator::Propagator;
+use propagation::ops::*;
 
 // FIXME: Without this trait, `Consistency` impl for the Propagator store conflicts with the following one.
 pub trait PropagatorKind {}

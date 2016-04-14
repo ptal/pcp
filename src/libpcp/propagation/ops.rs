@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::trilean::*;
+use kernel::consistency::*;
+use propagation::concept::*;
+
+pub trait Subsumption<Store>
+{
+  fn is_subsumed(&self, store: &Store) -> Trilean;
+}
+
 pub trait Propagator<VStore>
 {
   /// Returns `false` if it failed to propagate (a variable has an empty domain after propagation).
@@ -22,4 +31,20 @@ pub trait PropagatorDependencies<Event>
 {
   /// Each event on a variable that can change the result of the `is_subsumed` method should be listed here.
   fn dependencies(&self) -> Vec<(usize, Event)>;
+}
+
+pub trait BoxedClone<VStore, Event>
+{
+  fn boxed_clone(&self) -> Box<PropagatorConcept<VStore, Event>>;
+}
+
+impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
+  R: Clone,
+  R: Consistency<VStore>,
+  R: PropagatorDependencies<Event>,
+  R: 'static
+{
+  fn boxed_clone(&self) -> Box<PropagatorConcept<VStore, Event>> {
+    Box::new(self.clone())
+  }
 }

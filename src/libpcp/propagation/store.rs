@@ -18,41 +18,14 @@ use kernel::*;
 use kernel::Trilean::*;
 use propagation::Reactor;
 use propagation::Scheduler;
-use propagation::propagator::*;
+use propagation::ops::*;
+use propagation::concept::*;
 use variable::ops::*;
 use gcollections::ops::*;
 
-pub trait BoxedClone<VStore, Event>
-{
-  fn boxed_clone(&self) -> Box<PropagatorRequirements<VStore, Event>>;
-}
-
-impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
-  R: Clone,
-  R: Consistency<VStore>,
-  R: PropagatorDependencies<Event>,
-  R: 'static
-{
-  fn boxed_clone(&self) -> Box<PropagatorRequirements<VStore, Event>> {
-    Box::new(self.clone())
-  }
-}
-
-pub trait PropagatorRequirements<VStore, Event> :
-    Consistency<VStore>
-  + PropagatorDependencies<Event>
-  + BoxedClone<VStore, Event>
-{}
-
-impl<VStore, Event, R> PropagatorRequirements<VStore, Event> for R where
- R: Consistency<VStore>,
- R: PropagatorDependencies<Event>,
- R: BoxedClone<VStore, Event>
-{}
-
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
-  propagators: Vec<Box<PropagatorRequirements<VStore, Event> + 'static>>,
+  propagators: Vec<Box<PropagatorConcept<VStore, Event> + 'static>>,
   reactor: Reactor,
   scheduler: Scheduler
 }
@@ -149,7 +122,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
 }
 
 impl<Prop, VStore, Event, R, S> Alloc<Prop> for Store<VStore, Event, R, S> where
- Prop: PropagatorRequirements<VStore, Event> + 'static
+ Prop: PropagatorConcept<VStore, Event> + 'static
 {
   type Location = ();
   fn alloc(&mut self, p: Prop) {

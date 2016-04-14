@@ -1,4 +1,4 @@
-// Copyright 2015 Pierre Talbot (IRCAM)
+// Copyright 2016 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::trilean::*;
+use kernel::consistency::*;
+use propagation::ops::*;
 
-pub trait Subsumption<Store>
-{
-  fn is_subsumed(&self, store: &Store) -> Trilean;
-}
+pub trait PropagatorConcept<VStore, Event> :
+    Consistency<VStore>
+  + PropagatorDependencies<Event>
+  + BoxedClone<VStore, Event>
+{}
+
+impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
+ R: Consistency<VStore>,
+ R: PropagatorDependencies<Event>,
+ R: BoxedClone<VStore, Event>
+{}
+

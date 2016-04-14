@@ -23,10 +23,10 @@ pub mod scheduler;
 pub mod schedulers;
 pub mod events;
 pub mod store;
-pub mod propagator;
-pub mod subsumption;
+pub mod ops;
+pub mod concept;
 
 pub use propagation::reactor::Reactor;
 pub use propagation::scheduler::Scheduler;
-pub use propagation::propagator::*;
-pub use propagation::subsumption::*;
+pub use propagation::ops::*;
+pub use propagation::concept::*;
