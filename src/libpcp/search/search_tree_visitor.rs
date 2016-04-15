@@ -22,9 +22,16 @@ pub enum Status<Space> where
   Space: State
 {
   Satisfiable,
-  Pruned,
   Unsatisfiable,
   Unknown(Vec<Branch<Space>>)
+}
+
+impl<Space> Status<Space> where
+ Space: State
+{
+  pub fn pruned() -> Status<Space> {
+    Unknown(vec![])
+  }
 }
 
 impl<Space> Debug for Status<Space> where
@@ -34,7 +41,7 @@ impl<Space> Debug for Status<Space> where
     let name = match self {
       &Satisfiable => "Satisfiable",
       &Unsatisfiable => "Unsatisfiable",
-      &Pruned => "Pruned",
+      &Unknown(ref branches) if branches.is_empty() => "Pruned",
       &Unknown(_) => "Unknown"
     };
     formatter.write_str(name)
@@ -48,7 +55,7 @@ impl<Space> PartialEq for Status<Space> where
     match (self, other) {
       (&Satisfiable, &Satisfiable) => true,
       (&Unsatisfiable, &Unsatisfiable) => true,
-      (&Pruned, &Pruned) => true,
+      (&Unknown(ref b1), &Unknown(ref b2)) if b1.is_empty() && b2.is_empty() => true,
       (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
       (_, _) => false,
     }
@@ -62,7 +69,7 @@ impl<Space> Status<Space> where
   pub fn or(self, status: &Status<Space>) -> Self {
     match (self, status) {
       (_, &Satisfiable) => Satisfiable,
-      (Unsatisfiable, &Pruned) => Pruned,
+      (Unsatisfiable, &Unknown(ref branches)) if branches.is_empty() => Status::pruned(),
       (s, _) => s,
     }
   }

@@ -55,9 +55,9 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
   {
     let (current, child_status) = self.child.enter(current);
     match child_status {
+      Unknown(ref branches) if branches.is_empty() => *status = Status::pruned(),
       Unknown(branches) => self.push_branches(branches),
       Satisfiable => *status = Satisfiable,
-      Pruned => *status = Pruned,
       _ => ()
     }
     current
