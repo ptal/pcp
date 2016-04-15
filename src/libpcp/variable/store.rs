@@ -22,7 +22,6 @@ use std::slice;
 use std::fmt::{Formatter, Display, Error};
 use std::ops::Index;
 
-#[derive(Clone)]
 pub struct Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
@@ -59,21 +58,6 @@ impl<Memory, Domain> Empty for Store<Memory, Domain> where
 {
   fn empty() -> Store<Memory, Domain> {
     Store::from_memory(Memory::empty())
-  }
-}
-
-impl<Memory, Domain> State for Store<Memory, Domain> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
-{
-  type Label = Store<Memory, Domain>;
-
-  fn mark(&self) -> Store<Memory, Domain> {
-    self.clone()
-  }
-
-  fn restore(self, label: Store<Memory, Domain>) -> Self {
-    label
   }
 }
 

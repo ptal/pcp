@@ -19,7 +19,7 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter, Error};
 
 pub enum Status<Space> where
-  Space: State
+  Space: Freeze
 {
   Satisfiable,
   Unsatisfiable,
@@ -27,7 +27,7 @@ pub enum Status<Space> where
 }
 
 impl<Space> Status<Space> where
- Space: State
+ Space: Freeze
 {
   pub fn pruned() -> Status<Space> {
     Unknown(vec![])
@@ -35,7 +35,7 @@ impl<Space> Status<Space> where
 }
 
 impl<Space> Debug for Status<Space> where
-  Space: State
+  Space: Freeze
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let name = match self {
@@ -49,7 +49,7 @@ impl<Space> Debug for Status<Space> where
 }
 
 impl<Space> PartialEq for Status<Space> where
-  Space: State
+  Space: Freeze
 {
   fn eq(&self, other: &Status<Space>) -> bool {
     match (self, other) {
@@ -63,7 +63,7 @@ impl<Space> PartialEq for Status<Space> where
 }
 
 impl<Space> Status<Space> where
-  Space: State
+  Space: Freeze
 {
   // Promote `self` to `Pruned` or `Satisfiable` depending on `status`.
   pub fn or(self, status: &Status<Space>) -> Self {
@@ -76,8 +76,8 @@ impl<Space> Status<Space> where
 }
 
 pub trait SearchTreeVisitor<Space> where
-  Space: State
+  Space: Freeze
 {
   fn start(&mut self, _space: &Space) {}
-  fn enter(&mut self, space: Space) -> (Space, Status<Space>);
+  fn enter(&mut self, space: Space) -> (Space::ImmutableState, Status<Space>);
 }

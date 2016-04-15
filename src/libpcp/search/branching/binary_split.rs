@@ -30,14 +30,16 @@ pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
 impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
-  VStore: State + Iterable<Item=Domain>,
-  CStore: State,
+  VStore: Freeze + Iterable<Item=Domain>,
+  CStore: Freeze,
   CStore: Alloc<XLessEqC<Domain, Bound>>,
   CStore: Alloc<XGreaterC<Domain, Bound>>,
   Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
-  fn distribute(&mut self, space: &Space<VStore, CStore>, var_idx: usize) -> Vec<Branch<Space<VStore, CStore>>> {
+  fn distribute(&mut self, space: Space<VStore, CStore>, var_idx: usize) ->
+    (<Space<VStore, CStore> as Freeze>::ImmutableState, Vec<Branch<Space<VStore, CStore>>>)
+  {
     let dom = nth_dom(&space.vstore, var_idx);
     assert!(!dom.is_singleton() && !dom.is_empty(),
       "Can not distribute over assigned or failed variables.");
@@ -101,15 +103,16 @@ mod test {
       space.vstore.alloc(Interval::new(l,u));
     }
 
-    let branches = distributor.distribute(&space, distribution_index);
+    let (mut immutable_state, branches) = distributor.distribute(space, distribution_index);
 
     assert_eq!(branches.len(), children.len());
 
     for (branch, (l,u)) in branches.into_iter().zip(children.into_iter()) {
-      space = branch.commit(space);
+      space = branch.commit(immutable_state);
       assert_eq!(space.consistency(), True);
       let split_dom = nth_dom(&space.vstore, distribution_index);
       assert_eq!(split_dom, Interval::new(l,u));
+      immutable_state = space.freeze();
     }
   }
 

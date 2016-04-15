@@ -16,7 +16,6 @@ use kernel::*;
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
-use search::engine::PartialExploration;
 use gcollections::ops::multiset::*;
 use std::marker::PhantomData;
 
@@ -27,10 +26,8 @@ pub struct OneSolution<C, Q, Space> {
   phantom_space: PhantomData<Space>
 }
 
-impl<C, Q, Space> PartialExploration for OneSolution<C, Q, Space> {}
-
 impl<C, Q, Space> OneSolution<C, Q, Space> where
- Space: State,
+ Space: Freeze,
  C: SearchTreeVisitor<Space>,
  Q: Multiset<Branch<Space>>
 {
@@ -51,32 +48,32 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
     }
   }
 
-  fn enter_child(&mut self, current: Space, status: &mut Status<Space>) -> Space
+  fn enter_child(&mut self, current: Space, status: &mut Status<Space>) -> Space::ImmutableState
   {
-    let (current, child_status) = self.child.enter(current);
+    let (immutable_state, child_status) = self.child.enter(current);
     match child_status {
       Unknown(ref branches) if branches.is_empty() => *status = Status::pruned(),
       Unknown(branches) => self.push_branches(branches),
       Satisfiable => *status = Satisfiable,
       _ => ()
     }
-    current
+    immutable_state
   }
 
   // Only visit the root if we didn't visit it before (based on the queue emptiness).
-  fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space
+  fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space::ImmutableState
   {
     if self.queue.is_empty() && !self.exploring {
       self.exploring = true;
       self.enter_child(root, status)
     } else {
-      root
+      root.freeze()
     }
   }
 }
 
 impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
- Space: State,
+ Space: Freeze,
  C: SearchTreeVisitor<Space>,
  Q: Multiset<Branch<Space>>
 {
@@ -86,15 +83,15 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
     self.child.start(root);
   }
 
-  fn enter(&mut self, root: Space) -> (Space, Status<Space>) {
+  fn enter(&mut self, root: Space) -> (Space::ImmutableState, Status<Space>) {
     let mut status = Unsatisfiable;
-    let mut current = self.enter_root(root, &mut status);
+    let mut immutable_state = self.enter_root(root, &mut status);
     while status != Satisfiable && !self.queue.is_empty() {
       let branch = self.queue.extract().unwrap();
-      let child = branch.commit(current);
-      current = self.enter_child(child, &mut status);
+      let child = branch.commit(immutable_state);
+      immutable_state = self.enter_child(child, &mut status);
     }
-    (current, status)
+    (immutable_state, status)
   }
 }
 

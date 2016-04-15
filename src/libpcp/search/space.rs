@@ -13,8 +13,6 @@
 // limitations under the License.
 
 use kernel::*;
-use std::rc::*;
-use std::ops::Deref;
 use gcollections::ops::*;
 
 pub struct Space<VStore, CStore> {
@@ -40,26 +38,6 @@ impl<VStore, CStore> Space<VStore, CStore> where
   }
 }
 
-impl<VStore, CStore> State for Space<VStore, CStore> where
-  VStore: State,
-  CStore: State
-{
-  type Label = Rc<(VStore::Label, CStore::Label)>;
-
-  fn mark(&self) -> Rc<(VStore::Label, CStore::Label)>
-  {
-    Rc::new((self.vstore.mark(), self.cstore.mark()))
-  }
-
-  fn restore(mut self, label: Rc<(VStore::Label, CStore::Label)>) -> Space<VStore, CStore>
-  {
-    let label = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
-    self.vstore = self.vstore.restore(label.0);
-    self.cstore = self.cstore.restore(label.1);
-    self
-  }
-}
-
 impl<VStore, CStore> Empty for Space<VStore, CStore> where
   VStore: Empty,
   CStore: Empty
@@ -68,6 +46,58 @@ impl<VStore, CStore> Empty for Space<VStore, CStore> where
     Space {
       vstore: VStore::empty(),
       cstore: CStore::empty()
+    }
+  }
+}
+
+impl<VStore, CStore> Freeze for Space<VStore, CStore> where
+ VStore: Freeze,
+ CStore: Freeze
+{
+  type ImmutableState = ImmutableStore<VStore, CStore>;
+  fn freeze(self) -> Self::ImmutableState
+  {
+    ImmutableStore::new(self)
+  }
+}
+
+pub struct ImmutableStore<VStore, CStore> where
+ VStore: Freeze,
+ CStore: Freeze
+{
+  immutable_vstore: VStore::ImmutableState,
+  immutable_cstore: CStore::ImmutableState
+}
+
+impl<VStore, CStore> ImmutableStore<VStore, CStore> where
+ VStore: Freeze,
+ CStore: Freeze
+{
+  fn new(space: Space<VStore, CStore>) -> Self {
+    ImmutableStore {
+      immutable_vstore: space.vstore.freeze(),
+      immutable_cstore: space.cstore.freeze()
+    }
+  }
+}
+
+impl<VStore, CStore> Snapshot for ImmutableStore<VStore, CStore> where
+ VStore: Freeze,
+ CStore: Freeze
+{
+  type Label = (
+    <VStore::ImmutableState as Snapshot>::Label,
+    <CStore::ImmutableState as Snapshot>::Label);
+  type MutableState = Space<VStore, CStore>;
+
+  fn label(&mut self) -> Self::Label {
+    (self.immutable_vstore.label(), self.immutable_cstore.label())
+  }
+
+  fn restore(self, label: Self::Label) -> Self::MutableState {
+    Space {
+      vstore: self.immutable_vstore.restore(label.0),
+      cstore: self.immutable_cstore.restore(label.1)
     }
   }
 }

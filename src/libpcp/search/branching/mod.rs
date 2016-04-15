@@ -17,7 +17,7 @@ pub mod brancher;
 pub mod first_smallest_var;
 pub mod binary_split;
 
-use kernel::State;
+use kernel::*;
 use search::branching::branch::*;
 
 pub trait VarSelection<Space> {
@@ -26,7 +26,7 @@ pub trait VarSelection<Space> {
   fn select(&mut self, space: &Space) -> usize;
 }
 
-pub trait Distributor<Space> where Space: State {
+pub trait Distributor<Space> where Space: Freeze {
   // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
-  fn distribute(&mut self, space: &Space, var_idx: usize) -> Vec<Branch<Space>>;
+  fn distribute(&mut self, space: Space, var_idx: usize) -> (Space::ImmutableState, Vec<Branch<Space>>);
 }

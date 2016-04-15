@@ -100,30 +100,6 @@ impl<Store, Domain, Event> DrainDelta<Event> for DeltaStore<Store, Domain, Event
   }
 }
 
-impl<Store, Domain, Event> Clone for DeltaStore<Store, Domain, Event> where
- Store: StoreConcept<Domain>,
- Domain: DomainConcept
-{
-  fn clone(&self) -> Self {
-    DeltaStore::from_store(self.store.clone())
-  }
-}
-
-impl<Store, Domain, Event> State for DeltaStore<Store, Domain, Event> where
- Store: StoreConcept<Domain>,
- Domain: DomainConcept
-{
-  type Label = <Store as State>::Label;
-
-  fn mark(&self) -> Self::Label {
-    self.store.mark()
-  }
-
-  fn restore(self, label: Self::Label) -> Self {
-    DeltaStore::from_store(self.store.restore(label))
-  }
-}
-
 impl<Store, Domain, Event> Freeze for DeltaStore<Store, Domain, Event> where
  Store: StoreConcept<Domain>,
  Domain: DomainConcept

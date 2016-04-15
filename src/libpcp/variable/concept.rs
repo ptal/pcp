@@ -33,7 +33,6 @@ pub trait ImmutableMemoryConcept<Domain> :
  + Empty
  + Index<usize, Output=Domain>
  + Display
- + Clone // TO DELETE
  + Freeze
 {}
 
@@ -49,7 +48,6 @@ pub trait StoreConcept<Domain> :
    ImmutableMemoryConcept<Domain>
  + Alloc<Domain>
  + Update<usize, Domain>
- + State
 where
  Domain: DomainConcept
 {}

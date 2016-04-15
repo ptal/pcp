@@ -14,7 +14,7 @@
 
 use search::branching::*;
 use search::search_tree_visitor::*;
-use kernel::State;
+use kernel::*;
 
 pub struct Brancher<S,D>
 {
@@ -33,13 +33,13 @@ impl<S,D> Brancher<S,D>
 }
 
 impl<Space,S,D> SearchTreeVisitor<Space> for Brancher<S,D> where
-  Space: State,
+  Space: Freeze,
   S: VarSelection<Space>,
   D: Distributor<Space>
 {
-  fn enter(&mut self, current: Space) -> (Space, Status<Space>) {
+  fn enter(&mut self, current: Space) -> (Space::ImmutableState, Status<Space>) {
     let var_idx = self.selector.select(&current);
-    let branches = self.distributor.distribute(&current, var_idx);
-    (current, Status::Unknown(branches))
+    let (immutable_space, branches) = self.distributor.distribute(current, var_idx);
+    (immutable_space, Status::Unknown(branches))
   }
 }

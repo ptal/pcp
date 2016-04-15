@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::state::*;
+use kernel::*;
 use variable::concept::*;
 use variable::ops::*;
 use gcollections::ops::constructor::*;
@@ -148,29 +148,3 @@ impl<Domain> Snapshot for ImmutableCopyStore<Domain> where
     CopyStore::restore(variables)
   }
 }
-
-// #[cfg(test)]
-// mod test {
-//   use super::*;
-//   use variable::memory::ops::*;
-//   use std::ops::Deref;
-
-//   fn make_Immutable_store(initial_data: Vec<u32>) -> FrozenCopyStore<u32> {
-//     let mut copy_store = CopyStore::new();
-//     copy_store.extend(initial_data);
-//     copy_store.freeze()
-//   }
-
-//   #[test]
-//   fn save_and_restore_identity() {
-//     let initial_data = vec![1,2,3];
-//     let mut frozen = make_frozen_store(initial_data.clone());
-//     let snapshots: Vec<_> = (1..10).map(|_| frozen.snapshot()).collect();
-
-//     for snapshot in snapshots {
-//       let copy_store = frozen.restore(snapshot);
-//       assert_eq!(initial_data.clone(), copy_store.deref().clone());
-//       frozen = copy_store.freeze();
-//     }
-//   }
-// }

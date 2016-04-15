@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub trait State {
-  type Label : Clone;
-
-  fn mark(&self) -> Self::Label;
-  fn restore(self, label: Self::Label) -> Self;
-}
-
 pub trait Freeze : Sized
 {
   type ImmutableState : Snapshot<MutableState=Self>;

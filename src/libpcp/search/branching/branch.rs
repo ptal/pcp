@@ -23,25 +23,27 @@ use alloc::boxed::FnBox;
 // add the propagator(s) to the new space, when available.
 
 pub struct Branch<Space> where
-  Space: State
+  Space: Freeze
 {
-  label: Space::Label,
+  label: <Space::ImmutableState as Snapshot>::Label,
   alternative: Box<FnBox(&mut Space)>
 }
 
 impl<Space> Branch<Space> where
-  Space: State
+  Space: Freeze
 {
-  pub fn distribute(space: &Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> Vec<Branch<Space>> {
-    alternatives.into_iter().map(|alt|
+  pub fn distribute(space: Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> (Space::ImmutableState, Vec<Branch<Space>>) {
+    let mut immutable_space = space.freeze();
+    let branches = alternatives.into_iter().map(|alt|
       Branch {
-        label: space.mark(),
+        label: immutable_space.label(),
         alternative: alt
       }
-    ).collect()
+    ).collect();
+    (immutable_space, branches)
   }
 
-  pub fn commit(self, space_from: Space) -> Space {
+  pub fn commit(self, space_from: Space::ImmutableState) -> Space {
     let mut new = space_from.restore(self.label);
     self.alternative.call_once((&mut new,));
     new

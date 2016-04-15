@@ -30,8 +30,8 @@ impl<C> Propagation<C> {
 }
 
 impl<VStore, CStore, C> SearchTreeVisitor<Space<VStore, CStore>> for Propagation<C> where
-  VStore: State,
-  CStore: State + Consistency<VStore>,
+  VStore: Freeze,
+  CStore: Freeze + Consistency<VStore>,
   C: SearchTreeVisitor<Space<VStore, CStore>>
 {
   fn start(&mut self, root: &Space<VStore, CStore>) {
@@ -39,12 +39,12 @@ impl<VStore, CStore, C> SearchTreeVisitor<Space<VStore, CStore>> for Propagation
   }
 
   fn enter(&mut self, mut current: Space<VStore, CStore>)
-    -> (Space<VStore, CStore>, Status<Space<VStore, CStore>>)
+    -> (<Space<VStore, CStore> as Freeze>::ImmutableState, Status<Space<VStore, CStore>>)
   {
     let status = current.consistency();
     match status {
-      True => (current, Status::Satisfiable),
-      False => (current, Status::Unsatisfiable),
+      True => (current.freeze(), Status::Satisfiable),
+      False => (current.freeze(), Status::Unsatisfiable),
       Unknown => self.child.enter(current)
     }
   }

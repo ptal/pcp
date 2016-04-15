@@ -144,22 +144,6 @@ impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> whe
   }
 }
 
-impl<VStore, Event, R, S> State for Store<VStore, Event, R, S> where
- Event: EventIndex,
- R: Reactor,
- S: Scheduler
-{
-  type Label = Store<VStore, Event, R, S>;
-
-  fn mark(&self) -> Store<VStore, Event, R, S> {
-    self.clone()
-  }
-
-  fn restore(self, label: Store<VStore, Event, R, S>) -> Self {
-    label
-  }
-}
-
 impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
  Event: EventIndex,
  R: Reactor,
