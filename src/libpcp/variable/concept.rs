@@ -20,11 +20,11 @@ use std::ops::Index;
 use std::fmt::Display;
 
 pub trait DomainConcept :
-  Clone + Display + Bounded + Cardinality + Subset
+  Clone + Display + Bounded + Cardinality + Subset + Eq
 {}
 
 impl<R> DomainConcept for R where
-  R: Clone + Display + Bounded + Cardinality + Subset
+  R: Clone + Display + Bounded + Cardinality + Subset + Eq
 {}
 
 pub trait ImmutableMemoryConcept<Domain> :

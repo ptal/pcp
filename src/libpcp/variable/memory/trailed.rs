@@ -26,6 +26,7 @@ use std::ops::{Index, Deref, DerefMut};
 use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 
+#[derive(Debug)]
 struct MemoryCell<Domain>
 {
   location: usize,
@@ -50,7 +51,8 @@ pub struct Trail<Domain>
   previous: Option<Rc<Trail<Domain>>>
 }
 
-impl<Domain> Trail<Domain>
+impl<Domain> Trail<Domain> where
+ Domain: DomainConcept
 {
   fn from_parent(parent: Rc<Trail<Domain>>) -> Rc<Trail<Domain>> {
     Rc::new(
@@ -72,9 +74,28 @@ impl<Domain> Trail<Domain>
     self.trail.push(MemoryCell::new(key, dom));
   }
 
-  fn update_num_vars(&mut self, n: usize) {
+  fn compress(&mut self, n: usize) {
     debug_assert!(n >= self.num_vars, "The number of variables trailed can only increase.");
     self.num_vars = n;
+    let mut delta = VecMap::with_capacity(self.num_vars);
+    for cell in self.trail.iter().rev() {
+      delta.entry(cell.location).or_insert(cell.value.clone());
+    }
+
+    // println!("\nTrail:");
+    // for cell in &self.trail {
+    //   print!("[{}:{}] - ", cell.location, cell.value);
+    // }
+    // println!("\nDelta:");
+    // for (loc, value) in &delta {
+    //   print!("[{}:{}] - ", loc, value);
+    // }
+
+    // println!("{} vs {}",self.trail.len(), delta.len());
+    self.trail.clear();
+    for (loc, value) in delta {
+      self.trail.push(MemoryCell::new(loc, value));
+    }
   }
 }
 
@@ -104,12 +125,13 @@ impl<Domain> ImmutableMemoryConcept<Domain> for TrailedStore<Domain> where
  Domain: DomainConcept
 {}
 
-impl<Domain> TrailedStore<Domain>
+impl<Domain> TrailedStore<Domain> where
+ Domain: DomainConcept
 {
-  fn update_num_vars(&mut self) {
+  fn compress_trail(&mut self) {
     Rc::get_mut(&mut self.trail)
-      .expect("Cannot update the trail if it is not unique.")
-      .update_num_vars(self.variables.size());
+      .expect("Cannot compress the trail if it is not unique.")
+      .compress(self.variables.size());
   }
 }
 
@@ -153,12 +175,17 @@ impl<Domain> Update<usize, Domain> for TrailedStore<Domain> where
 {
   fn update(&mut self, key: usize, dom: Domain) -> Option<Domain>
   {
-    self.variables.update(key, dom).map(|dom| {
-      Rc::get_mut(&mut self.trail)
-        .expect("The trail must be a leaf of the tree when updated. Therefore, it must only have one strong reference.")
-        .trail_update(key, dom.clone());
-      dom
-    })
+    if dom != self.variables[key] {
+      self.variables.update(key, dom).map(|dom| {
+        Rc::get_mut(&mut self.trail)
+          .expect("The trail must be a leaf of the tree when updated. Therefore, it must only have one strong reference.")
+          .trail_update(key, dom.clone());
+        dom
+      })
+    }
+    else {
+      Some(dom)
+    }
   }
 }
 
@@ -193,10 +220,11 @@ pub struct ImmutableTrailedStore<Domain>
   store: TrailedStore<Domain>
 }
 
-impl<Domain> ImmutableTrailedStore<Domain>
+impl<Domain> ImmutableTrailedStore<Domain> where
+ Domain: DomainConcept
 {
   fn new(mut store: TrailedStore<Domain>) -> ImmutableTrailedStore<Domain> {
-    store.update_num_vars();
+    store.compress_trail();
     ImmutableTrailedStore {
       store: store
     }
