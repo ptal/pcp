@@ -13,5 +13,7 @@
 // limitations under the License.
 
 pub mod copy;
+pub mod trailed;
 
 pub use variable::memory::copy::*;
+pub use variable::memory::trailed::*;

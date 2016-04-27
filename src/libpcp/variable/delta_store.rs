@@ -75,7 +75,7 @@ impl<Store, Domain, Event> DeltaStore<Store, Domain, Event> where
   fn update_delta(&mut self, key: usize, old_dom: Domain) -> Domain {
     if let Some(delta) = Event::new(&self.store[key], &old_dom) {
       let mut updated = false;
-      if let Some(old_delta) = self.delta.get_mut(&key) {
+      if let Some(old_delta) = self.delta.get_mut(key) {
         *old_delta = Merge::merge(old_delta.clone(), delta.clone());
         updated = true;
       }

@@ -20,12 +20,11 @@ use gcollections::ops::cardinality::*;
 use gcollections::ops::sequence::*;
 use gcollections::ops::sequence::ordering::*;
 use std::slice;
-use std::ops::{Deref, Index};
+use std::ops::{Deref, DerefMut, Index};
 use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
 
-#[derive(Clone)]
 pub struct CopyStore<Domain>
 {
   variables: Vec<Domain>
@@ -45,6 +44,21 @@ impl<Domain> CopyStore<Domain>
     CopyStore {
       variables: variables
     }
+  }
+}
+
+impl<Domain> Deref for CopyStore<Domain>
+{
+  type Target = Vec<Domain>;
+  fn deref(&self) -> &Self::Target {
+    &self.variables
+  }
+}
+
+impl<Domain> DerefMut for CopyStore<Domain>
+{
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.variables
   }
 }
 
