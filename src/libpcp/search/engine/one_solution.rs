@@ -105,7 +105,6 @@ mod test {
   use propagation::schedulers::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
-  use variable::ops::*;
   use variable::test::*;
   use term::*;
   use search::search_tree_visitor::*;
@@ -116,7 +115,6 @@ mod test {
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
   use interval::interval::*;
-  use interval::ops::*;
   use gcollections::wrappers::Vector;
   use gcollections::ops::*;
   use test::Bencher;

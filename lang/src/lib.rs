@@ -29,6 +29,7 @@ use rustc_plugin::Registry;
 mod rust;
 mod code_gen;
 mod grammar;
+mod ast;
 
 #[plugin_registrar]
 pub fn plugin_registrar(reg: &mut Registry) {

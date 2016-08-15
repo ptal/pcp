@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+// TODO: Redo unecessary? By recomputation?
+//  Investigate why it became slow again...
+//  Turn TrailingStore into a store and not a memory.
+//  Add different store for NonFailure/StrictMonotonicity/... : First implement Derive(...) and see the inheritance system.
+
 use kernel::*;
 use variable::concept::*;
 use variable::ops::*;
@@ -54,48 +60,29 @@ pub struct Trail<Domain>
 impl<Domain> Trail<Domain> where
  Domain: DomainConcept
 {
-  fn from_parent(parent: Rc<Trail<Domain>>) -> Rc<Trail<Domain>> {
+  fn new(parent: Rc<Trail<Domain>>, num_vars: usize, trail: VecMap<Domain>) -> Rc<Trail<Domain>> {
+    debug_assert!(parent.num_vars <= num_vars, "The number of trailed variables can only increase.");
     Rc::new(
       Trail {
         depth: parent.depth + 1,
-        num_vars: parent.num_vars,
-        trail: vec![],
+        num_vars: num_vars,
+        trail: Self::compress_trail(trail),
         previous: Some(parent)
       }
     )
   }
 
+  fn compress_trail(trail: VecMap<Domain>) -> Vec<MemoryCell<Domain>> {
+    let mut compressed_trail = Vec::with_capacity(trail.len());
+    for (loc, value) in trail {
+      compressed_trail.push(MemoryCell::new(loc, value));
+    }
+    compressed_trail
+  }
+
   fn ancestor(&self) -> Rc<Trail<Domain>> {
-    assert!(self.depth > 0, "Only trails with depth > 0 have an ancestor.");
+    assert!(self.depth > 0, "Only trails with a depth > 0 have an ancestor.");
     self.previous.clone().expect("Trail with a depth > 0 must have a parent trail.")
-  }
-
-  fn trail_update(&mut self, key: usize, dom: Domain) {
-    self.trail.push(MemoryCell::new(key, dom));
-  }
-
-  fn compress(&mut self, n: usize) {
-    debug_assert!(n >= self.num_vars, "The number of variables trailed can only increase.");
-    self.num_vars = n;
-    let mut delta = VecMap::with_capacity(self.num_vars);
-    for cell in self.trail.iter().rev() {
-      delta.entry(cell.location).or_insert(cell.value.clone());
-    }
-
-    // println!("\nTrail:");
-    // for cell in &self.trail {
-    //   print!("[{}:{}] - ", cell.location, cell.value);
-    // }
-    // println!("\nDelta:");
-    // for (loc, value) in &delta {
-    //   print!("[{}:{}] - ", loc, value);
-    // }
-
-    // println!("{} vs {}",self.trail.len(), delta.len());
-    self.trail.clear();
-    for (loc, value) in delta {
-      self.trail.push(MemoryCell::new(loc, value));
-    }
   }
 }
 
@@ -114,7 +101,8 @@ impl<Domain> Empty for Trail<Domain>
 pub struct TrailedStore<Domain>
 {
   variables: CopyStore<Domain>,
-  trail: Rc<Trail<Domain>>
+  parent_trail: Rc<Trail<Domain>>,
+  trail: VecMap<Domain>
 }
 
 impl<Domain> MemoryConcept<Domain> for TrailedStore<Domain> where
@@ -128,10 +116,9 @@ impl<Domain> ImmutableMemoryConcept<Domain> for TrailedStore<Domain> where
 impl<Domain> TrailedStore<Domain> where
  Domain: DomainConcept
 {
-  fn compress_trail(&mut self) {
-    Rc::get_mut(&mut self.trail)
-      .expect("Cannot compress the trail if it is not unique.")
-      .compress(self.variables.size());
+  /// We only trail the first change of the domain during the current instant (before a freeze).
+  fn trail_variable(&mut self, key: usize, dom: Domain) {
+    self.trail.entry(key).or_insert(dom);
   }
 }
 
@@ -140,7 +127,8 @@ impl<Domain> Empty for TrailedStore<Domain>
   fn empty() -> TrailedStore<Domain> {
     TrailedStore {
       variables: CopyStore::empty(),
-      trail: Rc::new(Trail::empty())
+      parent_trail: Rc::new(Trail::empty()),
+      trail: VecMap::new()
     }
   }
 }
@@ -163,10 +151,13 @@ impl<Domain> Iterable for TrailedStore<Domain>
   }
 }
 
-impl<Domain> Push<Back, Domain> for TrailedStore<Domain>
+impl<Domain> Push<Back, Domain> for TrailedStore<Domain> where
+ Domain: DomainConcept
 {
-  fn push(&mut self, value: Domain) {
-    self.variables.push(value);
+  fn push(&mut self, dom: Domain) {
+    let dom_location = self.variables.size();
+    self.trail_variable(dom_location, dom.clone());
+    self.variables.push(dom);
   }
 }
 
@@ -177,9 +168,7 @@ impl<Domain> Update<usize, Domain> for TrailedStore<Domain> where
   {
     if dom != self.variables[key] {
       self.variables.update(key, dom).map(|dom| {
-        Rc::get_mut(&mut self.trail)
-          .expect("The trail must be a leaf of the tree when updated. Therefore, it must only have one strong reference.")
-          .trail_update(key, dom.clone());
+        self.trail_variable(key, dom.clone());
         dom
       })
     }
@@ -224,7 +213,9 @@ impl<Domain> ImmutableTrailedStore<Domain> where
  Domain: DomainConcept
 {
   fn new(mut store: TrailedStore<Domain>) -> ImmutableTrailedStore<Domain> {
-    store.compress_trail();
+    let parent_trail = Trail::new(store.parent_trail, store.variables.size(), store.trail);
+    store.parent_trail = parent_trail;
+    store.trail = VecMap::with_capacity(store.variables.size());
     ImmutableTrailedStore {
       store: store
     }
@@ -240,7 +231,7 @@ fn rc_eq<T>(a: &Rc<T>, b: &Rc<T>) -> bool
 fn redo_delta_from_trail<Domain>(node: &Rc<Trail<Domain>>, delta: &mut VecMap<Domain>) where
  Domain: DomainConcept
 {
-  for cell in node.trail.iter().rev() {
+  for cell in node.trail.iter() {
     delta.entry(cell.location).or_insert(cell.value.clone());
   }
 }
@@ -248,7 +239,7 @@ fn redo_delta_from_trail<Domain>(node: &Rc<Trail<Domain>>, delta: &mut VecMap<Do
 fn undo_delta_from_trail<Domain>(node: &Rc<Trail<Domain>>, delta: &mut VecMap<Domain>) where
  Domain: DomainConcept
 {
-  for cell in node.trail.iter().rev() {
+  for cell in node.trail.iter() {
     delta.insert(cell.location, cell.value.clone());
   }
 }
@@ -257,13 +248,13 @@ fn undo_redo_node<Domain>(node: &mut CopyStore<Domain>,
   undo_delta: VecMap<Domain>, redo_delta: VecMap<Domain>)
 {
   for (loc, value) in undo_delta {
-    if loc > node.size() { break; }
+    debug_assert!(loc <= node.size(), "All variables must be recorded.");
+    if loc == node.size() { break; }
     node.deref_mut()[loc] = value;
   }
   let mut redo_delta = redo_delta.into_iter();
   while let Some((loc, value)) = redo_delta.next() {
-    debug_assert!(loc <= node.size(),
-      "Every variable must be recorded.");
+    debug_assert!(loc <= node.size(), "All variables must be recorded.");
     if loc == node.size() {
       node.push(value);
       break;
@@ -278,6 +269,7 @@ fn undo_redo_node<Domain>(node: &mut CopyStore<Domain>,
   }
 }
 
+
 impl<Domain> Snapshot for ImmutableTrailedStore<Domain> where
  Domain: DomainConcept
 {
@@ -285,33 +277,36 @@ impl<Domain> Snapshot for ImmutableTrailedStore<Domain> where
   type MutableState = TrailedStore<Domain>;
 
   fn label(&mut self) -> Self::Label {
-    self.store.trail.clone()
+    self.store.parent_trail.clone()
   }
 
   fn restore(mut self, label: Self::Label) -> Self::MutableState {
-    let mut redo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());
-    let mut undo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());
-    let mut redo = label.clone();
-    let mut undo = self.store.trail;
+    if !rc_eq(&self.store.parent_trail, &label) {
+      let mut redo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());
+      let mut undo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());
+      let mut redo = label.clone();
+      let mut undo = self.store.parent_trail;
 
-    while redo.depth > undo.depth {
-      redo_delta_from_trail(&redo, &mut redo_delta);
-      redo = redo.ancestor();
+      while redo.depth > undo.depth {
+        redo_delta_from_trail(&redo, &mut redo_delta);
+        redo = redo.ancestor();
+      }
+      while undo.depth > redo.depth {
+        undo_delta_from_trail(&undo, &mut undo_delta);
+        undo = undo.ancestor();
+      }
+      while !rc_eq(&redo, &undo) {
+        redo_delta_from_trail(&redo, &mut redo_delta);
+        undo_delta_from_trail(&undo, &mut undo_delta);
+        redo = redo.ancestor();
+        undo = undo.ancestor();
+      }
+      let common_ancestor_vars = redo.num_vars;
+      self.store.variables.truncate(common_ancestor_vars);
+      undo_redo_node(&mut self.store.variables, undo_delta, redo_delta);
     }
-    while undo.depth > redo.depth {
-      undo_delta_from_trail(&undo, &mut undo_delta);
-      undo = undo.ancestor();
-    }
-    while !rc_eq(&redo, &undo) {
-      redo_delta_from_trail(&redo, &mut redo_delta);
-      undo_delta_from_trail(&undo, &mut undo_delta);
-      redo = redo.ancestor();
-      undo = undo.ancestor();
-    }
-    let common_ancestor_vars = redo.num_vars;
-    self.store.variables.truncate(common_ancestor_vars);
-    undo_redo_node(&mut self.store.variables, undo_delta, redo_delta);
-    self.store.trail = Trail::from_parent(label.clone());
+
+    self.store.parent_trail = label.clone();
     self.store
   }
 }

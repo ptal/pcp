@@ -18,7 +18,6 @@ use kernel::*;
 use kernel::Trilean::*;
 use propagation::Reactor;
 use propagation::Scheduler;
-use propagation::ops::*;
 use propagation::concept::*;
 use variable::ops::*;
 use gcollections::ops::*;

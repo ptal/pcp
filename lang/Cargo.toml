@@ -14,9 +14,6 @@ path = "src/lib.rs"
 crate_type = ["dylib"]
 plugin = true
 
-[dependencies.ama]
-git = "https://github.com/ptal/ama.git"
-
 [dependencies.pcp]
 path = ".."
 version = "0.1.2"
@@ -24,5 +21,6 @@ version = "0.1.2"
 [dependencies]
 oak = "0.3.15"
 oak_runtime = "0.3.7"
-intervallum = "0.5.3"
+intervallum = "0.5.4"
 gcollections = "0.2.1"
+ama = "0.1.3"
