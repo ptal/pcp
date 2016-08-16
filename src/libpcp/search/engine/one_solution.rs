@@ -48,7 +48,7 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
     }
   }
 
-  fn enter_child(&mut self, current: Space, status: &mut Status<Space>) -> Space::ImmutableState
+  fn enter_child(&mut self, current: Space, status: &mut Status<Space>) -> Space::FrozenState
   {
     let (immutable_state, child_status) = self.child.enter(current);
     match child_status {
@@ -61,7 +61,7 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
   }
 
   // Only visit the root if we didn't visit it before (based on the queue emptiness).
-  fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space::ImmutableState
+  fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space::FrozenState
   {
     if self.queue.is_empty() && !self.exploring {
       self.exploring = true;
@@ -83,7 +83,7 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
     self.child.start(root);
   }
 
-  fn enter(&mut self, root: Space) -> (Space::ImmutableState, Status<Space>) {
+  fn enter(&mut self, root: Space) -> (Space::FrozenState, Status<Space>) {
     let mut status = Unsatisfiable;
     let mut immutable_state = self.enter_root(root, &mut status);
     while status != Satisfiable && !self.queue.is_empty() {

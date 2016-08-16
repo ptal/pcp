@@ -14,16 +14,16 @@
 
 pub trait Freeze : Sized
 {
-  type ImmutableState : Snapshot<MutableState=Self>;
-  fn freeze(self) -> Self::ImmutableState;
+  type FrozenState : Snapshot<State=Self>;
+  fn freeze(self) -> Self::FrozenState;
 }
 
 pub trait Snapshot : Sized
 {
   type Label;
-  type MutableState : Freeze<ImmutableState=Self>;
+  type State : Freeze<FrozenState=Self>;
 
   fn label(&mut self) -> Self::Label;
-  fn restore(self, label: Self::Label) -> Self::MutableState;
+  fn restore(self, label: Self::Label) -> Self::State;
 }
 

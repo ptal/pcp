@@ -65,45 +65,45 @@ impl<Memory, Domain> Freeze for Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  type ImmutableState = ImmutableStore<Memory, Domain>;
-  fn freeze(self) -> Self::ImmutableState
+  type FrozenState = FrozenStore<Memory, Domain>;
+  fn freeze(self) -> Self::FrozenState
   {
-    ImmutableStore::new(self)
+    FrozenStore::new(self)
   }
 }
 
-pub struct ImmutableStore<Memory, Domain> where
+pub struct FrozenStore<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  immutable_memory: Memory::ImmutableState,
+  immutable_memory: Memory::FrozenState,
   phantom: PhantomData<Domain>
 }
 
-impl<Memory, Domain> ImmutableStore<Memory, Domain> where
+impl<Memory, Domain> FrozenStore<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
   fn new(store: Store<Memory, Domain>) -> Self {
-    ImmutableStore {
+    FrozenStore {
       immutable_memory: store.memory.freeze(),
       phantom: PhantomData
     }
   }
 }
 
-impl<Memory, Domain> Snapshot for ImmutableStore<Memory, Domain> where
+impl<Memory, Domain> Snapshot for FrozenStore<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  type Label = <Memory::ImmutableState as Snapshot>::Label;
-  type MutableState = Store<Memory, Domain>;
+  type Label = <Memory::FrozenState as Snapshot>::Label;
+  type State = Store<Memory, Domain>;
 
   fn label(&mut self) -> Self::Label {
     self.immutable_memory.label()
   }
 
-  fn restore(self, label: Self::Label) -> Self::MutableState {
+  fn restore(self, label: Self::Label) -> Self::State {
     Store::from_memory(self.immutable_memory.restore(label))
   }
 }

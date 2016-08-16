@@ -79,5 +79,5 @@ pub trait SearchTreeVisitor<Space> where
   Space: Freeze
 {
   fn start(&mut self, _space: &Space) {}
-  fn enter(&mut self, space: Space) -> (Space::ImmutableState, Status<Space>);
+  fn enter(&mut self, space: Space) -> (Space::FrozenState, Status<Space>);
 }

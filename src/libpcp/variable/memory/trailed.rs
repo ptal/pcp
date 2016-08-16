@@ -100,7 +100,7 @@ impl<Domain> Empty for Trail<Domain>
 
 pub struct TrailedStore<Domain>
 {
-  variables: CopyStore<Domain>,
+  variables: CopyMemory<Domain>,
   parent_trail: Rc<Trail<Domain>>,
   trail: VecMap<Domain>
 }
@@ -126,7 +126,7 @@ impl<Domain> Empty for TrailedStore<Domain>
 {
   fn empty() -> TrailedStore<Domain> {
     TrailedStore {
-      variables: CopyStore::empty(),
+      variables: CopyMemory::empty(),
       parent_trail: Rc::new(Trail::empty()),
       trail: VecMap::new()
     }
@@ -197,26 +197,26 @@ impl<Domain> Display for TrailedStore<Domain> where
 impl<Domain> Freeze for TrailedStore<Domain> where
  Domain: DomainConcept
 {
-  type ImmutableState = ImmutableTrailedStore<Domain>;
-  fn freeze(self) -> Self::ImmutableState
+  type FrozenState = FrozenTrailedStore<Domain>;
+  fn freeze(self) -> Self::FrozenState
   {
-    ImmutableTrailedStore::new(self)
+    FrozenTrailedStore::new(self)
   }
 }
 
-pub struct ImmutableTrailedStore<Domain>
+pub struct FrozenTrailedStore<Domain>
 {
   store: TrailedStore<Domain>
 }
 
-impl<Domain> ImmutableTrailedStore<Domain> where
+impl<Domain> FrozenTrailedStore<Domain> where
  Domain: DomainConcept
 {
-  fn new(mut store: TrailedStore<Domain>) -> ImmutableTrailedStore<Domain> {
+  fn new(mut store: TrailedStore<Domain>) -> FrozenTrailedStore<Domain> {
     let parent_trail = Trail::new(store.parent_trail, store.variables.size(), store.trail);
     store.parent_trail = parent_trail;
     store.trail = VecMap::with_capacity(store.variables.size());
-    ImmutableTrailedStore {
+    FrozenTrailedStore {
       store: store
     }
   }
@@ -244,7 +244,7 @@ fn undo_delta_from_trail<Domain>(node: &Rc<Trail<Domain>>, delta: &mut VecMap<Do
   }
 }
 
-fn undo_redo_node<Domain>(node: &mut CopyStore<Domain>,
+fn undo_redo_node<Domain>(node: &mut CopyMemory<Domain>,
   undo_delta: VecMap<Domain>, redo_delta: VecMap<Domain>)
 {
   for (loc, value) in undo_delta {
@@ -270,17 +270,17 @@ fn undo_redo_node<Domain>(node: &mut CopyStore<Domain>,
 }
 
 
-impl<Domain> Snapshot for ImmutableTrailedStore<Domain> where
+impl<Domain> Snapshot for FrozenTrailedStore<Domain> where
  Domain: DomainConcept
 {
   type Label = Rc<Trail<Domain>>;
-  type MutableState = TrailedStore<Domain>;
+  type State = TrailedStore<Domain>;
 
   fn label(&mut self) -> Self::Label {
     self.store.parent_trail.clone()
   }
 
-  fn restore(mut self, label: Self::Label) -> Self::MutableState {
+  fn restore(mut self, label: Self::Label) -> Self::State {
     if !rc_eq(&self.store.parent_trail, &label) {
       let mut redo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());
       let mut undo_delta: VecMap<Domain> = VecMap::with_capacity(self.store.size());

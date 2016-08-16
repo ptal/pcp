@@ -39,7 +39,7 @@ impl<VStore, CStore, C> SearchTreeVisitor<Space<VStore, CStore>> for Propagation
   }
 
   fn enter(&mut self, mut current: Space<VStore, CStore>)
-    -> (<Space<VStore, CStore> as Freeze>::ImmutableState, Status<Space<VStore, CStore>>)
+    -> (<Space<VStore, CStore> as Freeze>::FrozenState, Status<Space<VStore, CStore>>)
   {
     let status = current.consistency();
     match status {

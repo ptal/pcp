@@ -54,50 +54,50 @@ impl<VStore, CStore> Freeze for Space<VStore, CStore> where
  VStore: Freeze,
  CStore: Freeze
 {
-  type ImmutableState = ImmutableStore<VStore, CStore>;
-  fn freeze(self) -> Self::ImmutableState
+  type FrozenState = FrozenSpace<VStore, CStore>;
+  fn freeze(self) -> Self::FrozenState
   {
-    ImmutableStore::new(self)
+    FrozenSpace::new(self)
   }
 }
 
-pub struct ImmutableStore<VStore, CStore> where
+pub struct FrozenSpace<VStore, CStore> where
  VStore: Freeze,
  CStore: Freeze
 {
-  immutable_vstore: VStore::ImmutableState,
-  immutable_cstore: CStore::ImmutableState
+  frozen_vstore: VStore::FrozenState,
+  frozen_cstore: CStore::FrozenState
 }
 
-impl<VStore, CStore> ImmutableStore<VStore, CStore> where
+impl<VStore, CStore> FrozenSpace<VStore, CStore> where
  VStore: Freeze,
  CStore: Freeze
 {
   fn new(space: Space<VStore, CStore>) -> Self {
-    ImmutableStore {
-      immutable_vstore: space.vstore.freeze(),
-      immutable_cstore: space.cstore.freeze()
+    FrozenSpace {
+      frozen_vstore: space.vstore.freeze(),
+      frozen_cstore: space.cstore.freeze()
     }
   }
 }
 
-impl<VStore, CStore> Snapshot for ImmutableStore<VStore, CStore> where
+impl<VStore, CStore> Snapshot for FrozenSpace<VStore, CStore> where
  VStore: Freeze,
  CStore: Freeze
 {
   type Label = (
-    <VStore::ImmutableState as Snapshot>::Label,
-    <CStore::ImmutableState as Snapshot>::Label);
-  type MutableState = Space<VStore, CStore>;
+    <VStore::FrozenState as Snapshot>::Label,
+    <CStore::FrozenState as Snapshot>::Label);
+  type State = Space<VStore, CStore>;
 
   fn label(&mut self) -> Self::Label {
-    (self.immutable_vstore.label(), self.immutable_cstore.label())
+    (self.frozen_vstore.label(), self.frozen_cstore.label())
   }
 
-  fn restore(self, label: Self::Label) -> Self::MutableState {
+  fn restore(self, label: Self::Label) -> Self::State {
     Space {
-      vstore: self.immutable_vstore.restore(label.0),
-      cstore: self.immutable_cstore.restore(label.1)
+      vstore: self.frozen_vstore.restore(label.0),
+      cstore: self.frozen_cstore.restore(label.1)
     }
   }
 }

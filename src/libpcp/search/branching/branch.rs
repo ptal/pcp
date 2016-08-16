@@ -25,14 +25,14 @@ use alloc::boxed::FnBox;
 pub struct Branch<Space> where
   Space: Freeze
 {
-  label: <Space::ImmutableState as Snapshot>::Label,
+  label: <Space::FrozenState as Snapshot>::Label,
   alternative: Box<FnBox(&mut Space)>
 }
 
 impl<Space> Branch<Space> where
   Space: Freeze
 {
-  pub fn distribute(space: Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> (Space::ImmutableState, Vec<Branch<Space>>) {
+  pub fn distribute(space: Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
     let mut immutable_space = space.freeze();
     let branches = alternatives.into_iter().map(|alt|
       Branch {
@@ -43,7 +43,7 @@ impl<Space> Branch<Space> where
     (immutable_space, branches)
   }
 
-  pub fn commit(self, space_from: Space::ImmutableState) -> Space {
+  pub fn commit(self, space_from: Space::FrozenState) -> Space {
     let mut new = space_from.restore(self.label);
     self.alternative.call_once((&mut new,));
     new

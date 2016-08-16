@@ -25,29 +25,29 @@ use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
 
-pub struct CopyStore<Domain>
+pub struct CopyMemory<Domain>
 {
   variables: Vec<Domain>
 }
 
-impl<Domain> MemoryConcept<Domain> for CopyStore<Domain> where
+impl<Domain> MemoryConcept<Domain> for CopyMemory<Domain> where
  Domain: DomainConcept
 {}
 
-impl<Domain> ImmutableMemoryConcept<Domain> for CopyStore<Domain> where
+impl<Domain> ImmutableMemoryConcept<Domain> for CopyMemory<Domain> where
  Domain: DomainConcept
 {}
 
-impl<Domain> CopyStore<Domain>
+impl<Domain> CopyMemory<Domain>
 {
-  fn restore(variables: Vec<Domain>) -> CopyStore<Domain> {
-    CopyStore {
+  fn restore(variables: Vec<Domain>) -> CopyMemory<Domain> {
+    CopyMemory {
       variables: variables
     }
   }
 }
 
-impl<Domain> Deref for CopyStore<Domain>
+impl<Domain> Deref for CopyMemory<Domain>
 {
   type Target = Vec<Domain>;
   fn deref(&self) -> &Self::Target {
@@ -55,23 +55,23 @@ impl<Domain> Deref for CopyStore<Domain>
   }
 }
 
-impl<Domain> DerefMut for CopyStore<Domain>
+impl<Domain> DerefMut for CopyMemory<Domain>
 {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.variables
   }
 }
 
-impl<Domain> Empty for CopyStore<Domain>
+impl<Domain> Empty for CopyMemory<Domain>
 {
-  fn empty() -> CopyStore<Domain> {
-    CopyStore {
+  fn empty() -> CopyMemory<Domain> {
+    CopyMemory {
       variables: vec![]
     }
   }
 }
 
-impl<Domain> Cardinality for CopyStore<Domain>
+impl<Domain> Cardinality for CopyMemory<Domain>
 {
   type Size = usize;
 
@@ -80,7 +80,7 @@ impl<Domain> Cardinality for CopyStore<Domain>
   }
 }
 
-impl<Domain> Iterable for CopyStore<Domain>
+impl<Domain> Iterable for CopyMemory<Domain>
 {
   type Item = Domain;
 
@@ -89,14 +89,14 @@ impl<Domain> Iterable for CopyStore<Domain>
   }
 }
 
-impl<Domain> Push<Back, Domain> for CopyStore<Domain>
+impl<Domain> Push<Back, Domain> for CopyMemory<Domain>
 {
   fn push(&mut self, value: Domain) {
     self.variables.push(value);
   }
 }
 
-impl<Domain> Update<usize, Domain> for CopyStore<Domain>
+impl<Domain> Update<usize, Domain> for CopyMemory<Domain>
 {
   fn update(&mut self, key: usize, mut dom: Domain) -> Option<Domain> {
     mem::swap(&mut dom, &mut self.variables[key]);
@@ -104,7 +104,7 @@ impl<Domain> Update<usize, Domain> for CopyStore<Domain>
   }
 }
 
-impl<Domain> Index<usize> for CopyStore<Domain>
+impl<Domain> Index<usize> for CopyMemory<Domain>
 {
   type Output = Domain;
   fn index<'a>(&'a self, index: usize) -> &'a Domain {
@@ -112,7 +112,7 @@ impl<Domain> Index<usize> for CopyStore<Domain>
   }
 }
 
-impl<Domain> Display for CopyStore<Domain> where
+impl<Domain> Display for CopyMemory<Domain> where
  Domain: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -123,42 +123,42 @@ impl<Domain> Display for CopyStore<Domain> where
   }
 }
 
-impl<Domain> Freeze for CopyStore<Domain> where
+impl<Domain> Freeze for CopyMemory<Domain> where
  Domain: Clone
 {
-  type ImmutableState = ImmutableCopyStore<Domain>;
-  fn freeze(self) -> Self::ImmutableState
+  type FrozenState = FrozenCopyMemory<Domain>;
+  fn freeze(self) -> Self::FrozenState
   {
-    ImmutableCopyStore::new(self)
+    FrozenCopyMemory::new(self)
   }
 }
 
-pub struct ImmutableCopyStore<Domain>
+pub struct FrozenCopyMemory<Domain>
 {
   variables: Rc<Vec<Domain>>
 }
 
-impl<Domain> ImmutableCopyStore<Domain>
+impl<Domain> FrozenCopyMemory<Domain>
 {
-  fn new(store: CopyStore<Domain>) -> ImmutableCopyStore<Domain> {
-    ImmutableCopyStore {
+  fn new(store: CopyMemory<Domain>) -> FrozenCopyMemory<Domain> {
+    FrozenCopyMemory {
       variables: Rc::new(store.variables)
     }
   }
 }
 
-impl<Domain> Snapshot for ImmutableCopyStore<Domain> where
+impl<Domain> Snapshot for FrozenCopyMemory<Domain> where
  Domain: Clone
 {
   type Label = Rc<Vec<Domain>>;
-  type MutableState = CopyStore<Domain>;
+  type State = CopyMemory<Domain>;
 
   fn label(&mut self) -> Self::Label {
     self.variables.clone()
   }
 
-  fn restore(self, label: Self::Label) -> Self::MutableState {
+  fn restore(self, label: Self::Label) -> Self::State {
     let variables = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
-    CopyStore::restore(variables)
+    CopyMemory::restore(variables)
   }
 }

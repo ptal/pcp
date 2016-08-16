@@ -28,5 +28,5 @@ pub trait VarSelection<Space> {
 
 pub trait Distributor<Space> where Space: Freeze {
   // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
-  fn distribute(&mut self, space: Space, var_idx: usize) -> (Space::ImmutableState, Vec<Branch<Space>>);
+  fn distribute(&mut self, space: Space, var_idx: usize) -> (Space::FrozenState, Vec<Branch<Space>>);
 }

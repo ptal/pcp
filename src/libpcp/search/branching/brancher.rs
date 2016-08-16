@@ -37,7 +37,7 @@ impl<Space,S,D> SearchTreeVisitor<Space> for Brancher<S,D> where
   S: VarSelection<Space>,
   D: Distributor<Space>
 {
-  fn enter(&mut self, current: Space) -> (Space::ImmutableState, Status<Space>) {
+  fn enter(&mut self, current: Space) -> (Space::FrozenState, Status<Space>) {
     let var_idx = self.selector.select(&current);
     let (immutable_space, branches) = self.distributor.distribute(current, var_idx);
     (immutable_space, Status::Unknown(branches))

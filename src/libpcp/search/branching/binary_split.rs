@@ -38,7 +38,7 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
   fn distribute(&mut self, space: Space<VStore, CStore>, var_idx: usize) ->
-    (<Space<VStore, CStore> as Freeze>::ImmutableState, Vec<Branch<Space<VStore, CStore>>>)
+    (<Space<VStore, CStore> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore>>>)
   {
     let dom = nth_dom(&space.vstore, var_idx);
     assert!(!dom.is_singleton() && !dom.is_empty(),
