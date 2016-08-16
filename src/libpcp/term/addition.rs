@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use variable::ops::*;
+use term::ops::*;
 use term::ExprInference;
 use std::ops::*;
 use std::fmt::{Formatter, Debug, Error};
@@ -85,10 +85,13 @@ mod test {
   use kernel::trilean::Trilean::*;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
-  use variable::delta_store::*;
+  use variable::test::*;
   use propagators::test::*;
   use propagators::cmp::XLessY;
   use interval::interval::*;
+
+  type Domain = DomainI32;
+  type FDStore = StoreI32;
 
   #[test]
   fn x_less_y_plus_c() {
@@ -107,10 +110,10 @@ mod test {
     x_less_y_plus_c_test_one(7, dom1_1, dom5_15, -5, Unknown, True, vec![(1, Bound)], true);
   }
 
-  fn x_less_y_plus_c_test_one(id: u32, x: Interval<i32>, y: Interval<i32>, c: i32,
+  fn x_less_y_plus_c_test_one(id: u32, x: Domain, y: Domain, c: i32,
     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
   {
-    let mut store: FDStore = DeltaStore::empty();
+    let mut store: FDStore = FDStore::empty();
     let x = store.alloc(x);
     let y = store.alloc(y);
     let x_less_y_plus_c = XLessY::new(x, Addition::new(y, c));

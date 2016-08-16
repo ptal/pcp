@@ -15,8 +15,6 @@
 use vec_map::Drain;
 use std::slice;
 
-pub use term::ops::*;
-
 pub trait DrainDelta<Event>
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
@@ -28,11 +26,6 @@ pub trait Iterable
   type Item;
 
   fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
-}
-
-pub trait VarIndex
-{
-  fn index(&self) -> usize;
 }
 
 pub trait Failure

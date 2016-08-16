@@ -12,9 +12,9 @@ crate_type = ["rlib", "dylib"]
 
 [dependencies]
 
-intervallum = "0.5.4"
-gcollections = "0.2.1"
-num = "0.1.29"
+intervallum = "^0.5.5"
+gcollections = "^0.2.2"
+num = "^0.1.29"
 
 [dependencies.vec_map]
 version = "0.6.0"

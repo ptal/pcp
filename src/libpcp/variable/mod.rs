@@ -22,19 +22,17 @@ pub mod memory;
 pub mod concept;
 pub mod ops;
 pub mod store;
-pub mod delta_store;
 
 pub use variable::ops::Iterable;
 
 #[cfg(test)]
 pub mod test {
   use variable::store::*;
-  use variable::delta_store::*;
   use variable::memory::*;
   use propagation::events::FDEvent;
   use interval::interval::*;
 
   pub type DomainI32 = Interval<i32>;
   pub type MemoryI32 = CopyMemory<DomainI32>;
-  pub type DeltaStoreI32 = DeltaStore<MemoryI32, DomainI32, FDEvent>;
+  pub type StoreI32 = Store<MemoryI32, DomainI32, FDEvent>;
 }

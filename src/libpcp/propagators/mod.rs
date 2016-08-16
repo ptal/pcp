@@ -49,10 +49,11 @@ pub mod test {
   use propagation::events::*;
   use interval::interval::*;
   use term::identity::*;
-  use variable::delta_store::test::consume_delta;
-  pub use variable::delta_store::test::FDStore;
+  use variable::store::test::consume_delta;
+  use variable::test::*;
 
-  pub type FDVar = Identity<Interval<i32>>;
+  type FDStore = StoreI32;
+  pub type FDVar = Identity<DomainI32>;
 
   pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut FDStore,
     before: Trilean, after: Trilean,

@@ -89,7 +89,7 @@ mod test {
   use interval::ops::*;
 
   type Domain = DomainI32;
-  type VStore = DeltaStoreI32;
+  type VStore = StoreI32;
   type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
   type FDSpace = Space<VStore, CStore>;
 

@@ -27,6 +27,14 @@ impl<R> DomainConcept for R where
   R: Clone + Display + Bounded + Cardinality + Subset + Eq
 {}
 
+pub trait EventConcept<Domain> :
+  MonotonicEvent<Domain> + Merge + Clone
+{}
+
+impl<Domain, R> EventConcept<Domain> for R where
+  R: MonotonicEvent<Domain> + Merge + Clone
+{}
+
 pub trait ImmutableMemoryConcept<Domain> :
    Cardinality<Size=usize>
  + Iterable<Item=Domain>

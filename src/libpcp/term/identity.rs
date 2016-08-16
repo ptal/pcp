@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use term::ops::*;
 use variable::ops::*;
 use term::ExprInference;
 use std::marker::PhantomData;
@@ -80,17 +81,15 @@ mod test {
   use gcollections::ops::*;
   use kernel::Alloc;
   use variable::store::*;
-  use variable::memory::*;
-  use variable::ops::*;
+  use variable::test::*;
+  use term::ops::*;
   use interval::interval::*;
-
-  type Domain = Interval<i32>;
 
   #[test]
   fn identity_read_update() {
     let dom0_10 = (0,10).to_interval();
     let dom0_5 = (0,5).to_interval();
-    let mut store: Store<CopyMemory<Domain>, Domain> = Store::empty();
+    let mut store: StoreI32 = Store::empty();
     let v = store.alloc(dom0_10);
 
     assert_eq!(v.read(&store), dom0_10);

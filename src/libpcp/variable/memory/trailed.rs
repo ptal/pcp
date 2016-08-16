@@ -166,14 +166,9 @@ impl<Domain> Replace<usize, Domain> for TrailedStore<Domain> where
 {
   fn replace(&mut self, key: usize, dom: Domain) -> Domain
   {
-    if dom != self.variables[key] {
-      let dom = self.variables.replace(key, dom);
-      self.trail_variable(key, dom.clone());
-      dom
-    }
-    else {
-      dom
-    }
+    let dom = self.variables.replace(key, dom);
+    self.trail_variable(key, dom.clone());
+    dom
   }
 }
 

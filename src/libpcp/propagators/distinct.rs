@@ -18,7 +18,7 @@ use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
 use propagation::*;
-use variable::ops::*;
+use term::ops::*;
 use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 

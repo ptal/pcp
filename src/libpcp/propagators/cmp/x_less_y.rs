@@ -17,7 +17,7 @@ use kernel::Trilean::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
-use variable::ops::*;
+use term::ops::*;
 use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 
