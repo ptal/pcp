@@ -161,19 +161,18 @@ impl<Domain> Push<Back, Domain> for TrailedStore<Domain> where
   }
 }
 
-impl<Domain> Update<usize, Domain> for TrailedStore<Domain> where
+impl<Domain> Replace<usize, Domain> for TrailedStore<Domain> where
  Domain: DomainConcept
 {
-  fn update(&mut self, key: usize, dom: Domain) -> Option<Domain>
+  fn replace(&mut self, key: usize, dom: Domain) -> Domain
   {
     if dom != self.variables[key] {
-      self.variables.update(key, dom).map(|dom| {
-        self.trail_variable(key, dom.clone());
-        dom
-      })
+      let dom = self.variables.replace(key, dom);
+      self.trail_variable(key, dom.clone());
+      dom
     }
     else {
-      Some(dom)
+      dom
     }
   }
 }

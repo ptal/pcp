@@ -96,11 +96,10 @@ impl<Domain> Push<Back, Domain> for CopyMemory<Domain>
   }
 }
 
-impl<Domain> Update<usize, Domain> for CopyMemory<Domain>
+impl<Domain> Replace<usize, Domain> for CopyMemory<Domain>
 {
-  fn update(&mut self, key: usize, mut dom: Domain) -> Option<Domain> {
-    mem::swap(&mut dom, &mut self.variables[key]);
-    Some(dom)
+  fn replace(&mut self, key: usize, dom: Domain) -> Domain {
+    mem::replace(&mut self.variables[key], dom)
   }
 }
 

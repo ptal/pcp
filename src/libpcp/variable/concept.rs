@@ -39,7 +39,7 @@ pub trait ImmutableMemoryConcept<Domain> :
 pub trait MemoryConcept<Domain> :
    ImmutableMemoryConcept<Domain>
  + Push<Back, Domain>
- + Update<usize, Domain>
+ + Replace<usize, Domain>
  where
   Domain: DomainConcept
 {}
@@ -47,7 +47,7 @@ pub trait MemoryConcept<Domain> :
 pub trait StoreConcept<Domain> :
    ImmutableMemoryConcept<Domain>
  + Alloc<Domain>
- + Update<usize, Domain>
+ + MonotonicUpdate<usize, Domain>
 where
  Domain: DomainConcept
 {}

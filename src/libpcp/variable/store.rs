@@ -144,17 +144,18 @@ impl<Memory, Domain> Alloc<Domain> for Store<Memory, Domain> where
   }
 }
 
-impl<Memory, Domain> Update<usize, Domain> for Store<Memory, Domain> where
+impl<Memory, Domain> MonotonicUpdate<usize, Domain> for Store<Memory, Domain> where
  Memory: MemoryConcept<Domain>,
  Domain: DomainConcept
 {
-  fn update(&mut self, key: usize, dom: Domain) -> Option<Domain> {
+  fn update(&mut self, key: usize, dom: Domain) -> bool {
     assert!(dom.is_subset(&self.memory[key]), "Domain update must be monotonic.");
     if dom.is_empty() {
-      None
+      false
     }
     else {
-      self.memory.update(key, dom)
+      self.memory.replace(key, dom);
+      true
     }
   }
 }

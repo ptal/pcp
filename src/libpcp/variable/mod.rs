@@ -35,6 +35,6 @@ pub mod test {
   use interval::interval::*;
 
   pub type DomainI32 = Interval<i32>;
-  pub type StoreI32 = Store<CopyMemory<DomainI32>, DomainI32>;
-  pub type DeltaStoreI32 = DeltaStore<StoreI32, DomainI32, FDEvent>;
+  pub type MemoryI32 = CopyMemory<DomainI32>;
+  pub type DeltaStoreI32 = DeltaStore<MemoryI32, DomainI32, FDEvent>;
 }

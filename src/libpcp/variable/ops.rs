@@ -40,9 +40,13 @@ pub trait Failure
   fn is_failed(&self) -> bool;
 }
 
-pub trait Update<Key, Value>
+pub trait MonotonicUpdate<Location, Value>
 {
-  // `None` if the update operation failed.
-  // `Some(value)` if it succeeded, where `value` is the old one.
-  fn update(&mut self, key: Key, value: Value) -> Option<Value>;
+  fn update(&mut self, loc: Location, value: Value) -> bool;
+}
+
+pub trait Replace<Location, Value>
+{
+  // Returns the value previously at location `loc`.
+  fn replace(&mut self, loc: Location, value: Value) -> Value;
 }
