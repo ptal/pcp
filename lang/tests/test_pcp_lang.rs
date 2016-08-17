@@ -27,7 +27,6 @@ mod test
   use pcp::propagation::schedulers::*;
   use pcp::propagation::store::Store as ConStore;
   use pcp::variable::store::Store as VarStore;
-  use pcp::variable::delta_store::DeltaStore;
   use pcp::variable::memory::*;
   use pcp::kernel::*;
   use pcp::term::*;
@@ -48,7 +47,7 @@ mod test
   use gcollections::ops::*;
 
   type Domain = Interval<i32>;
-  type VStore = DeltaStore<VarStore<CopyMemory<Domain>, Domain>, Domain, FDEvent>;
+  type VStore = VarStore<CopyMemory<Domain>, Domain, FDEvent>;
   type CStore = ConStore<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
   type FDSpace = Space<VStore, CStore>;
 

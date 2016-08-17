@@ -16,49 +16,52 @@ use rust;
 use rust::AstBuilder;
 use grammar::*;
 use oak_runtime::*;
+use oak_runtime::ParseResult::*;
 use ama::compiler::*;
 
 pub type RBlock = rust::P<rust::Block>;
 pub type RStmt = rust::P<rust::Stmt>;
 pub type RExpr = rust::P<rust::Expr>;
 
-pub struct CodeGenerator<'cx>
+pub struct CodeGenerator<'a, 'b: 'a>
 {
-  cx: &'cx rust::ExtCtxt<'cx>
+  cx: &'a rust::ExtCtxt<'b>
 }
 
-impl<'cx> Compiler for CodeGenerator<'cx>
+impl<'a, 'b> Compiler for CodeGenerator<'a, 'b>
 {
   fn compile_expr(&mut self, unquote: Unquote) -> RExpr {
-    let state = pcp::parse_expression(unquote.code.stream());
+    let state = pcp::parse_expression(unquote.code.into_state());
     match state.into_result() {
-      Ok((success, _)) => {
-        self.gen_placement_store(&unquote, success.data)
+      Success(data) => {
+        self.gen_placement_store(&unquote, data)
       }
-      Err(error) => {
-        self.cx.span_err(unquote.span, format!("{}", error).as_str());
+      Partial(_, error)
+    | Failure(error) => {
+        self.cx.span_err(unquote.span, format!("{:?}", error).as_str());
         quote_expr!(self.cx, ())
       }
     }
   }
 
   fn compile_block(&mut self, unquote: Unquote) -> RBlock {
-    let state = pcp::parse_program(unquote.code.stream());
+    let state = pcp::parse_program(unquote.code.into_state());
     match state.into_result() {
-      Ok((success, _)) => {
-        self.gen_statements(&unquote, success.data)
+      Success(data) => {
+        self.gen_statements(&unquote, data)
       }
-      Err(error) => {
-        self.cx.span_err(unquote.span, format!("{}", error).as_str());
-        self.cx.block(unquote.span, vec![], None)
+      Partial(_, error)
+    | Failure(error) => {
+        self.cx.span_err(unquote.span, format!("{:?}", error).as_str());
+        self.cx.block(unquote.span, vec![])
       }
     }
   }
 }
 
-impl<'cx> CodeGenerator<'cx>
+impl<'a, 'b> CodeGenerator<'a, 'b>
 {
-  pub fn new(cx: &'cx rust::ExtCtxt) -> CodeGenerator<'cx> {
+  pub fn new(cx: &'a rust::ExtCtxt<'b>) -> CodeGenerator<'a, 'b> {
     CodeGenerator {
       cx: cx
     }
@@ -104,7 +107,7 @@ impl<'cx> CodeGenerator<'cx>
   fn gen_statements(&self, unquote: &Unquote, statements: Vec<pcp::Statement>) -> RBlock {
     let rust_stmt = statements.into_iter()
       .map(|stmt| self.gen_statement(unquote, stmt)).collect();
-    self.cx.block(unquote.span, rust_stmt, None)
+    self.cx.block(unquote.span, rust_stmt)
   }
 
   fn gen_statement(&self, unquote: &Unquote, statement: pcp::Statement) -> rust::Stmt {

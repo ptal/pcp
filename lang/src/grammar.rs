@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![allow(dead_code)]
 grammar! pcp {
+  // #![show_api]
 
   program = spacing statement_list eof
 
@@ -61,8 +63,7 @@ grammar! pcp {
   indexed_expr = identifier lbracket arith_expr rbracket > make_indexed_expr
 
   unary_arith_expr
-    = add_op factor
-    / unary_neg_op factor > make_unary_expr
+    = unary_neg_op factor > make_unary_expr
 
   term_op
     = add_op > add_bin_op
@@ -86,7 +87,7 @@ grammar! pcp {
   kw_tail = !ident_char spacing
   let_kw = "let" kw_tail
 
-  underscore = "_" -> (^)
+  underscore = "_"
   dotdot = ".." spacing
   semi_colon = ";" spacing
   comma = "," spacing
@@ -107,7 +108,7 @@ grammar! pcp {
   eq = "==" spacing
   neq = "!=" spacing
 
-  spacing = [" \n\r\t"]* -> ()
+  spacing = [" \n\r\t"]* -> (^)
   eof = !.
 
   integer
@@ -350,6 +351,7 @@ grammar! pcp {
 mod test
 {
   use oak_runtime::*;
+  use oak_runtime::ParseResult::*;
   use super::*;
 
   #[test]
@@ -358,10 +360,11 @@ mod test
     let state = pcp::recognize_program(
       "let x = variables <- 9i32 .. 100;
       constraints <- x*1 > y + (z - 9);
-      let y = variables <- 0..0;".stream());
+      let y = variables <- 0..0;".into_state());
     match state.into_result() {
-      Ok((success, _)) => assert!(success.full_read()),
-      _ => assert!(false)
+      Success(_) => (),
+      Partial(_, _)
+    | Failure(_) => assert!(false)
     };
   }
 }
