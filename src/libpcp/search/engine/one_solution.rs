@@ -115,7 +115,7 @@ mod test {
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
   use interval::interval::*;
-  use gcollections::wrappers::Vector;
+  use gcollections::VectorStack;
   use gcollections::ops::*;
   use test::Bencher;
 
@@ -162,7 +162,7 @@ mod test {
     // 2 queens can't share the same column.
     space.cstore.alloc(Distinct::new(queens));
 
-    let mut search: OneSolution<_, Vector<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    let mut search: OneSolution<_, VectorStack<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);
     let (_, status) = search.enter(space);
     assert_eq!(status, expect);
