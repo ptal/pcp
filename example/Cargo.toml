@@ -1,0 +1,13 @@
+[package]
+name = "pcp_example"
+version = "0.1.0"
+authors = ["Pierre Talbot <ptalbot@hyc.io>"]
+
+description = "An example for using the constraint programming library PCP."
+repository = "https://github.com/ptal/pcp"
+license = "Apache-2.0"
+
+[dependencies]
+intervallum = "^0.5.5"
+gcollections = "^0.2.2"
+pcp = { git = "https://github.com/ptal/pcp" }
