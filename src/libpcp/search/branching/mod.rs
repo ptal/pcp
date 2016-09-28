@@ -17,8 +17,13 @@ pub mod brancher;
 pub mod first_smallest_var;
 pub mod binary_split;
 
-use kernel::*;
+pub use search::branching::binary_split::*;
+pub use search::branching::brancher::*;
+pub use search::branching::first_smallest_var::*;
+
 use search::branching::branch::*;
+
+use kernel::*;
 
 pub trait VarSelection<Space> {
   // Precondition: `space` must have variables not assigned.

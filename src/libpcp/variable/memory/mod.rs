@@ -99,7 +99,7 @@ mod test {
 
   fn configure_depth() {
     let tree_shape = tree_depth_4();
-    for depth in 0..5 {
+    for depth in 2..3 {//0..5 {
       let mut test = Test::new(depth, &tree_shape);
       configure_memory(&mut test);
     }
@@ -111,7 +111,7 @@ mod test {
     type MTrailed = TrailedStore<DomainI32>;
 
     test.memory_config = String::from("CopyMemory");
-    configure_queue::<MCopy>(test);
+    // configure_queue::<MCopy>(test);
     test.memory_config = String::from("TrailedStore");
     configure_queue::<MTrailed>(test);
   }
@@ -123,7 +123,7 @@ mod test {
     type Queue<Label> = DequeFrontBackQueue<QueueItem<Label>>;
 
     test.queue_config = String::from("VectorStack (Depth-first search)");
-    test_restoration::<Mem, Stack<_>>(test);
+    // test_restoration::<Mem, Stack<_>>(test);
     test.queue_config = String::from("DequeFrontBackQueue (Breadth-first search)");
     test_restoration::<Mem, Queue<_>>(test);
   }
@@ -145,15 +145,19 @@ mod test {
     let mut current = tree.root;
     let mut frozen = mem.freeze();
     for child in tree.children(tree.root) {
+      println!("test_restoration: label");
       queue.insert((tree.root, child, frozen.label()));
     }
     while let Some((parent, child, label)) = queue.extract() {
+      println!("test_restoration: restore");
       mem = frozen.restore(label);
       test.assert_node_equality(mem[0], tree[parent].value, tree[current].value);
+      println!("replace: {} with {}", mem[0], tree[child].value);
       mem.replace(0, tree[child].value);
       current = child;
       frozen = mem.freeze();
       for grandchild in tree.children(child) {
+        println!("test_restoration: label");
         queue.insert((child, grandchild, frozen.label()));
       }
     }

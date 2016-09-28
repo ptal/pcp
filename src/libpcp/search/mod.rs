@@ -21,3 +21,25 @@ pub mod branching;
 pub mod search_tree_visitor;
 pub mod propagation;
 pub mod engine;
+
+pub use search::space::*;
+pub use search::search_tree_visitor::*;
+
+use propagation::CStoreFD;
+use variable::VStoreFD;
+use search::engine::one_solution::*;
+use search::branching::*;
+use search::propagation::*;
+use gcollections::VectorStack;
+
+type VStore = VStoreFD;
+type CStore = CStoreFD<VStore>;
+pub type FDSpace = Space<VStore, CStore>;
+
+pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
+  let search =
+    OneSolution::<_, VectorStack<_>, FDSpace>::new(
+    Propagation::new(
+    Brancher::new(FirstSmallestVar, BinarySplit)));
+  Box::new(search)
+}

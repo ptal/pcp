@@ -19,6 +19,9 @@
 pub mod cmp;
 pub mod distinct;
 
+pub use propagators::cmp::*;
+pub use propagators::distinct::*;
+
 use kernel::trilean::Trilean;
 use kernel::trilean::Trilean::*;
 use kernel::Consistency;
