@@ -83,15 +83,15 @@ mod test {
   use gcollections::ops::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
+  use variable::VStoreFD;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
-  use variable::test::*;
   use propagators::test::*;
   use propagators::cmp::XLessY;
   use interval::interval::*;
 
-  type Domain = DomainI32;
-  type FDStore = StoreI32;
+  type Domain = Interval<i32>;
+  type VStore = VStoreFD;
 
   #[test]
   fn x_less_y_plus_c() {
@@ -113,7 +113,7 @@ mod test {
   fn x_less_y_plus_c_test_one(id: u32, x: Domain, y: Domain, c: i32,
     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
   {
-    let mut store: FDStore = FDStore::empty();
+    let mut store = VStore::empty();
     let x = store.alloc(x);
     let y = store.alloc(y);
     let x_less_y_plus_c = XLessY::new(x, Addition::new(y, c));

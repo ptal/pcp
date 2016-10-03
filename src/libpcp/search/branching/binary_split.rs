@@ -79,18 +79,15 @@ mod test {
   use search::space::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
-  use propagation::store::Store;
-  use propagation::events::*;
-  use propagation::reactors::*;
-  use propagation::schedulers::*;
-  use variable::test::*;
+  use variable::VStoreFD;
+  use propagation::CStoreFD;
   use gcollections::ops::*;
   use interval::interval::*;
   use interval::ops::*;
 
-  type Domain = DomainI32;
-  type VStore = StoreI32;
-  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type Domain = Interval<i32>;
+  type VStore = VStoreFD;
+  type CStore = CStoreFD<VStore>;
   type FDSpace = Space<VStore, CStore>;
 
   fn test_distributor<D>(mut distributor: D, distribution_index: usize,

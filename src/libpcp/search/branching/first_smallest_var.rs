@@ -38,20 +38,17 @@ impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for First
 mod test {
   use super::*;
   use kernel::*;
-  use propagation::store::Store;
-  use propagation::events::*;
-  use propagation::reactors::*;
-  use propagation::schedulers::*;
-  use variable::test::*;
+  use variable::VStoreFD;
+  use propagation::CStoreFD;
   use search::space::*;
   use search::branching::VarSelection;
   use gcollections::ops::*;
   use interval::interval::*;
   use interval::ops::*;
 
-  type Domain = DomainI32;
-  type VStore = StoreI32;
-  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type Domain = Interval<i32>;
+  type VStore = VStoreFD;
+  type CStore = CStoreFD<VStore>;
   type FDSpace = Space<VStore, CStore>;
 
   fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where

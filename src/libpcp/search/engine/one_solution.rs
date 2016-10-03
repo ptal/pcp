@@ -99,13 +99,10 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
 mod test {
   use super::*;
   use kernel::*;
-  use propagation::store::Store;
-  use propagation::events::*;
-  use propagation::reactors::*;
-  use propagation::schedulers::*;
+  use variable::VStoreFD;
+  use propagation::CStoreFD;
   use propagators::cmp::*;
   use propagators::distinct::*;
-  use variable::test::*;
   use term::*;
   use search::search_tree_visitor::*;
   use search::search_tree_visitor::Status::*;
@@ -119,9 +116,9 @@ mod test {
   use gcollections::ops::*;
   use test::Bencher;
 
-  type Domain = DomainI32;
-  type VStore = StoreI32;
-  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type Domain = Interval<i32>;
+  type VStore = VStoreFD;
+  type CStore = CStoreFD<VStore>;
   type FDSpace = Space<VStore, CStore>;
 
   #[test]

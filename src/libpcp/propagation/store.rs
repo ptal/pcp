@@ -218,23 +218,19 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 
 #[cfg(test)]
 mod test {
-  use super::*;
   use kernel::*;
   use kernel::Trilean::*;
-  use propagation::events::*;
-  use propagation::reactors::*;
-  use propagation::schedulers::*;
+  use variable::VStoreFD;
+  use propagation::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
-  use term::*;
-  use variable::test::*;
+  use term::addition::Addition;
   use interval::interval::*;
   use interval::ops::*;
   use gcollections::ops::*;
 
-  type Domain = DomainI32;
-  type VStore = StoreI32;
-  type CStore = Store<VStore, FDEvent, IndexedDeps, RelaxedFifo>;
+  type VStore = VStoreFD;
+  type CStore = CStoreFD<VStore>;
 
   #[test]
   fn basic_test() {

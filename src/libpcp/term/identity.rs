@@ -80,16 +80,17 @@ impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
 mod test {
   use gcollections::ops::*;
   use kernel::Alloc;
-  use variable::store::*;
-  use variable::test::*;
+  use variable::VStoreFD;
   use term::ops::*;
   use interval::interval::*;
+
+  type VStore = VStoreFD;
 
   #[test]
   fn identity_read_update() {
     let dom0_10 = (0,10).to_interval();
     let dom0_5 = (0,5).to_interval();
-    let mut store: StoreI32 = Store::empty();
+    let mut store = VStore::empty();
     let v = store.alloc(dom0_10);
 
     assert_eq!(v.read(&store), dom0_10);

@@ -48,20 +48,20 @@ impl<VStore, R> Consistency<VStore> for R where
 pub mod test {
   use gcollections::ops::*;
   use kernel::*;
+  use variable::VStoreFD;
   use propagation::*;
   use propagation::events::*;
   use interval::interval::*;
   use term::identity::*;
   use variable::store::test::consume_delta;
-  use variable::test::*;
 
-  type FDStore = StoreI32;
-  pub type FDVar = Identity<DomainI32>;
+  type VStore = VStoreFD;
+  pub type FDVar = Identity<Interval<i32>>;
 
-  pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut FDStore,
+  pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut VStore,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
-   P: Propagator<FDStore> + Subsumption<FDStore>
+   P: Propagator<VStore> + Subsumption<VStore>
   {
     println!("Test number {}", test_num);
     assert_eq!(prop.is_subsumed(store), before);
@@ -75,10 +75,10 @@ pub mod test {
   pub fn binary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, x: Interval<i32>, y: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
-   P: Propagator<FDStore> + Subsumption<FDStore>,
+   P: Propagator<VStore> + Subsumption<VStore>,
    FnProp: FnOnce(FDVar, FDVar) -> P
   {
-    let mut store = FDStore::empty();
+    let mut store = VStore::empty();
     let x = store.alloc(x);
     let y = store.alloc(y);
     let propagator = make_prop(x, y);
@@ -88,10 +88,10 @@ pub mod test {
   pub fn nary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, doms: Vec<Interval<i32>>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
-   P: Propagator<FDStore> + Subsumption<FDStore>,
+   P: Propagator<VStore> + Subsumption<VStore>,
    FnProp: FnOnce(Vec<FDVar>) -> P
   {
-    let mut store = FDStore::empty();
+    let mut store = VStore::empty();
     let vars = doms.into_iter().map(|d| store.alloc(d)).collect();
     let propagator = make_prop(vars);
     subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);

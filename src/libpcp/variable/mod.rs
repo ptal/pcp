@@ -30,17 +30,5 @@ use variable::memory::*;
 use propagation::events::FDEvent;
 use interval::interval::*;
 
-pub type VStore<Domain> = Store<CopyMemory<Domain>, Domain, FDEvent>;
-pub type VStoreFD = VStore<Interval<i32>>;
-
-#[cfg(test)]
-pub mod test {
-  use variable::store::*;
-  use variable::memory::*;
-  use propagation::events::FDEvent;
-  use interval::interval::*;
-
-  pub type DomainI32 = Interval<i32>;
-  pub type MemoryI32 = CopyMemory<DomainI32>;
-  pub type StoreI32 = Store<MemoryI32, DomainI32, FDEvent>;
-}
+pub type VStoreCopy<Domain> = Store<CopyMemory<Domain>, Domain, FDEvent>;
+pub type VStoreFD = VStoreCopy<Interval<i32>>;

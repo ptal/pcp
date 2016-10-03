@@ -80,20 +80,19 @@ mod test {
   use propagation::*;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
-  use variable::test::*;
-  use variable::store::*;
+  use variable::VStoreFD;
   use term::ops::*;
   use propagators::test::*;
   use propagators::cmp::*;
   use interval::interval::*;
 
-  type FDStore = StoreI32;
+  type VStore = VStoreFD;
 
   #[test]
   fn x_less_constant() {
     let dom0_10 = (0,10).to_interval();
     let dom0_4 = (0,4).to_interval();
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     let x = store.alloc(dom0_10);
     let c: Constant<i32> = Constant::new(5);
 
@@ -132,9 +131,9 @@ mod test {
   fn unary_propagator_test_one<P, R>(id: u32, x: Interval<i32>, c: i32, make_prop: P,
     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool) where
    P: FnOnce(FDVar, Constant<i32>) -> R,
-   R: Propagator<FDStore> + Subsumption<FDStore>
+   R: Propagator<VStore> + Subsumption<VStore>
   {
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     let x = store.alloc(x);
     let propagator = make_prop(x, Constant::new(c));
     subsumption_propagate(id, propagator, &mut store, before, after, expected, update_success);

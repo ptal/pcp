@@ -22,12 +22,13 @@ pub use variable::memory::trailed::*;
 mod test {
   use super::*;
   use kernel::*;
-  use variable::test::DomainI32;
   use variable::concept::*;
   use interval::interval::*;
   use gcollections::ops::*;
   use gcollections::*;
   use std::ops::{Deref, DerefMut, Range};
+
+  type Domain = Interval<i32>;
 
   struct Test {
     pub tree_depth: usize,
@@ -46,7 +47,7 @@ mod test {
       }
     }
 
-    pub fn assert_node_equality(&self, real: DomainI32, expected: DomainI32, from: DomainI32) {
+    pub fn assert_node_equality(&self, real: Domain, expected: Domain, from: Domain) {
       if real != expected {
         println!("\nRestoration from `{}` to `{}` failed.",
           from, expected);
@@ -107,17 +108,17 @@ mod test {
 
   fn configure_memory(test: &mut Test)
   {
-    type MCopy = CopyMemory<DomainI32>;
-    type MTrailed = TrailedStore<DomainI32>;
+    type MCopy = CopyMemory<Domain>;
+    // type MTrailed = TrailedStore<Domain>;
 
     test.memory_config = String::from("CopyMemory");
-    // configure_queue::<MCopy>(test);
-    test.memory_config = String::from("TrailedStore");
-    configure_queue::<MTrailed>(test);
+    configure_queue::<MCopy>(test);
+    // test.memory_config = String::from("TrailedStore");
+    // configure_queue::<MTrailed>(test);
   }
 
   fn configure_queue<Mem>(test: &mut Test) where
-    Mem: MemoryConcept<DomainI32>
+    Mem: MemoryConcept<Domain>
   {
     type Stack<Label> = VectorStack<QueueItem<Label>>;
     type Queue<Label> = DequeFrontBackQueue<QueueItem<Label>>;
@@ -134,7 +135,7 @@ mod test {
   // We simulate the updates in the memory `M` according to the exploration `Q` of a static tree (in `test.tree`).
   // Since the tree is already fully built, we can test the values when restoring a node.
   fn test_restoration<M, Q>(test: &Test) where
-   M: MemoryConcept<DomainI32>,
+   M: MemoryConcept<Domain>,
    Q: Multiset<QueueItem<
     <M::FrozenState as Snapshot>::Label>>,
   {
@@ -165,12 +166,12 @@ mod test {
 
   #[derive(Clone)]
   struct Node {
-    value: DomainI32,
+    value: Domain,
     children: Vec<usize>
   }
 
   impl Node {
-    pub fn new(value: DomainI32, children: Vec<usize>) -> Self {
+    pub fn new(value: Domain, children: Vec<usize>) -> Self {
       Node {
         value: value,
         children: children
@@ -194,7 +195,7 @@ mod test {
       tree
     }
 
-    pub fn root_value(&self) -> DomainI32 {
+    pub fn root_value(&self) -> Domain {
       self.nodes[self.root].value
     }
 

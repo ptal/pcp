@@ -230,21 +230,20 @@ impl<Memory, Domain, Event> Snapshot for FrozenStore<Memory, Domain, Event> wher
 
 #[cfg(test)]
 pub mod test {
-  use super::*;
   use kernel::Alloc;
+  use variable::VStoreFD;
   use variable::ops::*;
   use term::ops::*;
-  use variable::test::*;
   use term::identity::*;
   use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use gcollections::ops::*;
 
-  pub type Domain = DomainI32;
-  pub type FDStore = StoreI32;
+  pub type Domain = Interval<i32>;
+  pub type VStore = VStoreFD;
 
-  pub fn consume_delta(store: &mut FDStore, delta_expected: Vec<(usize, FDEvent)>) {
+  pub fn consume_delta(store: &mut VStore, delta_expected: Vec<(usize, FDEvent)>) {
     let res: Vec<(usize, FDEvent)> = store.drain_delta().collect();
     assert_eq!(res, delta_expected);
     assert!(store.drain_delta().next().is_none());
@@ -253,7 +252,7 @@ pub mod test {
   #[test]
   fn ordered_assign_10_vars() {
     let dom0_10 = (0, 10).to_interval();
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
 
     for i in 0..10 {
       assert_eq!(store.alloc(dom0_10), Identity::new(i));
@@ -264,7 +263,7 @@ pub mod test {
   fn valid_read_update() {
     let dom0_10 = (0, 10).to_interval();
     let dom5_5 = (5, 5).to_interval();
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
 
     let vars: Vec<_> = (0..10).map(|_| store.alloc(dom0_10)).collect();
     for var in vars {
@@ -276,7 +275,7 @@ pub mod test {
 
   #[test]
   fn empty_update() {
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     let dom5_5 = (5, 5).to_interval();
 
     let var = store.alloc(dom5_5);
@@ -286,7 +285,7 @@ pub mod test {
   #[test]
   #[should_panic]
   fn empty_assign() {
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     store.alloc(Interval::<i32>::empty());
   }
 
@@ -296,7 +295,7 @@ pub mod test {
     let dom0_10 = (0,10).to_interval();
     let dom11_11 = 11.to_interval();
 
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     let var = store.alloc(dom0_10);
     var.update(&mut store, dom11_11);
   }
@@ -307,16 +306,16 @@ pub mod test {
     let dom0_10 = (0,10).to_interval();
     let domm5_15 = (-5, 15).to_interval();
 
-    let mut store: FDStore = Store::empty();
+    let mut store = VStore::empty();
     let var = store.alloc(dom0_10);
     var.update(&mut store, domm5_15);
   }
 
   fn test_op<Op>(test_num: u32, source: Domain, target: Domain, delta_expected: Vec<FDEvent>, update_success: bool, op: Op) where
-    Op: FnOnce(&FDStore, Identity<Domain>) -> Domain
+    Op: FnOnce(&VStore, Identity<Domain>) -> Domain
   {
     println!("Test number {}", test_num);
-    let mut store = FDStore::empty();
+    let mut store = VStore::empty();
     let var = store.alloc(source);
 
     let new = op(&store, var);
@@ -331,9 +330,9 @@ pub mod test {
   }
 
   fn test_binary_op<Op>(source1: Domain, source2: Domain, target: Domain, delta_expected: Vec<(usize, FDEvent)>, update_success: bool, op: Op) where
-    Op: FnOnce(&FDStore, Identity<Domain>, Identity<Domain>) -> Domain
+    Op: FnOnce(&VStore, Identity<Domain>, Identity<Domain>) -> Domain
   {
-    let mut store = FDStore::empty();
+    let mut store = VStore::empty();
     let var1 = store.alloc(source1);
     let var2 = store.alloc(source2);
 
