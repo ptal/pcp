@@ -15,6 +15,7 @@
 pub mod x_less_y;
 pub mod x_eq_y;
 pub mod x_neq_y;
+pub mod x_greater_y_plus_z;
 
 use num::PrimInt;
 use gcollections::ops::*;

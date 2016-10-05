@@ -85,6 +85,21 @@ pub mod test {
     subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
   }
 
+  pub fn trinary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp,
+    x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
+    before: Trilean, after: Trilean,
+    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
+   P: Propagator<VStore> + Subsumption<VStore>,
+   FnProp: FnOnce(FDVar, FDVar, FDVar) -> P
+  {
+    let mut store = VStore::empty();
+    let x = store.alloc(x);
+    let y = store.alloc(y);
+    let z = store.alloc(z);
+    let propagator = make_prop(x, y, z);
+    subsumption_propagate(test_num, propagator, &mut store, before, after, delta_expected, propagate_success);
+  }
+
   pub fn nary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, doms: Vec<Interval<i32>>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
