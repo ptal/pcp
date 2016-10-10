@@ -52,9 +52,9 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<
   X: StoreRead<Store, Value=DomX>,
   Y: StoreRead<Store, Value=DomY>,
   Z: StoreRead<Store, Value=DomZ>,
-  DomX: Bounded<Bound=B>,
-  DomY: Bounded<Bound=B>,
-  DomZ: Bounded<Bound=B>,
+  DomX: Bounded<Bound=B> + Debug,
+  DomY: Bounded<Bound=B> + Debug,
+  DomZ: Bounded<Bound=B> + Debug,
   B: PartialOrd + Num
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
@@ -64,7 +64,7 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<
 
     let x = self.x.read(store);
     let y = self.y.read(store);
-    let z = self.y.read(store);
+    let z = self.z.read(store);
 
     if x.upper() <= y.lower() + z.lower() {
       False
@@ -126,6 +126,9 @@ mod test {
     let dom10_20 = (10,20).to_interval();
     let dom10_11 = (10,11).to_interval();
     let dom5_15 = (5,15).to_interval();
+    let dom1_10 = (1,10).to_interval();
+    let dom5_10 = (5,10).to_interval();
+    let dom6_10 = (6,10).to_interval();
     let dom1_1 = (1,1).to_interval();
     let dom2_2 = (2,2).to_interval();
 
@@ -139,6 +142,8 @@ mod test {
       False, False, vec![], false);
     x_greater_y_plus_z_test_one(5, dom2_2, dom1_1, dom1_1,
       False, False, vec![], false);
+    x_greater_y_plus_z_test_one(6, dom6_10, dom5_10, dom1_10,
+      Unknown, Unknown, vec![(0, Bound), (1, Bound), (2, Bound)], true);
   }
 
   fn x_greater_y_plus_z_test_one(test_num: u32,
