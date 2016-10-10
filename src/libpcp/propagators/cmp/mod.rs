@@ -20,6 +20,7 @@ pub mod x_greater_y_plus_z;
 use num::PrimInt;
 use gcollections::ops::*;
 use term::*;
+pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;
 pub use propagators::cmp::x_less_y::XLessY;
 pub use propagators::cmp::x_eq_y::XEqY;
 pub use propagators::cmp::x_neq_y::XNeqY;

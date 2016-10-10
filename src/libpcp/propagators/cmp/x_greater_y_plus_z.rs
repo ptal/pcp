@@ -48,19 +48,17 @@ impl<X, Y, Z> Debug for XGreaterYPlusZ<X, Y, Z> where
   }
 }
 
-impl<Store, BX, BY, BZ, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> where
+impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> where
   X: StoreRead<Store, Value=DomX>,
   Y: StoreRead<Store, Value=DomY>,
   Z: StoreRead<Store, Value=DomZ>,
-  DomX: Bounded<Bound=BX>,
-  DomY: Bounded<Bound=BY>,
-  DomZ: Bounded<Bound=BZ>,
-  BX: PartialOrd + PartialOrd<BY> + PartialOrd<BZ>,
-  BY: PartialOrd + PartialOrd<BX> + PartialOrd<BZ> + Num,
-  BZ: PartialOrd + PartialOrd<BX> + PartialOrd<BY> + Num
+  DomX: Bounded<Bound=B>,
+  DomY: Bounded<Bound=B>,
+  DomZ: Bounded<Bound=B>,
+  B: PartialOrd + Num
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
-    // False: max(X) < min(Y) + min(Z)
+    // False: max(X) <= min(Y) + min(Z)
     // True: min(X) > max(Y) + max(Z)
     // Unknown: Everything else.
 
@@ -68,7 +66,7 @@ impl<Store, BX, BY, BZ, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreat
     let y = self.y.read(store);
     let z = self.y.read(store);
 
-    if x.upper() < y.lower() + z.lower() {
+    if x.upper() <= y.lower() + z.lower() {
       False
     }
     else if x.lower() > y.upper() + z.upper() {
@@ -128,10 +126,19 @@ mod test {
     let dom10_20 = (10,20).to_interval();
     let dom10_11 = (10,11).to_interval();
     let dom5_15 = (5,15).to_interval();
-    let dom11_20 = (11,20).to_interval();
     let dom1_1 = (1,1).to_interval();
+    let dom2_2 = (2,2).to_interval();
 
-    x_greater_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound), (2, Bound)], true);
+    x_greater_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10,
+      Unknown, Unknown, vec![(0, Bound), (1, Bound), (2, Bound)], true);
+    x_greater_y_plus_z_test_one(2, dom10_11, dom5_15, dom5_15,
+      Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
+    x_greater_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1,
+      True, True, vec![], true);
+    x_greater_y_plus_z_test_one(4, dom1_1, dom1_1, dom1_1,
+      False, False, vec![], false);
+    x_greater_y_plus_z_test_one(5, dom2_2, dom1_1, dom1_1,
+      False, False, vec![], false);
   }
 
   fn x_greater_y_plus_z_test_one(test_num: u32,
