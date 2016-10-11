@@ -19,7 +19,7 @@ pub mod x_greater_y_plus_z;
 pub mod x_less_y_plus_z;
 pub mod x_equals_y_plus_z;
 
-use num::PrimInt;
+use num::{PrimInt, Signed};
 use gcollections::ops::*;
 use term::*;
 pub use propagators::cmp::x_equals_y_plus_z::XEqualsYPlusZ;
@@ -66,9 +66,9 @@ pub fn x_geq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y
 pub fn x_leq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, BX> where
   X: ExprInference<Output=R>,
   R: Bounded<Bound=BX>,
-  BX: PrimInt
+  BX: PrimInt + Signed
 {
-  XLessYPlusZ::new(Addition::new(x, BX::one()), y, z)
+  XLessYPlusZ::new(Addition::new(x, -BX::one()), y, z)
 }
 
 #[cfg(test)]

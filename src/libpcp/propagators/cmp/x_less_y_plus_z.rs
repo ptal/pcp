@@ -1,4 +1,4 @@
-// Copyright 2015 Pierre Talbot (IRCAM)
+// Copyright 2016 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 
 #[derive(Clone, Copy)]
-pub struct XLessYPlusZ<X, Y, Z> 
+pub struct XLessYPlusZ<X, Y, Z>
 {
   x: X,
   y: Y,
@@ -55,7 +55,8 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XLessYPlusZ<X, 
   DomX: Bounded<Bound=B> + Debug,
   DomY: Bounded<Bound=B> + Debug,
   DomZ: Bounded<Bound=B> + Debug,
-  B: PartialOrd + Num{
+  B: PartialOrd + Num
+{
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False: min(X) >= max(Y) + max(Z)
     // True: max(X) < min(Y) + min(Z)
@@ -94,7 +95,7 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XLessYPlusZ<X, Y
     let z = self.z.read(store);
 
     debug!("PCP XLessYPlusZ propagate before x:{:?}, y:{:?}, z:{:?}", x, y, z);
-    
+
     self.x.update(store, x.strict_shrink_right(y.upper() + z.upper())) &&
     self.y.update(store, y.strict_shrink_left(x.lower() - z.upper())) &&
     self.z.update(store, z.strict_shrink_left(x.lower() - y.upper()))
@@ -132,9 +133,6 @@ mod test {
     let dom0_6 = (0,6).to_interval();
     let dom0_5 = (0,5).to_interval();
     let dom0_1 = (0,1).to_interval();
-    let dom1_10 = (1,10).to_interval();
-    let dom5_10 = (5,10).to_interval();
-    let dom6_10 = (6,10).to_interval();
     let dom1_1 = (1,1).to_interval();
     let dom2_2 = (2,2).to_interval();
 

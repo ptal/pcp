@@ -24,14 +24,13 @@ pub enum Trilean
 }
 
 impl Trilean {
-  pub fn add(self, other: Trilean)-> Trilean{
-      match (self, other) {
-        (_, False) => False,
-        (False, _) => False,
-        (Unknown, _) => Unknown ,
-        (_, Unknown) => Unknown ,
-        (True, True) => True,
-      }
+  pub fn and(self, other: Trilean)-> Trilean {
+    match (self, other) {
+      (True, True) => True,
+      (False, _) => False,
+      (_, False) => False,
+      _ => Unknown
+    }
   }
 }
 
