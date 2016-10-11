@@ -13,73 +13,73 @@
 // limitations under the License.
 
 use kernel::*;
-use kernel::Trilean::*;
 use propagators::PropagatorKind;
+use propagators::cmp::{XLessYPlusZ, XLessEqYPlusZ, XGreaterYPlusZ, XGreaterEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
+use term::addition::Addition;
+use num::PrimInt;
+use term::expr_inference::ExprInference;
 
 #[derive(Clone, Copy)]
-pub struct XEqualsYPlusZ<X, Y, Z> 
+pub struct XEqualsYPlusZ<X, Y, Z, BX> 
 {
+  greater: XGreaterYPlusZ<Addition<X, BX>, Y, Z>,
+  less: XLessYPlusZ<Addition<X, BX>, Y, Z>,
   x: X,
   y: Y,
   z: Z,
 }
 
-impl<X, Y, Z> PropagatorKind for XEqualsYPlusZ<X, Y, Z> {}
+impl<X, Y, Z, BX> PropagatorKind for XEqualsYPlusZ<X, Y, Z, BX> {}
 
-impl<X, Y, Z> XEqualsYPlusZ<X, Y, Z> {
-  pub fn new(x: X, y: Y, z: Z) -> XEqualsYPlusZ<X, Y, Z> {
-    XEqualsYPlusZ { x: x, y: y, z: z }
+impl<X, Y, Z, BX> XEqualsYPlusZ<X, Y, Z, BX> where
+  X: Clone,
+  Y: Clone,
+  Z: Clone,
+  BX: PrimInt {
+  pub fn new(x: X, y: Y, z: Z) -> XEqualsYPlusZ<X, Y, Z, BX> {
+    XEqualsYPlusZ { 
+      greater: XGreaterYPlusZ::new(Addition::new(x.clone(), BX::one()), y.clone(), z.clone()),
+      less: XLessYPlusZ::new(Addition::new(x.clone(), BX::one()), y.clone(), z.clone()),
+      x: x,
+      y: y,
+      z: z,
+
+    }
   }
 }
 
-impl<X, Y, Z> Debug for XEqualsYPlusZ<X, Y, Z> where
+impl<X, Y, Z, BX> Debug for XEqualsYPlusZ<X, Y, Z, BX> where
   X: Debug,
   Y: Debug,
-  Z: Debug
+  Z: Debug,
+  BX: PrimInt + Debug
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} < {:?} + {:?}", self.x, self.y, self.z))
+    formatter.write_fmt(format_args!("Great:{:?} and less {:?}", self.greater, self.less))
   }
 }
 
-impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XEqualsYPlusZ<X, Y, Z> where
-  X: StoreRead<Store, Value=DomX> + Debug,
+impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XEqualsYPlusZ<X, Y, Z, B> where
+  X: ExprInference<Output=DomX> + StoreRead<Store, Value=DomX> + Debug,
   Y: StoreRead<Store, Value=DomY> + Debug,
   Z: StoreRead<Store, Value=DomZ> + Debug,
   DomX: Bounded<Bound=B> + Debug,
   DomY: Bounded<Bound=B> + Debug,
   DomZ: Bounded<Bound=B> + Debug,
-  B: PartialOrd + Num{
+  B: PartialOrd + Num + Debug{
   fn is_subsumed(&self, store: &Store) -> Trilean {
-    // False: min(X) >= max(Y) + max(Z)
-    // True: max(X) < min(Y) + min(Z)
-    // Unknown: Everything else.
-    let x = self.x.read(store);
-    let y = self.y.read(store);
-    let z = self.z.read(store);
-
-    debug!("PCP XEqualsYPlusZ is_subsumed SELF:{:?}", self);
-    debug!("PCP XEqualsYPlusZ is_subsumed x:{:?}, y:{:?}, z:{:?}", x, y, z);
-
-    if x.lower() >= y.upper() + z.upper() || x.upper() <= y.lower() + z.lower() {
-      False
-    }
-    else if x.upper() < y.upper() + z.upper() && x.lower() > y.lower() + z.lower() {
-      True
-    }
-    else {
-      Unknown
-    }
+    //debug!("PCP XEqualsYPlusZ is_subsumed SELF:{:?}", self);
+    self.greater.is_subsumed(store).add(self.less.is_subsumed(store))
   }
 }
 
-impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XEqualsYPlusZ<X, Y, Z> where
+impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XEqualsYPlusZ<X, Y, Z, B> where
   X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX> + Debug,
   Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY> + Debug,
   Z: StoreRead<Store, Value=DomZ> + StoreMonotonicUpdate<Store, DomZ> + Debug,
@@ -89,32 +89,16 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XEqualsYPlusZ<X,
   B: PartialOrd + Num + Debug,
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
-    let x = self.x.read(store);
-    let y = self.y.read(store);
-    let z = self.z.read(store);
-
-    debug!("PCP XEqualsYPlusZ propagate before x:{:?}, y:{:?}, z:{:?}", x, y, z);
-
-    debug!("PCP XEqualsYPlusZ propagate self.y.update(store, y.strict_shrink_left(x.lower() - z.upper())):{:?}", (x.lower() - z.upper()));
-    debug!("PCP XEqualsYPlusZ propagate elf.y.update(store, y.strict_shrink_right(x.upper() - z.lower())):{:?}", (x.upper() - z.lower()));
-
-    let ret  = self.x.update(store, x.strict_shrink_left(y.lower() + z.lower())) &&
-    self.x.update(store, x.strict_shrink_right(y.upper() + z.upper())) &&
-    self.y.update(store, y.strict_shrink_left(x.lower() - z.upper())) &&
-    self.y.update(store, y.strict_shrink_right(x.upper() - z.lower())) &&
-//    self.z.update(store, z.strict_shrink_left(x.lower() - y.upper())) &&
-    self.z.update(store, z.strict_shrink_right(x.upper() - y.lower()));
-    
-    debug!("PCP XEqualsYPlusZ propagate after x:{:?}, y:{:?}, z:{:?}", x, y, z);
-
-    ret
- }
+    self.greater.propagate(store) &&
+    self.less.propagate(store)
+  }
 }
 
-impl<X, Y, Z> PropagatorDependencies<FDEvent> for XEqualsYPlusZ<X, Y, Z> where
+impl<X, Y, Z, BX> PropagatorDependencies<FDEvent> for XEqualsYPlusZ<X, Y, Z, BX> where
   X: ViewDependencies<FDEvent>,
   Y: ViewDependencies<FDEvent>,
-  Z: ViewDependencies<FDEvent>
+  Z: ViewDependencies<FDEvent>, 
+  BX: PrimInt
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let mut deps = self.x.dependencies(FDEvent::Bound);

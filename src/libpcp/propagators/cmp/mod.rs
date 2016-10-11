@@ -32,6 +32,8 @@ pub use propagators::cmp::x_neq_y::XNeqY;
 pub type XGreaterY<X, Y> = XLessY<Y, X>;
 pub type XGreaterEqY<X, Y, BX> = XLessY<Y, Addition<X, BX>>;
 pub type XLessEqY<X, Y, BY> = XLessY<X, Addition<Y, BY>>;
+pub type XGreaterEqYPlusZ<X, Y, Z, BX> = XGreaterYPlusZ<Addition<X, BX>, Y, Z>;
+pub type XLessEqYPlusZ<X, Y, Z, BX> = XLessYPlusZ<Addition<X, BX>, Y, Z>;
 
 pub fn x_greater_y<X, Y>(x: X, y: Y) -> XGreaterY<X, Y> {
   XLessY::new(y, x)
@@ -51,6 +53,22 @@ pub fn x_leq_y<X, Y, R, BY>(x: X, y: Y) -> XLessEqY<X, Y, BY> where
   BY: PrimInt
 {
   XLessY::new(x, Addition::new(y, BY::one()))
+}
+
+pub fn x_geq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y, Z, BX> where
+  X: ExprInference<Output=R>,
+  R: Bounded<Bound=BX>,
+  BX: PrimInt
+{
+  XGreaterYPlusZ::new(Addition::new(x, BX::one()), y, z)
+}
+
+pub fn x_leq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, BX> where
+  X: ExprInference<Output=R>,
+  R: Bounded<Bound=BX>,
+  BX: PrimInt
+{
+  XLessYPlusZ::new(Addition::new(x, BX::one()), y, z)
 }
 
 #[cfg(test)]

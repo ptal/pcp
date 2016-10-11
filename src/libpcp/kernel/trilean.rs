@@ -23,6 +23,18 @@ pub enum Trilean
   Unknown = 2
 }
 
+impl Trilean {
+  pub fn add(self, other: Trilean)-> Trilean{
+      match (self, other) {
+        (_, False) => False,
+        (False, _) => False,
+        (Unknown, _) => Unknown ,
+        (_, Unknown) => Unknown ,
+        (True, True) => True,
+      }
+  }
+}
+
 impl Not for Trilean {
   type Output = Trilean;
 
