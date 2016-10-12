@@ -20,8 +20,6 @@
 #![feature(alloc, unboxed_closures, fnbox, fn_traits, question_mark)]
 #![feature(test)]
 
-#[macro_use]
-extern crate log;
 extern crate test;
 extern crate interval;
 extern crate gcollections;

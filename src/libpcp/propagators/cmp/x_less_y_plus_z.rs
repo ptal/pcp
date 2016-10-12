@@ -65,9 +65,6 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XLessYPlusZ<X, 
     let y = self.y.read(store);
     let z = self.z.read(store);
 
-    debug!("PCP XLessYPlusZ is_subsumed SELF:{:?}", self);
-    debug!("PCP XLessYPlusZ is_subsumed x:{:?}, y:{:?}, z:{:?}", x, y, z);
-
     if x.lower() >= y.upper() + z.upper() {
       False
     }
@@ -93,8 +90,6 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XLessYPlusZ<X, Y
     let x = self.x.read(store);
     let y = self.y.read(store);
     let z = self.z.read(store);
-
-    debug!("PCP XLessYPlusZ propagate before x:{:?}, y:{:?}, z:{:?}", x, y, z);
 
     self.x.update(store, x.strict_shrink_right(y.upper() + z.upper())) &&
     self.y.update(store, y.strict_shrink_left(x.lower() - z.upper())) &&
