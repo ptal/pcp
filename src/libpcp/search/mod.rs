@@ -32,7 +32,7 @@ use search::branching::*;
 use search::propagation::*;
 use gcollections::VectorStack;
 
-type VStore = VStoreFD;
+pub type VStore = VStoreFD;
 type CStore = CStoreFD<VStore>;
 pub type FDSpace = Space<VStore, CStore>;
 
