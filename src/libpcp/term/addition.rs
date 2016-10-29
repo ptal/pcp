@@ -53,7 +53,7 @@ impl<X, V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Addition<X, V>
   V: Clone,
   X: StoreMonotonicUpdate<Store, Domain>
 {
-  fn update(&self, store: &mut Store, value: Domain) -> bool {
+  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
     self.x.update(store, value - self.v.clone())
   }
 }

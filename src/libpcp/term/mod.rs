@@ -16,11 +16,10 @@ pub mod expr_inference;
 pub mod identity;
 pub mod constant;
 pub mod addition;
-// pub mod multiplication;
 pub mod ops;
+pub mod bool2int;
 
 pub use term::expr_inference::ExprInference;
 pub use term::identity::Identity;
 pub use term::constant::Constant;
 pub use term::addition::Addition;
-// pub use term::multiplication::Multiplication;

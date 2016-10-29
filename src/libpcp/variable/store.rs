@@ -266,7 +266,7 @@ pub mod test {
     let mut store = VStore::empty();
 
     let vars: Vec<_> = (0..10).map(|_| store.alloc(dom0_10)).collect();
-    for var in vars {
+    for mut var in vars {
       assert_eq!(var.read(&store), dom0_10);
       assert_eq!(var.update(&mut store, dom5_5), true);
       assert_eq!(var.read(&store), dom5_5);
@@ -278,7 +278,7 @@ pub mod test {
     let mut store = VStore::empty();
     let dom5_5 = (5, 5).to_interval();
 
-    let var = store.alloc(dom5_5);
+    let mut var = store.alloc(dom5_5);
     assert_eq!(var.update(&mut store, Interval::empty()), false);
   }
 
@@ -296,7 +296,7 @@ pub mod test {
     let dom11_11 = 11.to_interval();
 
     let mut store = VStore::empty();
-    let var = store.alloc(dom0_10);
+    let mut var = store.alloc(dom0_10);
     var.update(&mut store, dom11_11);
   }
 
@@ -307,7 +307,7 @@ pub mod test {
     let domm5_15 = (-5, 15).to_interval();
 
     let mut store = VStore::empty();
-    let var = store.alloc(dom0_10);
+    let mut var = store.alloc(dom0_10);
     var.update(&mut store, domm5_15);
   }
 
@@ -316,7 +316,7 @@ pub mod test {
   {
     println!("Test number {}", test_num);
     let mut store = VStore::empty();
-    let var = store.alloc(source);
+    let mut var = store.alloc(source);
 
     let new = op(&store, var);
     assert_eq!(var.update(&mut store, new), update_success);
@@ -333,8 +333,8 @@ pub mod test {
     Op: FnOnce(&VStore, Identity<Domain>, Identity<Domain>) -> Domain
   {
     let mut store = VStore::empty();
-    let var1 = store.alloc(source1);
-    let var2 = store.alloc(source2);
+    let mut var1 = store.alloc(source1);
+    let mut var2 = store.alloc(source2);
 
     let new = op(&store, var1, var2);
     assert_eq!(var1.update(&mut store, new), update_success);

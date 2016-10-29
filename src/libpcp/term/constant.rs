@@ -50,7 +50,7 @@ impl<V> Debug for Constant<V> where
 impl<V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Constant<V> where
   Domain: Cardinality
 {
-  fn update(&self, _store: &mut Store, value: Domain) -> bool {
+  fn update(&mut self, _store: &mut Store, value: Domain) -> bool {
     !value.is_empty()
   }
 }

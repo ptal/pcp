@@ -14,7 +14,7 @@
 
 pub trait StoreMonotonicUpdate<Store, Value>
 {
-  fn update(&self, store: &mut Store, value: Value) -> bool;
+  fn update(&mut self, store: &mut Store, value: Value) -> bool;
 }
 
 pub trait StoreRead<Store>

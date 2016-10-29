@@ -54,7 +54,7 @@ impl<Domain> VarIndex for Identity<Domain> {
 impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Identity<Domain> where
   Store: MonotonicUpdate<usize, Domain>
 {
-  fn update(&self, store: &mut Store, value: Domain) -> bool {
+  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
     store.update(self.idx, value)
   }
 }
@@ -91,7 +91,7 @@ mod test {
     let dom0_10 = (0,10).to_interval();
     let dom0_5 = (0,5).to_interval();
     let mut store = VStore::empty();
-    let v = store.alloc(dom0_10);
+    let mut v = store.alloc(dom0_10);
 
     assert_eq!(v.read(&store), dom0_10);
     assert_eq!(v.update(&mut store, dom0_5), true);
