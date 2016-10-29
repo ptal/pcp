@@ -23,30 +23,30 @@ use num::{Signed, PrimInt};
 use term::expr_inference::ExprInference;
 
 #[derive(Clone, Copy)]
-pub struct XEqualsYPlusZ<X, Y, Z, B>
+pub struct XEqYPlusZ<X, Y, Z, B>
 {
   geq: XGreaterEqYPlusZ<X, Y, Z, B>,
   leq: XLessEqYPlusZ<X, Y, Z, B>
 }
 
-impl<X, Y, Z, B> PropagatorKind for XEqualsYPlusZ<X, Y, Z, B> {}
+impl<X, Y, Z, B> PropagatorKind for XEqYPlusZ<X, Y, Z, B> {}
 
-impl<X, Y, Z, R, BX> XEqualsYPlusZ<X, Y, Z, BX> where
+impl<X, Y, Z, R, BX> XEqYPlusZ<X, Y, Z, BX> where
   X: Clone + ExprInference<Output=R>,
   R: Bounded<Bound=BX>,
   BX: PrimInt + Signed,
   Y: Clone,
   Z: Clone
 {
-  pub fn new(x: X, y: Y, z: Z) -> XEqualsYPlusZ<X, Y, Z, BX> {
-    XEqualsYPlusZ {
+  pub fn new(x: X, y: Y, z: Z) -> XEqYPlusZ<X, Y, Z, BX> {
+    XEqYPlusZ {
       geq: x_geq_y_plus_z(x.clone(), y.clone(), z.clone()),
       leq: x_leq_y_plus_z(x, y, z)
     }
   }
 }
 
-impl<X, Y, Z, B> Debug for XEqualsYPlusZ<X, Y, Z, B> where
+impl<X, Y, Z, B> Debug for XEqYPlusZ<X, Y, Z, B> where
   X: Debug,
   Y: Debug,
   Z: Debug,
@@ -59,7 +59,7 @@ impl<X, Y, Z, B> Debug for XEqualsYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<Store, B, X, Y, Z> Subsumption<Store> for XEqualsYPlusZ<X, Y, Z, B> where
+impl<Store, B, X, Y, Z> Subsumption<Store> for XEqYPlusZ<X, Y, Z, B> where
   XGreaterEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
   XLessEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
 {
@@ -68,7 +68,7 @@ impl<Store, B, X, Y, Z> Subsumption<Store> for XEqualsYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<Store, B, X, Y, Z> Propagator<Store> for XEqualsYPlusZ<X, Y, Z, B> where
+impl<Store, B, X, Y, Z> Propagator<Store> for XEqYPlusZ<X, Y, Z, B> where
   XGreaterEqYPlusZ<X, Y, Z, B>: Propagator<Store>,
   XLessEqYPlusZ<X, Y, Z, B>: Propagator<Store>
 {
@@ -78,7 +78,7 @@ impl<Store, B, X, Y, Z> Propagator<Store> for XEqualsYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<X, Y, Z, B> PropagatorDependencies<FDEvent> for XEqualsYPlusZ<X, Y, Z, B> where
+impl<X, Y, Z, B> PropagatorDependencies<FDEvent> for XEqYPlusZ<X, Y, Z, B> where
   XGreaterEqYPlusZ<X, Y, Z, B>: PropagatorDependencies<FDEvent>,
   XLessEqYPlusZ<X, Y, Z, B>: PropagatorDependencies<FDEvent>
 {
@@ -102,7 +102,7 @@ mod test {
   use propagators::test::*;
 
   #[test]
-  fn x_equals_y_plus_z_test() {
+  fn x_eq_y_plus_z_test() {
     let dom0_10 = (0,10).to_interval();
     let dom10_20 = (10,20).to_interval();
     let dom12_12 = (12,12).to_interval();
@@ -112,19 +112,19 @@ mod test {
     let dom1_1 = (1,1).to_interval();
     let dom2_2 = (2,2).to_interval();
 
-    x_equals_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_equals_y_plus_z_test_one(2, dom12_12, dom0_6, dom0_6, Unknown, True, vec![(1, Assignment), (2, Assignment)], true);
-    x_equals_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
-    x_equals_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, True, True, vec![], true);
-    x_equals_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, False, False, vec![], false);
-    x_equals_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![], true);
+    x_eq_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_eq_y_plus_z_test_one(2, dom12_12, dom0_6, dom0_6, Unknown, True, vec![(1, Assignment), (2, Assignment)], true);
+    x_eq_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
+    x_eq_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, True, True, vec![], true);
+    x_eq_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, False, False, vec![], false);
+    x_eq_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![], true);
   }
 
-  fn x_equals_y_plus_z_test_one(test_num: u32,
+  fn x_eq_y_plus_z_test_one(test_num: u32,
     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    trinary_propagator_test(test_num, XEqualsYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
+    trinary_propagator_test(test_num, XEqYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
   }
 }

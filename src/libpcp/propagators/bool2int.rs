@@ -16,66 +16,38 @@ use term::ops::*;
 use term::ExprInference;
 use std::ops::*;
 use std::fmt::{Formatter, Debug, Error};
+use propagation::ops::Subsumption;
+use kernel::trilean::Trilean;
+use search::VStore;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Multiplication<X, V>
+pub struct Bool2Int
 {
-  x: X,
-  v: V
+  conjunction: Vec<Box<Subsumption<VStore>>>,
 }
 
-impl<X, V, R> ExprInference for Multiplication<X, V> where
-  X: Mul<V, Output=R>
-{
-  type Output = R;
-}
-
-impl<X, V> Multiplication<X, V> {
-  pub fn new(x: X, v: V) -> Multiplication<X, V> {
-    Multiplication {
-      x: x,
-      v: v
+impl Bool2Int {
+  pub fn new() -> Bool2Int {
+    Bool2Int {
+      conjunction: vec!(),
     }
   }
 }
 
-impl<X, V> Debug for Multiplication<X, V> where
-  X: Debug,
-  V: Debug
+impl Debug for Bool2Int
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} * {:?}", self.x, self.v))
+    formatter.write_fmt(format_args!("Conjunction"))
   }
 }
 
-impl<X, V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Multiplication<X, V> where
-  Domain: Sub<V, Output=Domain>,
-  V: Clone,
-  X: StoreMonotonicUpdate<Store, Domain>
+impl<Store> Subsumption<Store> for Bool2Int
 {
-  fn update(&self, store: &mut Store, value: Domain) -> bool {
-    self.x.update(store, value - self.v.clone())
+  fn is_subsumed(&self, store: &Store) -> Trilean {
+    return Trilean::Unknown;
   }
 }
 
-impl<X, V, Domain, Store> StoreRead<Store> for Multiplication<X, V> where
-  Domain: Mul<V, Output=Domain>,
-  V: Clone,
-  X: StoreRead<Store, Value=Domain>
-{
-  type Value = Domain;
-  fn read(&self, store: &Store) -> Domain {
-    self.x.read(store) * self.v.clone()
-  }
-}
-
-impl<X, V, Event> ViewDependencies<Event> for Multiplication<X, V> where
-  X: ViewDependencies<Event>
-{
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
-    self.x.dependencies(event)
-  }
-}
 
 #[cfg(test)]
 mod test {

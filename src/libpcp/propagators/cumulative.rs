@@ -22,7 +22,7 @@ use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Cumulative<V>
 {
   starts: Vec<V>,
