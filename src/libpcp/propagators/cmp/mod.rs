@@ -18,6 +18,7 @@ pub mod x_neq_y;
 pub mod x_greater_y_plus_z;
 pub mod x_less_y_plus_z;
 pub mod x_eq_y_plus_z;
+pub mod x_eq_y_mul_z;
 
 use num::{PrimInt, Signed};
 use gcollections::ops::*;
@@ -25,6 +26,7 @@ use term::*;
 pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
 pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
 pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;
+pub use propagators::cmp::x_eq_y_mul_z::XEqYMulZ;
 pub use propagators::cmp::x_less_y::XLessY;
 pub use propagators::cmp::x_eq_y::XEqY;
 pub use propagators::cmp::x_neq_y::XNeqY;

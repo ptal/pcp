@@ -52,9 +52,9 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XLessYPlusZ<X, 
   X: StoreRead<Store, Value=DomX> + Debug,
   Y: StoreRead<Store, Value=DomY> + Debug,
   Z: StoreRead<Store, Value=DomZ> + Debug,
-  DomX: Bounded<Bound=B> + Debug,
-  DomY: Bounded<Bound=B> + Debug,
-  DomZ: Bounded<Bound=B> + Debug,
+  DomX: Bounded<Bound=B>,
+  DomY: Bounded<Bound=B>,
+  DomZ: Bounded<Bound=B>,
   B: PartialOrd + Num
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
@@ -131,15 +131,15 @@ mod test {
     let dom1_1 = (1,1).to_interval();
     let dom2_2 = (2,2).to_interval();
 
-    x_lesser_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_lesser_y_plus_z_test_one(2, dom11_12, dom0_6, dom0_6, Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
-    x_lesser_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
-    x_lesser_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, False, False, vec![], false);
-    x_lesser_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, True, True, vec![], true);
-    x_lesser_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![(0, Bound)], true);
+    x_less_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_less_y_plus_z_test_one(2, dom11_12, dom0_6, dom0_6, Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
+    x_less_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
+    x_less_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, False, False, vec![], false);
+    x_less_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, True, True, vec![], true);
+    x_less_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![(0, Bound)], true);
   }
 
-  fn x_lesser_y_plus_z_test_one(test_num: u32,
+  fn x_less_y_plus_z_test_one(test_num: u32,
     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)

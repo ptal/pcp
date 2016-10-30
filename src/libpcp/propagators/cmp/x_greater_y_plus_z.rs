@@ -52,9 +52,9 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<
   X: StoreRead<Store, Value=DomX>,
   Y: StoreRead<Store, Value=DomY>,
   Z: StoreRead<Store, Value=DomZ>,
-  DomX: Bounded<Bound=B> + Debug,
-  DomY: Bounded<Bound=B> + Debug,
-  DomZ: Bounded<Bound=B> + Debug,
+  DomX: Bounded<Bound=B>,
+  DomY: Bounded<Bound=B>,
+  DomZ: Bounded<Bound=B>,
   B: PartialOrd + Num
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
