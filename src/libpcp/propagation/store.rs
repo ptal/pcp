@@ -19,6 +19,7 @@ use kernel::Trilean::*;
 use propagation::Reactor;
 use propagation::Scheduler;
 use propagation::concept::*;
+use propagation::ops::Subsumption;
 use variable::ops::*;
 use gcollections::ops::*;
 use std::rc::*;
@@ -130,6 +131,15 @@ impl<Prop, VStore, Event, R, S> Alloc<Prop> for Store<VStore, Event, R, S> where
     self.propagators.push(Box::new(p));
   }
 }
+
+impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
+{
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
+    self.propagators.iter()
+    .fold(True, |x,p| x.and(p.is_subsumed(store)))
+  }
+}
+
 
 impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,

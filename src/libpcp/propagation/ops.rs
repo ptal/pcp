@@ -41,6 +41,7 @@ pub trait BoxedClone<VStore, Event>
 impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
   R: Clone,
   R: Consistency<VStore>,
+  R: Subsumption<VStore>,
   R: PropagatorDependencies<Event>,
   R: 'static
 {

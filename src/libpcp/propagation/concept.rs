@@ -17,12 +17,14 @@ use propagation::ops::*;
 
 pub trait PropagatorConcept<VStore, Event> :
     Consistency<VStore>
+  + Subsumption<VStore>
   + PropagatorDependencies<Event>
   + BoxedClone<VStore, Event>
 {}
 
 impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
  R: Consistency<VStore>,
+ R: Subsumption<VStore>,
  R: PropagatorDependencies<Event>,
  R: BoxedClone<VStore, Event>
 {}
