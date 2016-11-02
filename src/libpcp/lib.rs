@@ -18,6 +18,7 @@
 #![crate_type = "dylib"]
 
 #![feature(alloc, unboxed_closures, fnbox, fn_traits)]
+#![feature(question_mark)]
 #![feature(test)]
 
 extern crate test;
