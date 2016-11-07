@@ -43,6 +43,7 @@ use pcp::search::*;
 use interval::interval::*;
 use gcollections::ops::*;
 use pcp::term::constant::Constant;
+use pcp::term::Addition;
 
 //build the contraint for num_robot with max-time indicating that all robot must finish before.
 pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
@@ -66,11 +67,17 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
  
 	  //contraints definition
 	  if i == 0 {space.cstore.alloc(XEqY::new(task[0], Constant::new(3)));} // Ls = 0 first robot start condition
+
+    space.cstore.alloc(x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 15)));
+    space.cstore.alloc(x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 15)));
+    space.cstore.alloc(x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 15)));
+    space.cstore.alloc(x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 15)));
 	  
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld 
+/*	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld 
 	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td 
 	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd 
 	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd 
+*/
   }
   space
 }

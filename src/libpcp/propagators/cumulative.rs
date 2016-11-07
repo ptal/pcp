@@ -19,31 +19,53 @@ use propagators::cmp::{x_leq_y, XLessYPlusZ};
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
+use term::expr_inference::ExprInference;
 use gcollections::ops::*;
+use gcollections::IntervalKind;
 use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
+use num::PrimInt;
 use std::ops::{Add, Sub};
 //use propagation::CStoreFD;
 
 pub type CStore<VStore> = CStoreFD<VStore>;
 
-pub struct Cumulative<V>
+pub struct Cumulative<V, VStore>
 {
   starts: Vec<V>,
   durations: Vec<usize>,
   resources: Vec<usize>,
   capacity: usize,
+  cstore: CStore<VStore>,
+
 }
 
-impl<V> PropagatorKind for Cumulative<V> {}
+impl<V, VStore> PropagatorKind for Cumulative<V, VStore> {}
 
-impl<V> Cumulative<V>  where V: Clone {
-  pub fn new(starts: Vec<V>, durations: Vec<usize>, resources: Vec<usize>, capacity: usize) -> Cumulative<V> {
-    Cumulative { starts: starts, durations: durations, resources: resources, capacity: capacity}
+impl<V, B, VStore, Domain,> Cumulative<V, VStore>  where
+    V: StoreRead<VStore, Value=Domain> + ViewDependencies<FDEvent> + StoreMonotonicUpdate<VStore, Domain> + ExprInference + Clone,
+    Domain: Bounded<Bound=B> + ShrinkLeft<B> + StrictShrinkRight<B> + Empty + IntervalKind + Add<B> + Sub<B>,
+    B: PartialOrd + Num + PrimInt + Clone
+  {
+  pub fn new(starts: Vec<V>, durations: Vec<usize>, resources: Vec<usize>, capacity: usize) -> Cumulative<V, VStore>
+  {
+
+    let mut cstore = CStore::empty();
+    for j in 0..starts.len() - 1 {
+      for i in 0..starts.len() - 1 {
+        if i != j {
+          // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
+          cstore.alloc(x_leq_y(starts[i].clone(), starts[j].clone())); 
+          cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
+        }
+      }
+    }
+
+    Cumulative { starts: starts, durations: durations, resources: resources, capacity: capacity, cstore: cstore}
   }
 }
 
-impl<V> Debug for Cumulative<V> where
+impl<V, VStore> Debug for Cumulative<V, VStore> where
   V: Debug,
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -51,43 +73,30 @@ impl<V> Debug for Cumulative<V> where
   }
 }
 
-impl<Store, DomV, V> Subsumption<Store> for Cumulative<V> where
-  V: StoreRead<Store, Value=DomV> + Clone + Debug,
-  DomV: Bounded + Disjoint + Debug + Add + Sub + Clone,
+impl<V, VStore> Subsumption<VStore> for Cumulative<V, VStore>
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
 
-    let mut cstore = CStore::empty();
-    for j in 0..self.starts.len() - 1 {
-      for i in 0..self.starts.len() - 1 {
-        if i != j {
-          // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
-          cstore.alloc(x_leq_y(self.starts[i].clone(), self.starts[j].clone())); 
-          cstore.alloc(XLessYPlusZ::new(self.starts[j].clone(), self.starts[i].clone(), self.durations[i].clone())); 
-        }
-      }
-    }
-
-    cstore.is_subsumed(store)
+    self.cstore.is_subsumed(store)
   }
 }
 
-impl<Store, B, DomV, V> Propagator<Store> for Cumulative<V> where
+impl<Store, B, DomV, V, VStore> Propagator<Store> for Cumulative<V, VStore> where
   V: StoreRead<Store, Value=DomV> + StoreMonotonicUpdate<Store, DomV>,
   DomV: Bounded<Bound=B> + StrictShrinkLeft<B>,
   B: PartialOrd + Num,
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
+    true
   }
 }
 
-impl<V> PropagatorDependencies<FDEvent> for Cumulative<V> where
+impl<V, VStore> PropagatorDependencies<FDEvent> for Cumulative<V, VStore> where
   V: ViewDependencies<FDEvent>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    let mut deps = self.starts.iter().flat_map(|v| v.dependencies(FDEvent::Bound)).collect();
-    deps.append(self.durations.iter().flat_map(|v| v.dependencies(FDEvent::Bound)).collect());
-    deps.append(self.resources.iter().flat_map(|v| v.dependencies(FDEvent::Bound)).collect());
+    let mut deps = self.starts.iter().flat_map(|v| v.dependencies(FDEvent::Bound)).collect::<Vec<(usize, FDEvent)>>();
+//    deps.append(self.cstore.dependencies(FDEvent::Bound));
     deps
   }
 }
