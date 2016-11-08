@@ -26,9 +26,28 @@ use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 use num::PrimInt;
 use std::ops::{Add, Sub};
+use variable::VStoreFD;
+use term::identity::Identity;
 //use propagation::CStoreFD;
 
-pub type CStore<VStore> = CStoreFD<VStore>;
+type CStore<VStore> = CStoreFD<VStore>;
+type VStore = VStoreFD;
+
+
+pub fn cumulative (vstore: &mut VStore, cstore: &mut CStore<VStore>, starts: Vec<Identity<usize>>, durations: Vec<usize>, resources: Vec<usize>, capacity: usize)
+  {
+
+    let mut cstore = CStore::empty();
+    for j in 0..starts.len() - 1 {
+      for i in 0..starts.len() - 1 {
+        if i != j {
+          // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
+          cstore.alloc(x_leq_y(starts[i], starts[j])); 
+ //         cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
+        }
+      }
+    }
+} 
 
 pub struct Cumulative<V, VStore>
 {
@@ -55,8 +74,8 @@ impl<V, B, VStore, Domain,> Cumulative<V, VStore>  where
       for i in 0..starts.len() - 1 {
         if i != j {
           // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
-          cstore.alloc(x_leq_y(starts[i].clone(), starts[j].clone())); 
-          cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
+ //         cstore.alloc(x_leq_y(starts[i].clone(), starts[j].clone())); 
+  //        cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
         }
       }
     }
