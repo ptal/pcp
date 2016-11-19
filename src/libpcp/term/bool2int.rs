@@ -52,6 +52,8 @@ impl<DomX, P> Debug for Bool2Int<DomX, P> where
   }
 }
 
+// A propagator using this view will not be subsumed unless (1) the propagator `p` of this view is subsumed (because `read` will return [0..1] until `p` is subsumed) or (2) if the parent propagator is subsumed whatever the value of this view becomes.
+
 impl<DomX, BX, P, Store> StoreMonotonicUpdate<Store, DomX> for Bool2Int<DomX, P> where
   DomX: Bounded<Bound=BX> + IsSingleton,
   BX: Zero + One + PartialOrd + PartialEq,

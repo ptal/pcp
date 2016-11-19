@@ -19,6 +19,8 @@ use search::space::*;
 use variable::ops::*;
 use term::*;
 use propagators::cmp::*;
+use propagation::concept::*;
+use propagation::events::*;
 use gcollections::ops::*;
 use num::traits::Num;
 use num::PrimInt;
@@ -32,8 +34,7 @@ pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
   VStore: Freeze + Iterable<Item=Domain>,
   CStore: Freeze,
-  CStore: Alloc<XLessEqC<Domain, Bound>>,
-  CStore: Alloc<XGreaterC<Domain, Bound>>,
+  CStore: Alloc<Box<PropagatorConcept<VStore, FDEvent> + 'static>>,
   Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
   Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
 {
@@ -52,10 +53,10 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
     Branch::distribute(space,
       vec![
         Box::new(move |space: &mut Space<VStore, CStore>| {
-          space.cstore.alloc(x_less_mid);
+          space.cstore.alloc(box x_less_mid);
         }),
         Box::new(move |space: &mut Space<VStore, CStore>| {
-          space.cstore.alloc(x_geq_mid);
+          space.cstore.alloc(box x_geq_mid);
         })
       ]
     )

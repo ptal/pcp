@@ -14,8 +14,7 @@
 
 use kernel::*;
 use kernel::Trilean::*;
-use propagators::PropagatorKind;
-use propagators::cmp::{x_leq_y, XLessYPlusZ};
+use propagators::*;
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
@@ -26,97 +25,60 @@ use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 use num::PrimInt;
 use std::ops::{Add, Sub};
-use variable::VStoreFD;
-use term::identity::Identity;
-//use propagation::CStoreFD;
-
-type CStore<VStore> = CStoreFD<VStore>;
-type VStore = VStoreFD;
-
-
-pub fn cumulative (vstore: &mut VStore, cstore: &mut CStore<VStore>, starts: Vec<Identity<usize>>, durations: Vec<usize>, resources: Vec<usize>, capacity: usize)
-  {
-
-    let mut cstore = CStore::empty();
-    for j in 0..starts.len() - 1 {
-      for i in 0..starts.len() - 1 {
-        if i != j {
-          // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
-          cstore.alloc(x_leq_y(starts[i], starts[j])); 
- //         cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
-        }
-      }
-    }
-} 
+use std::marker::PhantomData;
 
 pub struct Cumulative<V, VStore>
 {
-  starts: Vec<V>,
-  durations: Vec<usize>,
-  resources: Vec<usize>,
-  capacity: usize,
-  cstore: CStore<VStore>,
-
+  starts: Vec<Box<V>>,
+  durations: Vec<Box<V>>,
+  resources: Vec<Box<V>>,
+  capacity: Box<V>,
+  vstore_phantom: PhantomData<VStore>
 }
 
-impl<V, VStore> PropagatorKind for Cumulative<V, VStore> {}
-
-impl<V, B, VStore, Domain,> Cumulative<V, VStore>  where
-    V: StoreRead<VStore, Value=Domain> + ViewDependencies<FDEvent> + StoreMonotonicUpdate<VStore, Domain> + ExprInference + Clone,
-    Domain: Bounded<Bound=B> + ShrinkLeft<B> + StrictShrinkRight<B> + Empty + IntervalKind + Add<B> + Sub<B>,
-    B: PartialOrd + Num + PrimInt + Clone
+impl<V, VStore> Cumulative<V, VStore>
+{
+  pub fn new(starts: Vec<Box<V>>, durations: Vec<Box<V>>,
+   resources: Vec<Box<V>>, capacity: Box<V>) -> Self
   {
-  pub fn new(starts: Vec<V>, durations: Vec<usize>, resources: Vec<usize>, capacity: usize) -> Cumulative<V, VStore>
-  {
+    assert_eq!(starts.len(), durations.len());
+    assert_eq!(starts.len(), resources.len());
+    Cumulative {
+      starts: starts,
+      durations: durations,
+      resources: resources,
+      capacity: capacity,
+      vstore_phantom: PhantomData
+    }
+  }
+}
 
-    let mut cstore = CStore::empty();
-    for j in 0..starts.len() - 1 {
-      for i in 0..starts.len() - 1 {
+impl<V, BV, VStore, Domain> Cumulative<V, VStore> where
+  V: ExprInference<Output=Domain>,
+  V: ViewDependencies<FDEvent>,
+  V: StoreMonotonicUpdate<VStore, Domain>,
+  V: StoreRead<VStore, Value=Domain>,
+  V: Clone + 'static,
+  Domain: Bounded<Bound=BV> + Add<BV, Output=Domain> + Clone + Sub<BV, Output=Domain>,
+  Domain: Empty + ShrinkLeft<BV> + ShrinkRight<BV> + IntervalKind + 'static,
+  BV: PrimInt + 'static
+{
+  // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
+  // forall( j in tasks ) (
+  //   c >= r[j] + sum( i in tasks where i != j ) (
+  //     bool2int( s[i] <= s[j] /\ s[j] < s[i] + d[i] ) * r[i]));
+  pub fn join<CStore>(&self, vstore: &mut VStore, cstore: &mut CStore) where
+    CStore: Alloc<Box<PropagatorConcept<VStore, FDEvent> + 'static>>
+  {
+    let tasks = self.starts.len();
+    for j in 0..tasks {
+      for i in 0..tasks {
         if i != j {
-          // `s[i] <= s[j] /\ s[j] < s[i] + d[i]`
- //         cstore.alloc(x_leq_y(starts[i].clone(), starts[j].clone())); 
-  //        cstore.alloc(XLessYPlusZ::new(starts[j].clone(), starts[i].clone(), durations[i].clone())); 
+          // bool2int(s[i] <= s[j] /\ s[j] < s[i] + d[i])
+          cstore.alloc(box x_leq_y(*self.starts[i], *self.starts[j]));
         }
       }
     }
-
-    Cumulative { starts: starts, durations: durations, resources: resources, capacity: capacity, cstore: cstore}
-  }
-}
-
-impl<V, VStore> Debug for Cumulative<V, VStore> where
-  V: Debug,
-{
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("TO BE DONE capacity:{:?}", self.capacity))
-  }
-}
-
-impl<V, VStore> Subsumption<VStore> for Cumulative<V, VStore>
-{
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
-
-    self.cstore.is_subsumed(store)
-  }
-}
-
-impl<Store, B, DomV, V, VStore> Propagator<Store> for Cumulative<V, VStore> where
-  V: StoreRead<Store, Value=DomV> + StoreMonotonicUpdate<Store, DomV>,
-  DomV: Bounded<Bound=B> + StrictShrinkLeft<B>,
-  B: PartialOrd + Num,
-{
-  fn propagate(&mut self, store: &mut Store) -> bool {
-    true
-  }
-}
-
-impl<V, VStore> PropagatorDependencies<FDEvent> for Cumulative<V, VStore> where
-  V: ViewDependencies<FDEvent>
-{
-  fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    let mut deps = self.starts.iter().flat_map(|v| v.dependencies(FDEvent::Bound)).collect::<Vec<(usize, FDEvent)>>();
-//    deps.append(self.cstore.dependencies(FDEvent::Bound));
-    deps
   }
 }
 

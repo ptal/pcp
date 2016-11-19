@@ -123,12 +123,12 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
   }
 }
 
-impl<Prop, VStore, Event, R, S> Alloc<Prop> for Store<VStore, Event, R, S> where
- Prop: PropagatorConcept<VStore, Event> + 'static
+impl<VStore, Event, R, S> Alloc<Box<PropagatorConcept<VStore, Event>>>
+  for Store<VStore, Event, R, S>
 {
   type Location = ();
-  fn alloc(&mut self, p: Prop) {
-    self.propagators.push(Box::new(p));
+  fn alloc(&mut self, p: Box<PropagatorConcept<VStore, Event>>) {
+    self.propagators.push(p);
   }
 }
 
@@ -139,7 +139,6 @@ impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
     .fold(True, |x,p| x.and(p.is_subsumed(store)))
   }
 }
-
 
 impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
