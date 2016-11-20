@@ -21,6 +21,7 @@ use propagation::Scheduler;
 use propagation::concept::*;
 use propagation::ops::Subsumption;
 use variable::ops::*;
+use gcollections::kind::*;
 use gcollections::ops::*;
 use std::rc::*;
 use std::marker::PhantomData;
@@ -44,6 +45,16 @@ impl<VStore, Event, R, S> Empty for Store<VStore, Event, R, S> where
       scheduler: Scheduler::new(0)
     }
   }
+}
+
+impl<VStore, Event, R, S> Collection for Store<VStore, Event, R, S>
+{
+  type Item = Box<PropagatorConcept<VStore, Event>>;
+}
+
+impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
+{
+  type Location = ();
 }
 
 impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
@@ -123,11 +134,9 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
   }
 }
 
-impl<VStore, Event, R, S> Alloc<Box<PropagatorConcept<VStore, Event>>>
-  for Store<VStore, Event, R, S>
+impl<VStore, Event, R, S> Alloc for Store<VStore, Event, R, S>
 {
-  type Location = ();
-  fn alloc(&mut self, p: Box<PropagatorConcept<VStore, Event>>) {
+  fn alloc(&mut self, p: Self::Item) {
     self.propagators.push(p);
   }
 }
