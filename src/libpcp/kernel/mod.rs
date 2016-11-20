@@ -19,11 +19,9 @@ pub mod consistency;
 pub mod merge;
 pub mod event;
 pub mod restoration;
-pub mod alloc;
 
 pub use kernel::trilean::*;
 pub use kernel::consistency::*;
 pub use kernel::merge::*;
 pub use kernel::event::*;
 pub use kernel::restoration::*;
-pub use kernel::alloc::*;

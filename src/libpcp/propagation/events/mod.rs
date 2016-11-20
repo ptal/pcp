@@ -15,6 +15,7 @@
 use kernel::Merge;
 use kernel::event::*;
 use propagation::events::FDEvent::*;
+use gcollections::kind::*;
 use gcollections::ops::*;
 use std::cmp::min;
 
@@ -42,8 +43,9 @@ impl EventIndex for FDEvent {
   }
 }
 
-impl<Domain> MonotonicEvent<Domain> for FDEvent where
-  Domain: Subset + Cardinality + Bounded
+impl<Domain, Bound> MonotonicEvent<Domain> for FDEvent where
+  Domain: Subset + Cardinality + Bounded + Collection<Item=Bound>,
+  Bound: PartialEq + Eq
 {
   fn new(little: &Domain, big: &Domain) -> Option<Self>
   {

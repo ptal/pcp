@@ -18,7 +18,7 @@
 
 pub mod cmp;
 pub mod distinct;
-pub mod cumulative;
+// pub mod cumulative;
 
 pub use propagators::cmp::*;
 pub use propagators::distinct::*;

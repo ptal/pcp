@@ -1,4 +1,4 @@
-// Copyright 2015 Pierre Talbot (IRCAM)
+// Copyright 2016 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
+use variable::ops::*;
 use gcollections::kind::*;
-use vec_map::Drain;
-use std::slice;
+use gcollections::ops::*;
+use gcollections::ops::sequence::ordering::*;
+use std::ops::Index;
+use std::fmt::Display;
 
-pub trait DrainDelta<Event>
-{
-  fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
-  fn has_changed(&self) -> bool;
-}
+pub trait ImmutableMemoryConcept:
+   Collection
+ + AssociativeCollection
+ + Cardinality<Size=usize>
+ + Iterable
+ + Empty
+ + Index<usize, Output=<Self as Collection>::Item>
+ + Display
+ + Freeze
+{}
 
-pub trait Iterable: Collection
-{
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
-}
-
-pub trait Failure
-{
-  fn is_failed(&self) -> bool;
-}
-
-pub trait MonotonicUpdate: AssociativeCollection
-{
-  fn update(&mut self, loc: &Self::Location, value: Self::Item) -> bool;
-}
+pub trait MemoryConcept:
+   ImmutableMemoryConcept
+ + AssociativeCollection<Location=usize>
+ + Push<Back>
+ + Replace<Location=usize>
+{}

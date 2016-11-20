@@ -15,9 +15,8 @@
 use kernel::*;
 use variable::concept::*;
 use variable::ops::*;
-use gcollections::ops::constructor::*;
-use gcollections::ops::cardinality::*;
-use gcollections::ops::sequence::*;
+use gcollections::kind::*;
+use gcollections::ops::*;
 use gcollections::ops::sequence::ordering::*;
 use std::slice;
 use std::ops::{Deref, DerefMut, Index};
@@ -30,13 +29,38 @@ pub struct CopyMemory<Domain>
   variables: Vec<Domain>
 }
 
-impl<Domain> MemoryConcept<Domain> for CopyMemory<Domain> where
- Domain: DomainConcept
+impl<Domain> MemoryConcept for CopyMemory<Domain> where
+  Domain: Clone + Display
 {}
 
-impl<Domain> ImmutableMemoryConcept<Domain> for CopyMemory<Domain> where
- Domain: DomainConcept
+impl<Domain> ImmutableMemoryConcept for CopyMemory<Domain> where
+  Domain: Clone + Display
 {}
+
+impl<Domain> Collection for CopyMemory<Domain>
+{
+  type Item = Domain;
+}
+
+impl<Domain> AssociativeCollection for CopyMemory<Domain>
+{
+  type Location = usize;
+}
+
+impl<Domain> Replace for CopyMemory<Domain>
+{
+  fn replace(&mut self, key: usize, dom: Domain) -> Domain {
+    mem::replace(&mut self.variables[key], dom)
+  }
+}
+
+impl<Domain> Index<usize> for CopyMemory<Domain>
+{
+  type Output = Domain;
+  fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    &self.variables[index]
+  }
+}
 
 impl<Domain> CopyMemory<Domain>
 {
@@ -82,32 +106,15 @@ impl<Domain> Cardinality for CopyMemory<Domain>
 
 impl<Domain> Iterable for CopyMemory<Domain>
 {
-  type Item = Domain;
-
   fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
     self.variables.iter()
   }
 }
 
-impl<Domain> Push<Back, Domain> for CopyMemory<Domain>
+impl<Domain> Push<Back> for CopyMemory<Domain>
 {
   fn push(&mut self, value: Domain) {
     self.variables.push(value);
-  }
-}
-
-impl<Domain> Replace<usize, Domain> for CopyMemory<Domain>
-{
-  fn replace(&mut self, key: usize, dom: Domain) -> Domain {
-    mem::replace(&mut self.variables[key], dom)
-  }
-}
-
-impl<Domain> Index<usize> for CopyMemory<Domain>
-{
-  type Output = Domain;
-  fn index<'a>(&'a self, index: usize) -> &'a Domain {
-    &self.variables[index]
   }
 }
 

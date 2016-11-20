@@ -17,7 +17,6 @@
 #![crate_name = "pcp"]
 
 #![feature(alloc, unboxed_closures, fnbox, fn_traits, box_syntax)]
-#![feature(question_mark)]
 #![feature(test)]
 
 extern crate test;
@@ -29,7 +28,7 @@ extern crate vec_map;
 
 pub mod kernel;
 pub mod propagation;
-pub mod propagators;
+// pub mod propagators;
 pub mod term;
 pub mod variable;
-pub mod search;
+// pub mod search;

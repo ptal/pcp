@@ -16,60 +16,66 @@ use kernel::*;
 use variable::ops::*;
 use variable::concept::*;
 use term::identity::*;
+use gcollections::kind::*;
 use gcollections::ops::*;
 use vec_map::{Drain, VecMap};
-use std::marker::PhantomData;
 use std::slice;
+use std::marker::PhantomData;
 use std::fmt::{Formatter, Display, Error};
 use std::ops::Index;
 
-pub struct Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+pub struct Store<Memory, Event>
 {
   memory: Memory,
-  delta: VecMap<Event>,
-  phantom: PhantomData<Domain>
+  delta: VecMap<Event>
 }
 
-impl<Memory, Domain, Event> ImmutableMemoryConcept<Domain> for
-  Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Collection for Store<Memory, Event> where
+  Memory: MemoryConcept
+{
+  type Item = <Memory as Collection>::Item;
+}
+
+impl<Memory, Event> AssociativeCollection for Store<Memory, Event> where
+  Memory: MemoryConcept
+{
+  type Location = Identity<<Memory as Collection>::Item>;
+}
+
+impl<Memory, Event> ImmutableMemoryConcept for Store<Memory, Event> where
+ Memory: MemoryConcept
 {}
 
-impl<Memory, Domain, Event> StoreConcept<Domain> for
-  Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept,
+impl<Memory, Domain, Event> StoreConcept for Store<Memory, Event> where
+ Memory: MemoryConcept,
+ Memory: Collection<Item=Domain>,
+ Domain: Subset + Cardinality + Bounded,
  Event: EventConcept<Domain>
 {}
 
-impl<Memory, Domain, Event> Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Store<Memory, Event> where
+ Memory: MemoryConcept
 {
   fn from_memory(memory: Memory) -> Self {
     Store {
       memory: memory,
-      delta: VecMap::new(),
-      phantom: PhantomData
+      delta: VecMap::new()
     }
   }
 }
 
-impl<Memory, Domain, Event> Empty for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Empty for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
-  fn empty() -> Store<Memory, Domain, Event> {
+  fn empty() -> Store<Memory, Event> {
     Store::from_memory(Memory::empty())
   }
 }
 
-impl<Memory, Domain, Event> Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept,
+impl<Memory, Domain, Event> Store<Memory, Event> where
+ Memory: MemoryConcept,
+ Memory: Collection<Item=Domain>,
+ Domain: Subset + Cardinality + Bounded,
  Event: EventConcept<Domain>
 {
   // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
@@ -87,9 +93,8 @@ impl<Memory, Domain, Event> Store<Memory, Domain, Event> where
   }
 }
 
-impl<Memory, Domain, Event> Cardinality for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Cardinality for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
   type Size = usize;
 
@@ -98,24 +103,20 @@ impl<Memory, Domain, Event> Cardinality for Store<Memory, Domain, Event> where
   }
 }
 
-impl<Memory, Domain, Event> Iterable for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Iterable for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
-  type Item = Domain;
-
   fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
     self.memory.iter()
   }
 }
 
-impl<Memory, Domain, Event> Alloc<Domain> for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Domain, Event> Alloc for Store<Memory, Event> where
+ Memory: MemoryConcept,
+ Memory: Collection<Item=Domain>,
+ Domain: Cardinality + IsEmpty
 {
-  type Location = Identity<Domain>;
-
-  fn alloc(&mut self, dom: Domain) -> Identity<Domain> {
+  fn alloc(&mut self, dom: Self::Item) -> Self::Location {
     assert!(!dom.is_empty());
     let var_idx = self.memory.size();
     self.memory.push(dom);
@@ -123,52 +124,51 @@ impl<Memory, Domain, Event> Alloc<Domain> for Store<Memory, Domain, Event> where
   }
 }
 
-impl<Memory, Domain, Event> MonotonicUpdate<usize, Domain> for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept,
+impl<Memory, Domain, Event> MonotonicUpdate for Store<Memory, Event> where
+ Memory: MemoryConcept,
+ Memory: Collection<Item=Domain>,
+ Domain: Subset + Cardinality + Bounded,
  Event: EventConcept<Domain>
 {
   // We update the domain located at `loc` if `dom` is not empty and is a strictly smaller than the current value.
-  fn update(&mut self, loc: usize, dom: Domain) -> bool {
-    assert!(dom.is_subset(&self.memory[loc]),
+  fn update(&mut self, loc: &Identity<Domain>, dom: Self::Item) -> bool {
+    let idx = loc.index();
+    assert!(dom.is_subset(&self.memory[idx]),
       "Domain update must be monotonic.");
     if dom.is_empty() {
       false
     }
     else {
-      if dom.size() < self[loc].size() {
-        let old_dom = self.memory.replace(loc, dom);
-        self.update_delta(loc, &old_dom);
+      if dom.size() < self[idx].size() {
+        let old_dom = self.memory.replace(idx, dom);
+        self.update_delta(idx, &old_dom);
       }
       true
     }
   }
 }
 
-impl<Memory, Domain, Event> Index<usize> for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Index<usize> for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
-  type Output = Domain;
-  fn index<'a>(&'a self, index: usize) -> &'a Domain {
+  type Output = <Memory as Collection>::Item;
+
+  fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
     assert!(index < self.memory.size(),
       "Variable not registered in the store. Variable index must be obtained with `alloc`.");
     &self.memory[index]
   }
 }
 
-impl<Memory, Domain, Event> Display for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Display for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     self.memory.fmt(formatter)
   }
 }
 
-impl<Memory, Domain, Event> DrainDelta<Event> for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> DrainDelta<Event> for Store<Memory, Event>
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
     self.delta.drain()
@@ -179,45 +179,39 @@ impl<Memory, Domain, Event> DrainDelta<Event> for Store<Memory, Domain, Event> w
   }
 }
 
-impl<Memory, Domain, Event> Freeze for Store<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Freeze for Store<Memory, Event> where
+ Memory: MemoryConcept
 {
-  type FrozenState = FrozenStore<Memory, Domain, Event>;
+  type FrozenState = FrozenStore<Memory, Event>;
   fn freeze(self) -> Self::FrozenState
   {
     FrozenStore::new(self)
   }
 }
 
-pub struct FrozenStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+pub struct FrozenStore<Memory, Event> where
+ Memory: MemoryConcept
 {
   frozen_memory: Memory::FrozenState,
-  phantom_domain: PhantomData<Domain>,
   phantom_event: PhantomData<Event>
 }
 
-impl<Memory, Domain, Event> FrozenStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> FrozenStore<Memory, Event> where
+ Memory: MemoryConcept
 {
-  fn new(store: Store<Memory, Domain, Event>) -> Self {
+  fn new(store: Store<Memory, Event>) -> Self {
     FrozenStore {
       frozen_memory: store.memory.freeze(),
-      phantom_domain: PhantomData,
       phantom_event: PhantomData
     }
   }
 }
 
-impl<Memory, Domain, Event> Snapshot for FrozenStore<Memory, Domain, Event> where
- Memory: MemoryConcept<Domain>,
- Domain: DomainConcept
+impl<Memory, Event> Snapshot for FrozenStore<Memory, Event> where
+ Memory: MemoryConcept
 {
   type Label = <Memory::FrozenState as Snapshot>::Label;
-  type State = Store<Memory, Domain, Event>;
+  type State = Store<Memory, Event>;
 
   fn label(&mut self) -> Self::Label {
     self.frozen_memory.label()
@@ -230,7 +224,6 @@ impl<Memory, Domain, Event> Snapshot for FrozenStore<Memory, Domain, Event> wher
 
 #[cfg(test)]
 pub mod test {
-  use kernel::Alloc;
   use variable::VStoreFD;
   use variable::ops::*;
   use term::ops::*;

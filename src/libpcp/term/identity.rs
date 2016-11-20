@@ -15,6 +15,7 @@
 use term::ops::*;
 use variable::ops::*;
 use term::ExprInference;
+use gcollections::kind::*;
 use std::marker::PhantomData;
 use std::fmt::{Formatter, Debug, Error};
 use std::ops::Index;
@@ -36,6 +37,10 @@ impl<Domain> Identity<Domain> {
       phantom: PhantomData
     }
   }
+
+  pub fn index(&self) -> usize {
+    self.idx
+  }
 }
 
 impl<Domain> Debug for Identity<Domain>
@@ -45,22 +50,18 @@ impl<Domain> Debug for Identity<Domain>
   }
 }
 
-impl<Domain> VarIndex for Identity<Domain> {
-  fn index(&self) -> usize {
-    self.idx
-  }
-}
-
-impl<Domain, Store> StoreMonotonicUpdate<Store, Domain> for Identity<Domain> where
-  Store: MonotonicUpdate<usize, Domain>
+impl<Domain, Store> StoreMonotonicUpdate<Store, Store::Item> for Identity<Domain> where
+  Store: MonotonicUpdate,
+  Store: AssociativeCollection<Location=Identity<Domain>>
 {
-  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
-    store.update(self.idx, value)
+  fn update(&mut self, store: &mut Store, value: Store::Item) -> bool {
+    store.update(self, value)
   }
 }
 
 impl<Domain, Store> StoreRead<Store> for Identity<Domain> where
   Store: Index<usize, Output=Domain>,
+  Store: Collection<Item=Domain>,
   Domain: Clone
 {
   type Value = Domain;
@@ -79,7 +80,6 @@ impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
 #[cfg(test)]
 mod test {
   use gcollections::ops::*;
-  use kernel::Alloc;
   use variable::VStoreFD;
   use term::ops::*;
   use interval::interval::*;

@@ -12,22 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub use variable::memory::concept::*;
 use kernel::*;
 use variable::ops::*;
+use gcollections::kind::*;
 use gcollections::ops::*;
-use gcollections::ops::sequence::ordering::*;
-use std::ops::Index;
-use std::fmt::Display;
 
-pub trait DomainConcept :
-  Clone + Display + Bounded + Cardinality + Subset + Eq
-{}
-
-impl<R> DomainConcept for R where
-  R: Clone + Display + Bounded + Cardinality + Subset + Eq
-{}
-
-pub trait EventConcept<Domain> :
+pub trait EventConcept<Domain>:
   MonotonicEvent<Domain> + Merge + Clone
 {}
 
@@ -35,27 +26,8 @@ impl<Domain, R> EventConcept<Domain> for R where
   R: MonotonicEvent<Domain> + Merge + Clone
 {}
 
-pub trait ImmutableMemoryConcept<Domain> :
-   Cardinality<Size=usize>
- + Iterable<Item=Domain>
- + Empty
- + Index<usize, Output=Domain>
- + Display
- + Freeze
-{}
-
-pub trait MemoryConcept<Domain> :
-   ImmutableMemoryConcept<Domain>
- + Push<Back, Domain>
- + Replace<usize, Domain>
- where
-  Domain: DomainConcept
-{}
-
-pub trait StoreConcept<Domain> :
-   ImmutableMemoryConcept<Domain>
- + Alloc<Domain>
- + MonotonicUpdate<usize, Domain>
-where
- Domain: DomainConcept
+pub trait StoreConcept:
+   ImmutableMemoryConcept
+ + Alloc
+ + MonotonicUpdate
 {}

@@ -13,10 +13,11 @@
 // limitations under the License.
 
 pub mod copy;
-pub mod trailed;
+pub mod concept;
+// pub mod trailed;
 
 pub use variable::memory::copy::*;
-pub use variable::memory::trailed::*;
+// pub use variable::memory::trailed::*;
 
 #[cfg(test)]
 mod test {
@@ -118,7 +119,8 @@ mod test {
   }
 
   fn configure_queue<Mem>(test: &mut Test) where
-    Mem: MemoryConcept<Domain>
+    Mem: MemoryConcept,
+    Mem: Collection<Item=Domain>
   {
     type Stack<Label> = VectorStack<QueueItem<Label>>;
     type Queue<Label> = DequeFrontBackQueue<QueueItem<Label>>;
@@ -135,9 +137,11 @@ mod test {
   // We simulate the updates in the memory `M` according to the exploration `Q` of a static tree (in `test.tree`).
   // Since the tree is already fully built, we can test the values when restoring a node.
   fn test_restoration<M, Q>(test: &Test) where
-   M: MemoryConcept<Domain>,
-   Q: Multiset<QueueItem<
-    <M::FrozenState as Snapshot>::Label>>,
+   M: MemoryConcept,
+   M: Collection<Item=Domain>,
+   Q: Multiset,
+   Q: Collection<Item=QueueItem<
+     <M::FrozenState as Snapshot>::Label>>,
   {
     let tree = &test.tree;
     let mut queue = Q::empty();

@@ -27,8 +27,3 @@ pub trait ViewDependencies<Event>
 {
   fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
 }
-
-pub trait VarIndex
-{
-  fn index(&self) -> usize;
-}
