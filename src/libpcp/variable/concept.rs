@@ -15,7 +15,6 @@
 pub use variable::memory::concept::*;
 use kernel::*;
 use variable::ops::*;
-use gcollections::kind::*;
 use gcollections::ops::*;
 
 pub trait EventConcept<Domain>:

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use term::ops::*;
-use term::ExprInference;
+use gcollections::kind::*;
 use std::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 
@@ -22,12 +22,6 @@ pub struct Addition<X, V>
 {
   x: X,
   v: V
-}
-
-impl<X, V, R> ExprInference for Addition<X, V> where
-  X: Add<V, Output=R>
-{
-  type Output = R;
 }
 
 impl<X, V> Addition<X, V> {
@@ -48,10 +42,11 @@ impl<X, V> Debug for Addition<X, V> where
   }
 }
 
-impl<X, V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Addition<X, V> where
+impl<X, V, Domain, Store> StoreMonotonicUpdate<Store> for Addition<X, V> where
+  Store: Collection<Item=Domain>,
   Domain: Sub<V, Output=Domain>,
   V: Clone,
-  X: StoreMonotonicUpdate<Store, Domain>
+  X: StoreMonotonicUpdate<Store>
 {
   fn update(&mut self, store: &mut Store, value: Domain) -> bool {
     self.x.update(store, value - self.v.clone())
@@ -59,12 +54,12 @@ impl<X, V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Addition<X, V>
 }
 
 impl<X, V, Domain, Store> StoreRead<Store> for Addition<X, V> where
+  Store: Collection<Item=Domain>,
   Domain: Add<V, Output=Domain>,
   V: Clone,
-  X: StoreRead<Store, Value=Domain>
+  X: StoreRead<Store>
 {
-  type Value = Domain;
-  fn read(&self, store: &Store) -> Domain {
+  fn read(&self, store: &Store) -> Store::Item {
     self.x.read(store) + self.v.clone()
   }
 }

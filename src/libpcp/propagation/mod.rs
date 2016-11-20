@@ -23,13 +23,13 @@
 // pub mod schedulers;
 pub mod events;
 // pub mod store;
-// pub mod ops;
-// pub mod concept;
+pub mod ops;
+pub mod concept;
 
 // pub use propagation::reactor::Reactor;
 // pub use propagation::scheduler::Scheduler;
-// pub use propagation::ops::*;
-// pub use propagation::concept::*;
+pub use propagation::ops::*;
+pub use propagation::concept::*;
 
 // pub type CStoreFD<VStore> =
 //   store::Store<VStore, events::FDEvent, reactors::IndexedDeps, schedulers::RelaxedFifo>;

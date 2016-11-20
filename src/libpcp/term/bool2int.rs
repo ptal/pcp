@@ -12,39 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use term::ExprInference;
-use num::{Zero, One};
+use num::Integer;
 use term::ops::*;
 use propagation::ops::*;
+use gcollections::kind::*;
 use gcollections::ops::*;
 use interval::ops::Range;
-use std::cmp::PartialOrd;
 use std::fmt::{Formatter, Debug, Error};
-use std::marker::PhantomData;
 
 /// x = bool2int(c)
 #[derive(Clone, Copy)]
-pub struct Bool2Int<DomX, P>
+pub struct Bool2Int<P>
 {
-  x: PhantomData<DomX>,
-  p: P,
+  p: P
 }
 
-impl<DomX, P> ExprInference for Bool2Int<DomX, P>
-{
-  type Output = DomX;
-}
-
-impl<DomX, P> Bool2Int<DomX, P> {
+impl<P> Bool2Int<P> {
   pub fn new(p: P) -> Self {
     Bool2Int {
-      x: PhantomData,
       p: p
     }
   }
 }
 
-impl<DomX, P> Debug for Bool2Int<DomX, P> where
+impl<P> Debug for Bool2Int<P> where
   P: Debug
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
@@ -54,14 +45,15 @@ impl<DomX, P> Debug for Bool2Int<DomX, P> where
 
 // A propagator using this view will not be subsumed unless (1) the propagator `p` of this view is subsumed (because `read` will return [0..1] until `p` is subsumed) or (2) if the parent propagator is subsumed whatever the value of this view becomes.
 
-impl<DomX, BX, P, Store> StoreMonotonicUpdate<Store, DomX> for Bool2Int<DomX, P> where
-  DomX: Bounded<Bound=BX> + IsSingleton,
-  BX: Zero + One + PartialOrd + PartialEq,
-  P: Propagator<Store>
+impl<Domain, B, P, Store> StoreMonotonicUpdate<Store> for Bool2Int<P> where
+ Store: Collection<Item=Domain>,
+ Domain: Collection<Item=B> + Bounded + IsSingleton,
+ B: Integer,
+ P: Propagator<Store>
 {
-  fn update(&mut self, store: &mut Store, value: DomX) -> bool {
+  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
     if value.is_singleton() {
-      if value.lower() == BX::one() {
+      if value.lower() == B::one() {
         self.p.propagate(store)
       }
       else {
@@ -75,23 +67,23 @@ impl<DomX, BX, P, Store> StoreMonotonicUpdate<Store, DomX> for Bool2Int<DomX, P>
   }
 }
 
-impl<DomX, BX, P, Store> StoreRead<Store> for Bool2Int<DomX, P> where
-  DomX: Bounded<Bound=BX> + Range<BX> + Singleton<BX>,
-  BX: Zero + One + PartialOrd,
-  P: Subsumption<Store>
+impl<Domain, B, P, Store> StoreRead<Store> for Bool2Int<P> where
+ Store: Collection<Item=Domain>,
+ Domain: Collection<Item=B> + Bounded + Range + Singleton,
+ B: Integer,
+ P: Subsumption<Store>
 {
-  type Value = DomX;
-  fn read(&self, store: &Store) -> Self::Value {
+  fn read(&self, store: &Store) -> Domain {
     use kernel::trilean::Trilean::*;
     match self.p.is_subsumed(store) {
-      True => DomX::singleton(BX::one()),
-      False => DomX::singleton(BX::zero()),
-      Unknown => DomX::new(BX::zero(), BX::one())
+      True => Domain::singleton(B::one()),
+      False => Domain::singleton(B::zero()),
+      Unknown => Domain::new(B::zero(), B::one())
     }
   }
 }
 
-impl<DomX, P, Event> ViewDependencies<Event> for Bool2Int<DomX, P> where
+impl<P, Event> ViewDependencies<Event> for Bool2Int<P> where
   P: PropagatorDependencies<Event>
 {
   fn dependencies(&self, _event: Event) -> Vec<(usize, Event)> {

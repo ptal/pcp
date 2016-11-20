@@ -14,7 +14,6 @@
 
 use term::ops::*;
 use variable::ops::*;
-use term::ExprInference;
 use gcollections::kind::*;
 use std::marker::PhantomData;
 use std::fmt::{Formatter, Debug, Error};
@@ -24,10 +23,6 @@ use std::ops::Index;
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>
-}
-
-impl<Domain> ExprInference for Identity<Domain> {
-  type Output = Domain;
 }
 
 impl<Domain> Identity<Domain> {
@@ -50,7 +45,7 @@ impl<Domain> Debug for Identity<Domain>
   }
 }
 
-impl<Domain, Store> StoreMonotonicUpdate<Store, Store::Item> for Identity<Domain> where
+impl<Domain, Store> StoreMonotonicUpdate<Store> for Identity<Domain> where
   Store: MonotonicUpdate,
   Store: AssociativeCollection<Location=Identity<Domain>>
 {
@@ -60,12 +55,11 @@ impl<Domain, Store> StoreMonotonicUpdate<Store, Store::Item> for Identity<Domain
 }
 
 impl<Domain, Store> StoreRead<Store> for Identity<Domain> where
-  Store: Index<usize, Output=Domain>,
   Store: Collection<Item=Domain>,
+  Store: Index<usize, Output=Domain>,
   Domain: Clone
 {
-  type Value = Domain;
-  fn read(&self, store: &Store) -> Domain {
+  fn read(&self, store: &Store) -> Store::Item {
     store[self.idx].clone()
   }
 }

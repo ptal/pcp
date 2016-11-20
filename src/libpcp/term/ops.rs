@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub trait StoreMonotonicUpdate<Store, Value>
+use gcollections::kind::*;
+
+pub trait StoreMonotonicUpdate<Store: Collection>
 {
-  fn update(&mut self, store: &mut Store, value: Value) -> bool;
+  fn update(&mut self, store: &mut Store, value: Store::Item) -> bool;
 }
 
-pub trait StoreRead<Store>
+pub trait StoreRead<Store: Collection>
 {
-  type Value;
-  fn read(&self, store: &Store) -> Self::Value;
+  fn read(&self, store: &Store) -> Store::Item;
 }
 
 pub trait ViewDependencies<Event>

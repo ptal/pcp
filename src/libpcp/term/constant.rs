@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use term::ops::*;
-use term::ExprInference;
 use gcollections::ops::*;
 use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
@@ -22,11 +21,6 @@ use std::fmt::{Formatter, Debug, Error};
 pub struct Constant<V>
 {
   value: V
-}
-
-impl<V> ExprInference for Constant<V>
-{
-  type Output = V;
 }
 
 impl<V> Constant<V>
@@ -46,21 +40,22 @@ impl<V> Debug for Constant<V> where
   }
 }
 
-
-impl<V, Domain, Store> StoreMonotonicUpdate<Store, Domain> for Constant<V> where
+impl<V, Domain, Store> StoreMonotonicUpdate<Store> for Constant<V> where
+  Store: Collection<Item=Domain>,
   Domain: Cardinality
 {
-  fn update(&mut self, _store: &mut Store, value: Domain) -> bool {
+  fn update(&mut self, _store: &mut Store, value: Store::Item) -> bool {
     !value.is_empty()
   }
 }
 
-impl<V, Store> StoreRead<Store> for Constant<V> where
+impl<V, Domain, Store> StoreRead<Store> for Constant<V> where
+  Store: Collection<Item=Domain>,
+  Domain: Collection<Item=V> + Singleton,
   V: Clone
 {
-  type Value = Optional<V>;
-  fn read(&self, _store: &Store) -> Optional<V> {
-    Optional::singleton(self.value.clone())
+  fn read(&self, _store: &Store) -> Domain {
+    Domain::singleton(self.value.clone())
   }
 }
 
