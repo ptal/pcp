@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
+use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 
@@ -48,14 +49,13 @@ impl<X, Y, Z> Debug for XGreaterYPlusZ<X, Y, Z> where
   }
 }
 
-impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> where
-  X: StoreRead<Store, Value=DomX>,
-  Y: StoreRead<Store, Value=DomY>,
-  Z: StoreRead<Store, Value=DomZ>,
-  DomX: Bounded<Bound=B>,
-  DomY: Bounded<Bound=B>,
-  DomZ: Bounded<Bound=B>,
-  B: PartialOrd + Num
+impl<Store, Dom, Bound, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store>,
+  Y: StoreRead<Store>,
+  Z: StoreRead<Store>,
+  Dom: Bounded<Item=Bound>,
+  Bound: PartialOrd + Num
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False: max(X) <= min(Y) + min(Z)
@@ -78,14 +78,13 @@ impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<
   }
 }
 
-impl<Store, B, DomX, DomY, DomZ, X, Y, Z> Propagator<Store> for XGreaterYPlusZ<X, Y, Z> where
-  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
-  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY>,
-  Z: StoreRead<Store, Value=DomZ> + StoreMonotonicUpdate<Store, DomZ>,
-  DomX: Bounded<Bound=B> + StrictShrinkLeft<B>,
-  DomY: Bounded<Bound=B> + StrictShrinkRight<B>,
-  DomZ: Bounded<Bound=B> + StrictShrinkRight<B>,
-  B: PartialOrd + Num,
+impl<Store, Dom, Bound, X, Y, Z> Propagator<Store> for XGreaterYPlusZ<X, Y, Z> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Z: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Dom: Bounded<Item=Bound> + StrictShrinkRight + StrictShrinkLeft,
+  Bound: PartialOrd + Num
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);

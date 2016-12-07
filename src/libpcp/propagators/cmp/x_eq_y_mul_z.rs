@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
+use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
 use std::ops::*;
 
@@ -49,13 +50,12 @@ impl<X, Y, Z> Debug for XEqYMulZ<X, Y, Z> where
   }
 }
 
-impl<Store, DomX, DomY, DomZ, DomYZ, X, Y, Z> Subsumption<Store> for XEqYMulZ<X, Y, Z> where
-  X: StoreRead<Store, Value=DomX>,
-  Y: StoreRead<Store, Value=DomY>,
-  Z: StoreRead<Store, Value=DomZ>,
-  DomX: IsSingleton,
-  DomY: Mul<DomZ, Output = DomYZ>,
-  DomYZ: IsSingleton + Overlap<DomX>
+impl<Store, Dom, X, Y, Z> Subsumption<Store> for XEqYMulZ<X, Y, Z> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store>,
+  Y: StoreRead<Store>,
+  Z: StoreRead<Store>,
+  Dom: Bounded + IsSingleton + Mul<Output=Dom> + Overlap
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False: x and y*z do not overlap.
@@ -76,12 +76,12 @@ impl<Store, DomX, DomY, DomZ, DomYZ, X, Y, Z> Subsumption<Store> for XEqYMulZ<X,
   }
 }
 
-impl<Store, DomX, DomY, DomZ, DomYZ, X, Y, Z> Propagator<Store> for XEqYMulZ<X, Y, Z> where
-  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
-  Y: StoreRead<Store, Value=DomY>,
-  Z: StoreRead<Store, Value=DomZ>,
-  DomX: Intersection<DomYZ, Output = DomX>,
-  DomY: Mul<DomZ, Output = DomYZ>,
+impl<Store, Dom, X, Y, Z> Propagator<Store> for XEqYMulZ<X, Y, Z> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Z: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Dom: Bounded + Intersection<Output=Dom> + Mul<Output=Dom>
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);

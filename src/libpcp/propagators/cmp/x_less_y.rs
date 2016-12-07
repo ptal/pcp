@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
+use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
@@ -45,13 +46,12 @@ impl<X, Y> Debug for XLessY<X, Y> where
   }
 }
 
-impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XLessY<X, Y> where
-  X: StoreRead<Store, Value=DomX>,
-  Y: StoreRead<Store, Value=DomY>,
-  DomX: Bounded<Bound=BX>,
-  DomY: Bounded<Bound=BY>,
-  BX: PartialOrd + PartialOrd<BY>,
-  BY: PartialOrd + PartialOrd<BX>
+impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XLessY<X, Y> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store>,
+  Y: StoreRead<Store>,
+  Dom: Bounded<Item=Bound>,
+  Bound: PartialOrd
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     // False:
@@ -79,13 +79,12 @@ impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XLessY<X, Y> where
   }
 }
 
-impl<Store, BX, BY, DomX, DomY, X, Y> Propagator<Store> for XLessY<X, Y> where
-  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
-  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY>,
-  DomX: Bounded<Bound=BX> + StrictShrinkLeft<BY> + StrictShrinkRight<BY>,
-  DomY: Bounded<Bound=BY> + StrictShrinkLeft<BX> + StrictShrinkRight<BX>,
-  BX: PartialOrd,
-  BY: PartialOrd
+impl<Store, Dom, Bound, X, Y> Propagator<Store> for XLessY<X, Y> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Dom: Bounded<Item=Bound> + StrictShrinkLeft + StrictShrinkRight,
+  Bound: PartialOrd
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);

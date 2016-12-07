@@ -21,7 +21,6 @@ pub mod x_eq_y_plus_z;
 pub mod x_eq_y_mul_z;
 
 use num::{PrimInt, Signed};
-use gcollections::ops::*;
 use term::*;
 pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
 pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
@@ -32,45 +31,37 @@ pub use propagators::cmp::x_eq_y::XEqY;
 pub use propagators::cmp::x_neq_y::XNeqY;
 
 pub type XGreaterY<X, Y> = XLessY<Y, X>;
-pub type XGreaterEqY<X, Y, BX> = XLessY<Y, Addition<X, BX>>;
+pub type XGreaterEqY<X, Y, Bound> = XLessY<Y, Addition<X, Bound>>;
 pub type XLessEqY<X, Y, BY> = XLessY<X, Addition<Y, BY>>;
-pub type XGreaterEqYPlusZ<X, Y, Z, BX> = XGreaterYPlusZ<Addition<X, BX>, Y, Z>;
-pub type XLessEqYPlusZ<X, Y, Z, BX> = XLessYPlusZ<Addition<X, BX>, Y, Z>;
+pub type XGreaterEqYPlusZ<X, Y, Z, Bound> = XGreaterYPlusZ<Addition<X, Bound>, Y, Z>;
+pub type XLessEqYPlusZ<X, Y, Z, Bound> = XLessYPlusZ<Addition<X, Bound>, Y, Z>;
 
 pub fn x_greater_y<X, Y>(x: X, y: Y) -> XGreaterY<X, Y> {
   XLessY::new(y, x)
 }
 
-pub fn x_geq_y<X, Y, R, BX>(x: X, y: Y) -> XGreaterEqY<X, Y, BX> where
-  X: ExprInference<Output=R>,
-  R: Bounded<Bound=BX>,
-  BX: PrimInt
+pub fn x_geq_y<X, Y, Bound>(x: X, y: Y) -> XGreaterEqY<X, Y, Bound> where
+  Bound: PrimInt
 {
-  x_greater_y(Addition::new(x, BX::one()), y)
+  x_greater_y(Addition::new(x, Bound::one()), y)
 }
 
-pub fn x_leq_y<X, Y, R, BY>(x: X, y: Y) -> XLessEqY<X, Y, BY> where
-  Y: ExprInference<Output=R>,
-  R: Bounded<Bound=BY>,
-  BY: PrimInt
+pub fn x_leq_y<X, Y, Bound>(x: X, y: Y) -> XLessEqY<X, Y, Bound> where
+  Bound: PrimInt
 {
-  XLessY::new(x, Addition::new(y, BY::one()))
+  XLessY::new(x, Addition::new(y, Bound::one()))
 }
 
-pub fn x_geq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y, Z, BX> where
-  X: ExprInference<Output=R>,
-  R: Bounded<Bound=BX>,
-  BX: PrimInt
+pub fn x_geq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y, Z, Bound> where
+  Bound: PrimInt
 {
-  XGreaterYPlusZ::new(Addition::new(x, BX::one()), y, z)
+  XGreaterYPlusZ::new(Addition::new(x, Bound::one()), y, z)
 }
 
-pub fn x_leq_y_plus_z<X, Y, Z, R, BX>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, BX> where
-  X: ExprInference<Output=R>,
-  R: Bounded<Bound=BX>,
-  BX: PrimInt + Signed
+pub fn x_leq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, Bound> where
+  Bound: PrimInt + Signed
 {
-  XLessYPlusZ::new(Addition::new(x, -BX::one()), y, z)
+  XLessYPlusZ::new(Addition::new(x, -Bound::one()), y, z)
 }
 
 #[cfg(test)]

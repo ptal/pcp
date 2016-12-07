@@ -17,10 +17,8 @@ use propagators::PropagatorKind;
 use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
-use gcollections::ops::*;
 use std::fmt::{Formatter, Debug, Error};
 use num::{Signed, PrimInt};
-use term::expr_inference::ExprInference;
 
 #[derive(Clone, Copy)]
 pub struct XEqYPlusZ<X, Y, Z, B>
@@ -31,14 +29,13 @@ pub struct XEqYPlusZ<X, Y, Z, B>
 
 impl<X, Y, Z, B> PropagatorKind for XEqYPlusZ<X, Y, Z, B> {}
 
-impl<X, Y, Z, R, BX> XEqYPlusZ<X, Y, Z, BX> where
-  X: Clone + ExprInference<Output=R>,
-  R: Bounded<Bound=BX>,
-  BX: PrimInt + Signed,
+impl<X, Y, Z, B> XEqYPlusZ<X, Y, Z, B> where
+  X: Clone,
   Y: Clone,
-  Z: Clone
+  Z: Clone,
+  B: PrimInt + Signed,
 {
-  pub fn new(x: X, y: Y, z: Z) -> XEqYPlusZ<X, Y, Z, BX> {
+  pub fn new(x: X, y: Y, z: Z) -> XEqYPlusZ<X, Y, Z, B> {
     XEqYPlusZ {
       geq: x_geq_y_plus_z(x.clone(), y.clone(), z.clone()),
       leq: x_leq_y_plus_z(x, y, z)
@@ -59,7 +56,7 @@ impl<X, Y, Z, B> Debug for XEqYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<Store, B, X, Y, Z> Subsumption<Store> for XEqYPlusZ<X, Y, Z, B> where
+impl<Store, X, Y, Z, B> Subsumption<Store> for XEqYPlusZ<X, Y, Z, B> where
   XGreaterEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
   XLessEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
 {
@@ -68,7 +65,7 @@ impl<Store, B, X, Y, Z> Subsumption<Store> for XEqYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<Store, B, X, Y, Z> Propagator<Store> for XEqYPlusZ<X, Y, Z, B> where
+impl<Store, X, Y, Z, B> Propagator<Store> for XEqYPlusZ<X, Y, Z, B> where
   XGreaterEqYPlusZ<X, Y, Z, B>: Propagator<Store>,
   XLessEqYPlusZ<X, Y, Z, B>: Propagator<Store>
 {

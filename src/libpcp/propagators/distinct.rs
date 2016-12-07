@@ -20,6 +20,7 @@ use propagation::events::*;
 use propagation::*;
 use term::ops::*;
 use gcollections::ops::*;
+use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone)]
@@ -61,9 +62,11 @@ impl<V> Debug for Distinct<V> where
   }
 }
 
-impl<Store, Domain, V> Subsumption<Store> for Distinct<V> where
-  V: StoreRead<Store, Value=Domain> + Clone,
-  Domain: Bounded + Disjoint
+impl<Store, Dom, Bound, V> Subsumption<Store> for Distinct<V> where
+  Store: Collection<Item=Dom>,
+  V: StoreRead<Store> + Clone,
+  Dom: Bounded<Item=Bound> + Disjoint,
+  Bound: PartialOrd
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     let mut all_entailed = true;
@@ -79,10 +82,12 @@ impl<Store, Domain, V> Subsumption<Store> for Distinct<V> where
   }
 }
 
-impl<Store, Domain, V> Propagator<Store> for Distinct<V> where
-  V: StoreRead<Store, Value=Domain> + StoreMonotonicUpdate<Store, Domain>,
-  Domain: Bounded + Cardinality,
-  Domain: Difference<<Domain as Bounded>::Bound, Output=Domain>
+impl<Store, Dom, Bound, V> Propagator<Store> for Distinct<V> where
+  Store: Collection<Item=Dom>,
+  V: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Dom: Bounded<Item=Bound> + Cardinality,
+  Dom: Difference<<Dom as Collection>::Item, Output=Dom>,
+  Bound: PartialOrd
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     for p in &mut self.props {

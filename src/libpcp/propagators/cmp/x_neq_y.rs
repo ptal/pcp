@@ -19,6 +19,7 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
+use gcollections::*;
 use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
@@ -45,26 +46,24 @@ impl<X, Y> Debug for XNeqY<X, Y> where
   }
 }
 
-impl<Store, BX, BY, DomX, DomY, X, Y> Subsumption<Store> for XNeqY<X, Y> where
-  X: StoreRead<Store, Value=DomX> + Clone,
-  Y: StoreRead<Store, Value=DomY> + Clone,
-  DomX: Bounded<Bound=BX> + Disjoint<DomY>,
-  DomY: Bounded<Bound=BY>,
-  BX: PartialOrd + PartialOrd<BY>,
-  BY: PartialOrd
+impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XNeqY<X, Y> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store> + Clone,
+  Y: StoreRead<Store> + Clone,
+  Dom: Bounded<Item=Bound> + Disjoint,
+  Bound: PartialOrd
 {
   fn is_subsumed(&self, store: &Store) -> Trilean {
     !XEqY::new(self.x.clone(), self.y.clone()).is_subsumed(store)
   }
 }
 
-impl<Store, BX, BY, DomX, DomY, X, Y> Propagator<Store> for XNeqY<X, Y> where
-  X: StoreRead<Store, Value=DomX> + StoreMonotonicUpdate<Store, DomX>,
-  Y: StoreRead<Store, Value=DomY> + StoreMonotonicUpdate<Store, DomY>,
-  DomX: Bounded<Bound=BX> + Cardinality + Difference<BY, Output=DomX>,
-  DomY: Bounded<Bound=BY> + Cardinality + Difference<BX, Output=DomY>,
-  BX: PartialOrd,
-  BY: PartialOrd
+impl<Store, Dom, Bound, X, Y> Propagator<Store> for XNeqY<X, Y> where
+  Store: Collection<Item=Dom>,
+  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Dom: Bounded<Item=Bound> + Cardinality + Difference<Bound, Output=Dom>,
+  Bound: PartialOrd
 {
   fn propagate(&mut self, store: &mut Store) -> bool {
     let x = self.x.read(store);
