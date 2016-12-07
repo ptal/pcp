@@ -32,7 +32,7 @@ pub use propagators::cmp::x_neq_y::XNeqY;
 
 pub type XGreaterY<X, Y> = XLessY<Y, X>;
 pub type XGreaterEqY<X, Y, Bound> = XLessY<Y, Addition<X, Bound>>;
-pub type XLessEqY<X, Y, BY> = XLessY<X, Addition<Y, BY>>;
+pub type XLessEqY<X, Y, Bound> = XLessY<X, Addition<Y, Bound>>;
 pub type XGreaterEqYPlusZ<X, Y, Z, Bound> = XGreaterYPlusZ<Addition<X, Bound>, Y, Z>;
 pub type XLessEqYPlusZ<X, Y, Z, Bound> = XLessYPlusZ<Addition<X, Bound>, Y, Z>;
 
