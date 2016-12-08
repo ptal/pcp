@@ -14,10 +14,6 @@
 
 // This example models the n-queens problem using interval domain (with `i32` bounds).
 
-extern crate pcp;
-extern crate interval;
-extern crate gcollections;
-
 use pcp::kernel::*;
 use pcp::propagators::*;
 use pcp::variable::ops::*;
@@ -40,15 +36,15 @@ pub fn nqueens(n: usize) {
       let q1 = (i + 1) as i32;
       let q2 = (j + 1) as i32;
       // Xi + i != Xj + j reformulated as: Xi != Xj + j - i
-      space.cstore.alloc(XNeqY::new(
+      space.cstore.alloc(box XNeqY::new(
         queens[i], Addition::new(queens[j], q2 - q1)));
       // Xi - i != Xj - j reformulated as: Xi != Xj - j + i
-      space.cstore.alloc(XNeqY::new(
+      space.cstore.alloc(box XNeqY::new(
         queens[i], Addition::new(queens[j], -q2 + q1)));
     }
   }
   // 2 queens can't share the same column.
-  space.cstore.alloc(Distinct::new(queens));
+  space.cstore.alloc(box Distinct::new(queens));
 
   // Search step.
   let mut search = one_solution_engine();

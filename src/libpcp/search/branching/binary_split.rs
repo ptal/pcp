@@ -22,8 +22,10 @@ use propagators::cmp::*;
 use propagation::concept::*;
 use propagation::events::*;
 use gcollections::ops::*;
+use gcollections::*;
 use num::traits::Num;
-use num::PrimInt;
+use num::{Integer, PrimInt};
+use std::ops::*;
 
 pub struct BinarySplit;
 
@@ -32,11 +34,13 @@ pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
 impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
-  VStore: Freeze + Iterable<Item=Domain>,
+  VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
+  VStore: AssociativeCollection<Location=Identity<Domain>>,
   CStore: Freeze,
-  CStore: Alloc<Box<PropagatorConcept<VStore, FDEvent> + 'static>>,
-  Domain: Clone + Cardinality + Bounded<Bound=Bound> + 'static,
-  Bound: PrimInt + Num + PartialOrd + Clone + Bounded<Bound=Bound> + 'static
+  CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
+  Domain: Clone + Cardinality + Bounded + Collection<Item=Bound> + Add<Bound, Output=Domain> + Sub<Bound, Output=Domain> + 'static,
+  Domain: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight + Empty + Singleton,
+  Bound: PrimInt + Num + Integer + PartialOrd + Clone + 'static
 {
   fn distribute(&mut self, space: Space<VStore, CStore>, var_idx: usize) ->
     (<Space<VStore, CStore> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore>>>)
@@ -44,10 +48,10 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
     let dom = nth_dom(&space.vstore, var_idx);
     assert!(!dom.is_singleton() && !dom.is_empty(),
       "Can not distribute over assigned or failed variables.");
-    let mid = (dom.lower() + dom.upper()) / (Bound::one() + Bound::one());
+    let mid: Bound = (dom.lower() + dom.upper()) / (Bound::one() + Bound::one());
     let mid = Constant::new(mid);
     let x = Identity::<Domain>::new(var_idx);
-    let x_less_mid = x_leq_y(x.clone(), mid.clone());
+    let x_less_mid = x_leq_y::<_,_,Bound>(x.clone(), mid.clone());
     let x_geq_mid = x_greater_y(x, mid);
 
     Branch::distribute(space,

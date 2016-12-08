@@ -17,13 +17,14 @@ use search::branching::*;
 use variable::ops::Iterable;
 use gcollections::ops::*;
 use num::traits::Unsigned;
+use num::Integer;
 
 pub struct FirstSmallestVar;
 
 impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for FirstSmallestVar where
   VStore: Iterable<Item=Domain>,
   Domain: Cardinality<Size=Size>,
-  Size: Ord + Unsigned
+  Size: Ord + Unsigned + Integer
 {
   fn select(&mut self, space: &Space<VStore, CStore>) -> usize {
     space.vstore.iter().enumerate()

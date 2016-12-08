@@ -31,5 +31,5 @@ pub use propagation::scheduler::Scheduler;
 pub use propagation::ops::*;
 pub use propagation::concept::*;
 
-// pub type CStoreFD<VStore> =
-//   store::Store<VStore, events::FDEvent, reactors::IndexedDeps, schedulers::RelaxedFifo>;
+pub type CStoreFD<VStore> =
+  store::Store<VStore, events::FDEvent, reactors::IndexedDeps, schedulers::RelaxedFifo>;

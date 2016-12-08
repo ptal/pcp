@@ -16,7 +16,7 @@
 
 #![crate_name = "pcp"]
 
-#![feature(alloc, unboxed_closures, box_syntax)]
+#![feature(alloc, unboxed_closures, box_syntax, fn_traits, fnbox)]
 #![feature(test)]
 
 extern crate test;
@@ -31,4 +31,4 @@ pub mod propagation;
 pub mod propagators;
 pub mod term;
 pub mod variable;
-// pub mod search;
+pub mod search;

@@ -17,6 +17,7 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
 use gcollections::ops::multiset::*;
+use gcollections::*;
 use std::marker::PhantomData;
 
 pub struct OneSolution<C, Q, Space> {
@@ -29,7 +30,7 @@ pub struct OneSolution<C, Q, Space> {
 impl<C, Q, Space> OneSolution<C, Q, Space> where
  Space: Freeze,
  C: SearchTreeVisitor<Space>,
- Q: Multiset<Branch<Space>>
+ Q: Multiset + Collection<Item=Branch<Space>>
 {
   pub fn new(child: C) -> OneSolution<C, Q, Space>
   {
@@ -75,7 +76,7 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
 impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
  Space: Freeze,
  C: SearchTreeVisitor<Space>,
- Q: Multiset<Branch<Space>>
+ Q: Multiset + Collection<Item=Branch<Space>>
 {
   fn start(&mut self, root: &Space) {
     self.queue = Q::empty();
