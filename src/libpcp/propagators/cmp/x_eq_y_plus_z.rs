@@ -91,9 +91,7 @@ impl<X, Y, Z, B> PropagatorDependencies<FDEvent> for XEqYPlusZ<X, Y, Z, B> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
   use kernel::Trilean::*;
-  use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use propagators::test::*;
@@ -122,6 +120,6 @@ mod test {
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    trinary_propagator_test(test_num, XEqYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
+    trinary_propagator_test(test_num, XEqYPlusZ::<_,_,_,i32>::new, x, y, z, before, after, delta_expected, propagate_success);
   }
 }

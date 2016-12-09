@@ -112,9 +112,6 @@ impl<X, Y, Z> PropagatorDependencies<FDEvent> for XLessYPlusZ<X, Y, Z> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
-  use kernel::Trilean::*;
-  use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use propagators::test::*;

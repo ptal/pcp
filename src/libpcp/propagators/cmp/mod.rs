@@ -123,6 +123,6 @@ mod test {
     before: Trilean, after: Trilean,
     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
   {
-    binary_propagator_test(test_num, x_geq_y, x, y, before, after, delta_expected, propagate_success);
+    binary_propagator_test(test_num, x_geq_y::<_,_,i32>, x, y, before, after, delta_expected, propagate_success);
   }
 }

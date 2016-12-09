@@ -69,14 +69,12 @@ impl<V, Event> ViewDependencies<Event> for Constant<V>
 #[cfg(test)]
 mod test {
   use super::*;
-  use gcollections::ops::*;
   use kernel::*;
   use kernel::trilean::Trilean::*;
   use propagation::*;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
   use variable::VStoreFD;
-  use term::ops::*;
   use propagators::test::*;
   use propagators::cmp::*;
   use interval::interval::*;
@@ -105,17 +103,17 @@ mod test {
     unary_propagator_test_one(2, dom0_10, 11, XLessY::new, True, True, vec![], true);
     unary_propagator_test_one(3, dom0_10, 10, XLessY::new, Unknown, True, vec![(0, Bound)], true);
 
-    unary_propagator_test_one(4, dom0_10, -1, x_leq_y, False, False, vec![], false);
-    unary_propagator_test_one(5, dom0_10, 10, x_leq_y, True, True, vec![], true);
-    unary_propagator_test_one(6, dom0_10, 9, x_leq_y, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(4, dom0_10, -1, x_leq_y::<_,_,i32>, False, False, vec![], false);
+    unary_propagator_test_one(5, dom0_10, 10, x_leq_y::<_,_,i32>, True, True, vec![], true);
+    unary_propagator_test_one(6, dom0_10, 9, x_leq_y::<_,_,i32>, Unknown, True, vec![(0, Bound)], true);
 
     unary_propagator_test_one(7, dom0_10, 10, x_greater_y, False, False, vec![], false);
     unary_propagator_test_one(8, dom0_10, -1, x_greater_y, True, True, vec![], true);
     unary_propagator_test_one(9, dom0_10, 0, x_greater_y, Unknown, True, vec![(0, Bound)], true);
 
-    unary_propagator_test_one(10, dom0_10, 11, x_geq_y, False, False, vec![], false);
-    unary_propagator_test_one(11, dom0_10, 0, x_geq_y, True, True, vec![], true);
-    unary_propagator_test_one(12, dom0_10, 1, x_geq_y, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(10, dom0_10, 11, x_geq_y::<_,_,i32>, False, False, vec![], false);
+    unary_propagator_test_one(11, dom0_10, 0, x_geq_y::<_,_,i32>, True, True, vec![], true);
+    unary_propagator_test_one(12, dom0_10, 1, x_geq_y::<_,_,i32>, Unknown, True, vec![(0, Bound)], true);
 
     unary_propagator_test_one(13, dom0_0, 0, XNeqY::new, False, False, vec![], false);
     unary_propagator_test_one(14, dom0_10, 5, XNeqY::new, Unknown, Unknown, vec![], true);

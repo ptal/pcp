@@ -110,9 +110,6 @@ impl<V> PropagatorDependencies<FDEvent> for Distinct<V> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
-  use kernel::Trilean::*;
-  use propagation::events::*;
   use propagation::events::FDEvent::*;
   use interval::interval::*;
   use propagators::test::*;

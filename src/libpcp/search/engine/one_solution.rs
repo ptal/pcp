@@ -99,14 +99,11 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
   use variable::VStoreFD;
   use propagation::CStoreFD;
   use propagators::cmp::*;
   use propagators::distinct::*;
   use term::*;
-  use search::search_tree_visitor::*;
-  use search::search_tree_visitor::Status::*;
   use search::space::*;
   use search::propagation::*;
   use search::branching::binary_split::*;
@@ -152,13 +149,13 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        space.cstore.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
         // Xi - i != Xj - j
-        space.cstore.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
       }
     }
     // 2 queens can't share the same column.
-    space.cstore.alloc(Distinct::new(queens));
+    space.cstore.alloc(box Distinct::new(queens));
 
     let mut search: OneSolution<_, VectorStack<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);

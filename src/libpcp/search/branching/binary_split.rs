@@ -81,14 +81,11 @@ pub fn nth_dom<VStore, Domain>(vstore: &VStore, var_idx: usize) -> Domain where
 mod test {
   use super::*;
   use search::branching::Distributor;
-  use search::space::*;
-  use kernel::*;
   use kernel::trilean::Trilean::*;
   use variable::VStoreFD;
   use propagation::CStoreFD;
-  use gcollections::ops::*;
   use interval::interval::*;
-  use interval::ops::*;
+  use interval::ops::Range;
 
   type Domain = Interval<i32>;
   type VStore = VStoreFD;

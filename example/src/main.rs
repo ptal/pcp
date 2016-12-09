@@ -25,7 +25,7 @@ extern crate gcollections;
 extern crate test;
 
 mod nqueens;
-// mod robot;
+mod robot;
 
 use nqueens::nqueens;
 
@@ -37,5 +37,5 @@ fn main() {
   nqueens(10);
   println!("");
 
-  // robot::solve_schedule(4, robot::build_store(4, 500), true);
+  robot::solve_schedule(4, robot::build_store(4, 500), true);
 }

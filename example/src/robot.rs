@@ -16,19 +16,19 @@
 // schedule num_robot to do some tasks. //
 // Each robot with take something, wait some time, put the thing somewhere and go to park.
 // Robot task : Loading (L), Take (T), Wait (W), Put (P), go to park end (E)
-// Contraint for one robot : 
+// Contraint for one robot :
 // for each task start and duraton variable are defined
-// start task are in domaine time[0, max_time] 
+// start task are in domaine time[0, max_time]
 //constraint:
 // Ls = 0 //loading first robot start at 0.
 // Ld element [10, 15] //loading take from 10 to 15 second
 // Ts > Ls + Ld // take start after that loading has finished (Ls + Ld)
 // Td element [25,35]
-// Ws > Ts + Td 
+// Ws > Ts + Td
 // Wd element [100, 250]
-// P > Ws + Wd 
+// P > Ws + Wd
 // Pd element [25, 35]
-// Es > Ps + Pd 
+// Es > Ps + Pd
 // Es end before max_time.
 //
 
@@ -52,9 +52,9 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
   let mut last = vec![];
 
   let time_dom = (1, max_time as i32).to_interval();
- 
+
   //add task start variable
-  for i in 0..num_robot { 
+  for i in 0..num_robot {
 	  task.push(space.vstore.alloc(time_dom)); //Loading L start
 	  last.push(space.vstore.alloc((10, 15 as i32).to_interval())); //Loading L Duration
 	  task.push(space.vstore.alloc(time_dom)); //Take T start
@@ -64,19 +64,19 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
 	  task.push(space.vstore.alloc(time_dom)); //Put P start
 	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Put P Duration
 	  task.push(space.vstore.alloc(time_dom)); //Park End E start
- 
-	  //contraints definition
-	  if i == 0 {space.cstore.alloc(XEqY::new(task[0], Constant::new(3)));} // Ls = 0 first robot start condition
 
-    space.cstore.alloc(x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 15)));
-    space.cstore.alloc(x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 15)));
-    space.cstore.alloc(x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 15)));
-    space.cstore.alloc(x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 15)));
-	  
-/*	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld 
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td 
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd 
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd 
+	  //contraints definition
+	  if i == 0 {space.cstore.alloc(box XEqY::new(task[0], Constant::new(3)));} // Ls = 0 first robot start condition
+
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 15)));
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 15)));
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 15)));
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 15)));
+
+/*	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld
+	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td
+	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd
+	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd
 */
   }
   space

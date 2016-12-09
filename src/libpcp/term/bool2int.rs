@@ -94,11 +94,8 @@ impl<P, Event> ViewDependencies<Event> for Bool2Int<P> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use gcollections::ops::*;
   use propagators::XEqY;
-  use kernel::Alloc;
   use variable::VStoreFD;
-  use term::ops::*;
   use interval::interval::*;
 
   type VStore = VStoreFD;
@@ -111,7 +108,7 @@ mod test {
     let mut y = store.alloc(dom0_10);
 
     // z = bool2int(x == y)
-    let z: Bool2Int<Interval<i32>, _> = Bool2Int::new(XEqY::new(x, y));
+    let z = Bool2Int::new(XEqY::new(x, y));
     assert_eq!(z.read(&store), dom0_1);
 
     x.update(&mut store, narrow_x);
@@ -142,7 +139,7 @@ mod test {
     let y = store.alloc(dom_y);
 
     // z = bool2int(x == y)
-    let mut z: Bool2Int<Interval<i32>, _> = Bool2Int::new(XEqY::new(x, y));
+    let mut z = Bool2Int::new(XEqY::new(x, y));
     if expected {
       assert_eq!(z.read(&store), dom0_1);
     }

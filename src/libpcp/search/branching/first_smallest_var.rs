@@ -38,12 +38,9 @@ impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for First
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
   use variable::VStoreFD;
   use propagation::CStoreFD;
-  use search::space::*;
   use search::branching::VarSelection;
-  use gcollections::ops::*;
   use interval::interval::*;
   use interval::ops::*;
 

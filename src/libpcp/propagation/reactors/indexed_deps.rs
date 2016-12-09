@@ -95,7 +95,6 @@ impl Debug for IndexedDeps
 #[cfg(test)]
 mod test {
   use super::*;
-  use gcollections::ops::*;
   use propagation::Reactor;
   use propagation::events::FDEvent;
   use propagation::events::FDEvent::*;
