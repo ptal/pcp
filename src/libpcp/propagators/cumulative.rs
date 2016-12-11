@@ -17,12 +17,12 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use term::bool2int::*;
-use interval::ops::{Range, Whole};
+use interval::ops::{Range};
 use gcollections::ops::*;
 use gcollections::*;
 use gcollections::IntervalKind;
 use num::{Integer, PrimInt, Signed};
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, Mul};
 use std::marker::PhantomData;
 
 pub struct Cumulative<V, VStore>
@@ -57,11 +57,11 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
   V: StoreMonotonicUpdate<VStore>,
   V: StoreRead<VStore>,
   V: Clone + 'static,
-  Dom: Bounded<Item=Bound> + Add<Output=Dom> + Sub<Output=Dom> + Clone + Whole,
+  Dom: Bounded<Item=Bound> + Add<Bound, Output=Dom> + Add<Output=Dom> + Sub<Bound, Output=Dom> + Mul<Output=Dom> + Clone,
   Dom: Singleton + Overlap + Intersection<Output=Dom> + Cardinality + Range,
-  Dom: Empty + ShrinkLeft + ShrinkRight + IntervalKind + 'static + PrimInt + Signed,
+  Dom: Empty + ShrinkLeft + ShrinkRight + IntervalKind + 'static,
   Bound: PartialOrd,
-  Bound: Integer + PrimInt + 'static
+  Bound: Integer + PrimInt + Signed + 'static
 {
   // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
   // forall( j in tasks ) (
@@ -80,22 +80,25 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
           // bool2int(s[i] <= s[j] /\ s[j] < s[i] + d[i])
           let mut conj: CStore = CStore::empty();
           // s[i] <= s[j]
-          conj.alloc(box x_leq_y(self.start_at(i), self.start_at(j)));
+          conj.alloc(box x_leq_y::<_,_,Bound>(self.start_at(i), self.start_at(j)));
           // s[j] < s[i] + d[i]
           conj.alloc(box XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i)));
           let b2i = Bool2Int::new(conj);
 
           // r = b2i * r[i]
-          let r = vstore.alloc(Dom::whole());
-          cstore.alloc(box XEqYMulZ::new(r.clone(), b2i, self.resource_at(i)));
+          let ri = self.resource_at(i);
+          let ri_ub = ri.read(vstore).upper();
+          let r = vstore.alloc(Dom::new(Bound::zero(), ri_ub));
+          cstore.alloc(box XEqYMulZ::new(r.clone(), b2i, ri));
           resource_vars.push(r);
         }
       }
       //  sum( i in tasks where i != j )(...)
       let mut sum = resource_vars.pop().expect("Need at least two tasks.");
       for r in resource_vars {
-        let sum2 = vstore.alloc(Dom::whole());
-        cstore.alloc(box XEqYPlusZ::new(sum2.clone(), sum, r));
+        let sum2_dom = sum.read(vstore) + r.read(vstore);
+        let sum2 = vstore.alloc(sum2_dom);
+        cstore.alloc(box XEqYPlusZ::<_,_,_,Bound>::new(sum2.clone(), sum, r));
         sum = sum2;
       }
       // c >= r[j] + sum
@@ -122,41 +125,67 @@ mod test {
   use super::*;
   use kernel::*;
   use kernel::Trilean::*;
-  use propagation::events::FDEvent::*;
   use interval::interval::*;
-  use propagators::test::*;
+  use variable::VStoreCopy;
+  use propagation::CStoreFD;
+
+  type VStoreFD = VStoreCopy<Interval<i32>>;
+
+  struct CumulativeTest {
+    starts: Vec<Interval<i32>>,
+    durations: Vec<Interval<i32>>,
+    resources: Vec<Interval<i32>>,
+    capacity: Interval<i32>,
+  }
+
+  impl CumulativeTest {
+    fn new(starts: Vec<Interval<i32>>, durations: Vec<Interval<i32>>,
+      resources: Vec<Interval<i32>>, capacity: Interval<i32>) -> Self
+    {
+      CumulativeTest {
+        starts: starts,
+        durations: durations,
+        resources: resources,
+        capacity: capacity
+      }
+    }
+
+    fn new_assignment(starts: Vec<i32>, durations: Vec<i32>,
+      resources: Vec<i32>, capacity: i32) -> Self
+    {
+      CumulativeTest::new(
+        starts.into_iter().map(|s| Interval::new(s, s)).collect(),
+        durations.into_iter().map(|d| Interval::new(d, d)).collect(),
+        resources.into_iter().map(|r| Interval::new(r, r)).collect(),
+        Interval::new(capacity, capacity)
+      )
+    }
+
+    fn instantiate(self, vstore: &mut VStoreFD, cstore: &mut CStoreFD<VStoreFD>) {
+      let cumulative = Cumulative::new(
+        self.starts.into_iter().map(|s| box vstore.alloc(s)).collect(),
+        self.durations.into_iter().map(|d| box vstore.alloc(d)).collect(),
+        self.resources.into_iter().map(|r| box vstore.alloc(r)).collect(),
+        box vstore.alloc(self.capacity)
+      );
+      cumulative.join(vstore, cstore);
+    }
+
+    fn test(self, test_num: usize, before: Trilean, after: Trilean, propagate_success: bool) {
+      println!("Test number {}", test_num);
+      let vstore = &mut VStoreFD::empty();
+      let cstore = &mut CStoreFD::empty();
+      self.instantiate(vstore, cstore);
+      assert_eq!(cstore.is_subsumed(vstore), before);
+      assert_eq!(cstore.propagate(vstore), propagate_success);
+      assert_eq!(cstore.is_subsumed(vstore), after);
+    }
+  }
 
   #[test]
   fn cumulative_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom10_11 = (10,11).to_interval();
-    let dom5_15 = (5,15).to_interval();
-    let dom1_10 = (1,10).to_interval();
-    let dom5_10 = (5,10).to_interval();
-    let dom6_10 = (6,10).to_interval();
-    let dom1_1 = (1,1).to_interval();
-    let dom2_2 = (2,2).to_interval();
-
-    culmulative_test_one(1, dom0_10, dom0_10, dom0_10,
-      Unknown, Unknown, vec![(0, Bound), (1, Bound), (2, Bound)], true);
-    culmulative_test_one(2, dom10_11, dom5_15, dom5_15,
-      Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
-    culmulative_test_one(3, dom10_20, dom1_1, dom1_1,
-      True, True, vec![], true);
-    culmulative_test_one(4, dom1_1, dom1_1, dom1_1,
-      False, False, vec![], false);
-    culmulative_test_one(5, dom2_2, dom1_1, dom1_1,
-      False, False, vec![], false);
-    culmulative_test_one(6, dom6_10, dom5_10, dom1_10,
-      Unknown, Unknown, vec![(0, Bound), (1, Bound), (2, Bound)], true);
-  }
-
-  fn culmulative_test_one(test_num: u32,
-    x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    trinary_propagator_test(test_num, XGreaterYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
+    let failed = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+    failed.test(1, Unknown, False, false);
   }
 }

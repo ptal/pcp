@@ -16,11 +16,11 @@ plugin = true
 
 [dependencies.pcp]
 path = ".."
-version = "^0.1.3"
+version = "^0.2.0"
 
 [dependencies]
-oak = "^0.4.1"
-oak_runtime = "^0.4.0"
-intervallum = "^0.5.5"
-gcollections = "^0.2.2"
+oak = "^0.4.5"
+oak_runtime = "^0.4.1"
+intervallum = "^0.6.0"
+gcollections = "^0.3.2"
 ama = "^0.1.3"

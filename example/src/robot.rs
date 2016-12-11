@@ -137,30 +137,30 @@ pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
 
  #[cfg(test)]
 mod tests {
-    use test::Bencher;
+  use test::Bencher;
 
-    #[test]
-    fn test_shedule() {
-        super::solve_schedule(4, super::build_store(4, 500), true);
-    }
+  #[test]
+  fn test_shedule() {
+      super::solve_schedule(4, super::build_store(4, 500), true);
+  }
 
-    #[bench]
-    fn bench_schedule_2(b: &mut Bencher) {
-    	b.iter(|| super::solve_schedule(2, super::build_store(2, 500), false));
-    }
+  #[bench]
+  fn bench_schedule_2(b: &mut Bencher) {
+  	b.iter(|| super::solve_schedule(2, super::build_store(2, 500), false));
+  }
 
-    #[bench]
-    fn bench_schedule_4(b: &mut Bencher) {
-    	b.iter(|| super::solve_schedule(4, super::build_store(4, 500), false));
-    }
+  #[bench]
+  fn bench_schedule_4(b: &mut Bencher) {
+  	b.iter(|| super::solve_schedule(4, super::build_store(4, 500), false));
+  }
 
-    #[bench]
-    fn bench_schedule_8(b: &mut Bencher) {
-    	b.iter(|| super::solve_schedule(8, super::build_store(8, 500), false));
-    }
+  #[bench]
+  fn bench_schedule_8(b: &mut Bencher) {
+  	b.iter(|| super::solve_schedule(8, super::build_store(8, 500), false));
+  }
 
-    #[bench]
-    fn bench_schedule_16(b: &mut Bencher) {
-    	b.iter(|| super::solve_schedule(16, super::build_store(16, 500), false));
-    }
+  #[bench]
+  fn bench_schedule_16(b: &mut Bencher) {
+  	b.iter(|| super::solve_schedule(16, super::build_store(16, 500), false));
+  }
 }

@@ -19,7 +19,7 @@ use kernel::Trilean::*;
 use propagation::Reactor;
 use propagation::Scheduler;
 use propagation::concept::*;
-use propagation::ops::Subsumption;
+use propagation::ops::*;
 use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
@@ -86,17 +86,15 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     }
   }
 
-  fn propagation_loop(&mut self, store: &mut VStore) -> Trilean {
-    let mut unsatisfiable = false;
+  fn propagation_loop(&mut self, store: &mut VStore) -> bool {
+    let mut consistent = true;
     while let Some(p_idx) = self.scheduler.pop() {
       if !self.propagate_one(p_idx, store) {
-        unsatisfiable = true;
+        consistent = false;
         break;
       }
     }
-    if unsatisfiable { False }
-    else if self.reactor.is_empty() { True }
-    else { Unknown }
+    consistent
   }
 
   fn propagate_one(&mut self, p_idx: usize, store: &mut VStore) -> bool {
@@ -149,6 +147,28 @@ impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
   }
 }
 
+impl<VStore, Event, R, S> Propagator<VStore> for Store<VStore, Event, R, S> where
+ VStore: Cardinality<Size=usize> + DrainDelta<Event>,
+ Event: EventIndex,
+ R: Reactor + Cardinality<Size=usize>,
+ S: Scheduler
+{
+  fn propagate(&mut self, store: &mut VStore) -> bool {
+    self.prepare(store);
+    self.propagation_loop(store)
+  }
+}
+
+impl<VStore, Event, R, S> PropagatorDependencies<Event> for Store<VStore, Event, R, S>
+{
+  fn dependencies(&self) -> Vec<(usize, Event)> {
+    self.propagators.iter()
+      .map(|p| p.dependencies())
+      .flat_map(|deps| deps.into_iter())
+      .collect()
+  }
+}
+
 impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
@@ -156,8 +176,10 @@ impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> whe
  S: Scheduler
 {
   fn consistency(&mut self, store: &mut VStore) -> Trilean {
-    self.prepare(store);
-    self.propagation_loop(store)
+    let consistent = self.propagate(store);
+    if !consistent { False }
+    else if self.reactor.is_empty() { True }
+    else { Unknown }
   }
 }
 
