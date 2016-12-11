@@ -24,6 +24,7 @@ use gcollections::IntervalKind;
 use num::{Integer, PrimInt, Signed};
 use std::ops::{Add, Sub, Mul};
 use std::marker::PhantomData;
+use std::fmt::Debug;
 
 pub struct Cumulative<V, VStore>
 {
@@ -56,11 +57,11 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
   V: ViewDependencies<FDEvent>,
   V: StoreMonotonicUpdate<VStore>,
   V: StoreRead<VStore>,
-  V: Clone + 'static,
+  V: Clone + Debug + 'static,
   Dom: Bounded<Item=Bound> + Add<Bound, Output=Dom> + Add<Output=Dom> + Sub<Bound, Output=Dom> + Mul<Output=Dom> + Clone,
   Dom: Singleton + Overlap + Intersection<Output=Dom> + Cardinality + Range,
   Dom: Empty + ShrinkLeft + ShrinkRight + IntervalKind + 'static,
-  Bound: PartialOrd,
+  Bound: PartialOrd + Debug,
   Bound: Integer + PrimInt + Signed + 'static
 {
   // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
@@ -102,7 +103,7 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
         sum = sum2;
       }
       // c >= r[j] + sum
-      cstore.alloc(box XGreaterYPlusZ::new(self.capacity_var(), self.resource_at(j), sum));
+      cstore.alloc(box x_geq_y_plus_z::<_,_,_,Bound>(self.capacity_var(), self.resource_at(j), sum));
     }
   }
 
@@ -183,9 +184,51 @@ mod test {
   }
 
   #[test]
-  fn cumulative_test() {
-    let failed = CumulativeTest::new_assignment(
+  fn cumulative_assignment_test() {
+    // The task 2 and 3 overlaps and consume 4 resources altogether.
+    let test = CumulativeTest::new_assignment(
       vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
-    failed.test(1, Unknown, False, false);
+    test.test(1, Unknown, False, false);
+
+    // We can delay the task 3 to fix the problem.
+    let test = CumulativeTest::new_assignment(
+      vec![0,1,5], vec![3,4,2], vec![1,2,2], 3);
+    test.test(2, Unknown, True, true);
+
+    // Another possibility is to reduce the resource of task 3.
+    let test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,1], 3);
+    test.test(3, Unknown, True, true);
+
+    // Or augment the total amount of resources available.
+    let test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,2], 4);
+    test.test(4, Unknown, True, true);
+
+    // Or reduce the duration of task 2.
+    let test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,3,2], vec![1,2,2], 3);
+    test.test(4, Unknown, True, true);
+  }
+
+  #[test]
+  fn cumulative_test() {
+    let mut test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+    // Widden the start date of task 1, should fail anyway.
+    test.starts[0] = Interval::new(0,4);
+    test.test(1, Unknown, False, false);
+
+    let mut test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+    // Widden the start date of task 2, succeed when schedule at start=0.
+    test.starts[1] = Interval::new(0,1);
+    test.test(2, Unknown, Unknown, true);
+
+    let mut test = CumulativeTest::new_assignment(
+      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+    // Widden the start date of task 3, succeed when schedule at start=5.
+    test.starts[2] = Interval::new(4,5);
+    test.test(3, Unknown, Unknown, true);
   }
 }

@@ -25,6 +25,7 @@ use gcollections::kind::*;
 use gcollections::ops::*;
 use std::rc::*;
 use std::marker::PhantomData;
+use std::fmt::{Formatter, Debug, Error};
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
@@ -55,6 +56,17 @@ impl<VStore, Event, R, S> Collection for Store<VStore, Event, R, S>
 impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
 {
   type Location = ();
+}
+
+impl<VStore, Event, R, S> Debug for Store<VStore, Event, R, S>
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    for p in &self.propagators {
+      p.fmt(formatter)?;
+      formatter.write_str("\n")?;
+    }
+    Ok(())
+  }
 }
 
 impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
@@ -159,13 +171,17 @@ impl<VStore, Event, R, S> Propagator<VStore> for Store<VStore, Event, R, S> wher
   }
 }
 
-impl<VStore, Event, R, S> PropagatorDependencies<Event> for Store<VStore, Event, R, S>
+impl<VStore, Event, R, S> PropagatorDependencies<Event> for Store<VStore, Event, R, S> where
+  Event: Ord
 {
   fn dependencies(&self) -> Vec<(usize, Event)> {
-    self.propagators.iter()
+    let mut deps: Vec<_> = self.propagators.iter()
       .map(|p| p.dependencies())
       .flat_map(|deps| deps.into_iter())
-      .collect()
+      .collect();
+    deps.sort();
+    deps.dedup();
+    deps
   }
 }
 

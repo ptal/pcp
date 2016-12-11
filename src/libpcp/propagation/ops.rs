@@ -15,6 +15,7 @@
 use kernel::trilean::*;
 use kernel::consistency::*;
 use propagation::concept::*;
+use std::fmt::Debug;
 
 pub trait Subsumption<Store>
 {
@@ -39,7 +40,7 @@ pub trait BoxedClone<VStore, Event>
 }
 
 impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
-  R: Clone,
+  R: Clone + Debug,
   R: Consistency<VStore>,
   R: Subsumption<VStore>,
   R: PropagatorDependencies<Event>,

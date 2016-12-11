@@ -26,6 +26,7 @@ use gcollections::*;
 use num::traits::Num;
 use num::{Integer, PrimInt};
 use std::ops::*;
+use std::fmt::Debug;
 
 pub struct BinarySplit;
 
@@ -40,7 +41,7 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
   CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
   Domain: Clone + Cardinality + Bounded + Collection<Item=Bound> + Add<Bound, Output=Domain> + Sub<Bound, Output=Domain> + 'static,
   Domain: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight + Empty + Singleton,
-  Bound: PrimInt + Num + Integer + PartialOrd + Clone + 'static
+  Bound: PrimInt + Num + Integer + PartialOrd + Clone + Debug + 'static
 {
   fn distribute(&mut self, space: Space<VStore, CStore>, var_idx: usize) ->
     (<Space<VStore, CStore> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore>>>)
