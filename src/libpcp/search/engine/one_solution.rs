@@ -23,7 +23,7 @@ use gcollections::*;
 use std::marker::PhantomData;
 
 pub struct OneSolution<C, Q, Space> {
-  child: C,
+  pub child: C,
   queue: Q,
   started_exploration: bool,
   phantom_space: PhantomData<Space>

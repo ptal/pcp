@@ -1,4 +1,4 @@
-// Copyright 2015 Pierre Talbot (IRCAM)
+// Copyright 2016 Pierre Talbot (IRCAM)
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 
 pub struct AllSolution<C> {
-  child: C
+  pub child: C
 }
 
 impl<C> AllSolution<C>
