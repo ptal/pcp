@@ -23,7 +23,8 @@ pub enum Status<Space> where
 {
   Satisfiable,
   Unsatisfiable,
-  Unknown(Vec<Branch<Space>>)
+  Unknown(Vec<Branch<Space>>),
+  EndOfSearch
 }
 
 impl<Space> Status<Space> where
@@ -42,7 +43,8 @@ impl<Space> Debug for Status<Space> where
       &Satisfiable => "Satisfiable",
       &Unsatisfiable => "Unsatisfiable",
       &Unknown(ref branches) if branches.is_empty() => "Pruned",
-      &Unknown(_) => "Unknown"
+      &Unknown(_) => "Unknown",
+      &EndOfSearch => "End of search"
     };
     formatter.write_str(name)
   }
@@ -57,20 +59,8 @@ impl<Space> PartialEq for Status<Space> where
       (&Unsatisfiable, &Unsatisfiable) => true,
       (&Unknown(ref b1), &Unknown(ref b2)) if b1.is_empty() && b2.is_empty() => true,
       (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
+      (&EndOfSearch, &EndOfSearch) => true,
       (_, _) => false,
-    }
-  }
-}
-
-impl<Space> Status<Space> where
-  Space: Freeze
-{
-  // Promote `self` to `Pruned` or `Satisfiable` depending on `status`.
-  pub fn or(self, status: &Status<Space>) -> Self {
-    match (self, status) {
-      (_, &Satisfiable) => Satisfiable,
-      (Unsatisfiable, &Unknown(ref branches)) if branches.is_empty() => Status::pruned(),
-      (s, _) => s,
     }
   }
 }

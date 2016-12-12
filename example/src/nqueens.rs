@@ -49,9 +49,8 @@ pub fn nqueens(n: usize) {
   // Search step.
   let mut search = one_solution_engine();
   search.start(&space);
-  let (mut space, status) = search.enter(space);
-  let label = space.label();
-  let space = space.restore(label);
+  let (mut frozen_space, status) = search.enter(space);
+  let space = frozen_space.unfreeze();
 
   // Print result.
   match status {

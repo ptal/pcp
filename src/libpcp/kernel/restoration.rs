@@ -25,5 +25,8 @@ pub trait Snapshot : Sized
 
   fn label(&mut self) -> Self::Label;
   fn restore(self, label: Self::Label) -> Self::State;
+  fn unfreeze(mut self) -> Self::State {
+    let label = self.label();
+    self.restore(label)
+  }
 }
-

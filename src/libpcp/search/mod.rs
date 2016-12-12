@@ -43,3 +43,41 @@ pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
     Brancher::new(FirstSmallestVar, BinarySplit)));
   Box::new(search)
 }
+
+#[cfg(test)]
+mod test {
+  use variable::VStoreFD;
+  use propagation::CStoreFD;
+  use propagators::cmp::*;
+  use propagators::distinct::*;
+  use term::*;
+  use search::space::*;
+  use gcollections::ops::*;
+  use interval::interval::*;
+
+  pub type Domain = Interval<i32>;
+  pub type VStore = VStoreFD;
+  pub type CStore = CStoreFD<VStore>;
+  pub type FDSpace = Space<VStore, CStore>;
+
+  pub fn nqueens(n: usize, space: &mut FDSpace) {
+    let mut queens = vec![];
+    // 2 queens can't share the same line.
+    for _ in 0..n {
+      queens.push(space.vstore.alloc((1, n as i32).to_interval()));
+    }
+    for i in 0..n-1 {
+      for j in i + 1..n {
+        // 2 queens can't share the same diagonal.
+        let q1 = (i + 1) as i32;
+        let q2 = (j + 1) as i32;
+        // Xi + i != Xj + j
+        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+        // Xi - i != Xj - j
+        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+      }
+    }
+    // 2 queens can't share the same column.
+    space.cstore.alloc(box Distinct::new(queens));
+  }
+}

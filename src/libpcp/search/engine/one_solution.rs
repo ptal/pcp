@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// OneSolution combinator is a generator over the solution. It returns from `enter` each time it found a solution (with `Satisfiable`) or when no more node can be explored (with `EndOfSearch`). Its method `enter` can be safely call several time to generate more than one solution.
+
 use kernel::*;
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
@@ -23,7 +25,7 @@ use std::marker::PhantomData;
 pub struct OneSolution<C, Q, Space> {
   child: C,
   queue: Q,
-  exploring: bool,
+  started_exploration: bool,
   phantom_space: PhantomData<Space>
 }
 
@@ -37,7 +39,7 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
     OneSolution {
       queue: Q::empty(),
       child: child,
-      exploring: false,
+      started_exploration: false,
       phantom_space: PhantomData
     }
   }
@@ -56,16 +58,21 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
       Unknown(ref branches) if branches.is_empty() => *status = Status::pruned(),
       Unknown(branches) => self.push_branches(branches),
       Satisfiable => *status = Satisfiable,
+      EndOfSearch => *status = EndOfSearch,
       _ => ()
     }
     immutable_state
   }
 
+  fn fully_explored(&self) -> bool {
+    self.queue.is_empty() && self.started_exploration
+  }
+
   // Only visit the root if we didn't visit it before (based on the queue emptiness).
   fn enter_root(&mut self, root: Space, status: &mut Status<Space>) -> Space::FrozenState
   {
-    if self.queue.is_empty() && !self.exploring {
-      self.exploring = true;
+    if self.queue.is_empty() && !self.started_exploration {
+      self.started_exploration = true;
       self.enter_child(root, status)
     } else {
       root.freeze()
@@ -80,14 +87,18 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
 {
   fn start(&mut self, root: &Space) {
     self.queue = Q::empty();
-    self.exploring = false;
+    self.started_exploration = false;
     self.child.start(root);
   }
 
   fn enter(&mut self, root: Space) -> (Space::FrozenState, Status<Space>) {
+    if self.fully_explored() {
+      return (root.freeze(), EndOfSearch);
+    }
+
     let mut status = Unsatisfiable;
     let mut immutable_state = self.enter_root(root, &mut status);
-    while status != Satisfiable && !self.queue.is_empty() {
+    while status != EndOfSearch && status != Satisfiable && !self.queue.is_empty() {
       let branch = self.queue.extract().unwrap();
       let child = branch.commit(immutable_state);
       immutable_state = self.enter_child(child, &mut status);
@@ -99,65 +110,38 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
 #[cfg(test)]
 mod test {
   use super::*;
-  use variable::VStoreFD;
-  use propagation::CStoreFD;
-  use propagators::cmp::*;
-  use propagators::distinct::*;
-  use term::*;
-  use search::space::*;
+  use search::test::*;
   use search::propagation::*;
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
-  use interval::interval::*;
   use gcollections::VectorStack;
   use gcollections::ops::*;
   use test::Bencher;
 
-  type Domain = Interval<i32>;
-  type VStore = VStoreFD;
-  type CStore = CStoreFD<VStore>;
-  type FDSpace = Space<VStore, CStore>;
-
   #[test]
   fn example_nqueens() {
-    nqueens(1, Satisfiable);
-    nqueens(2, Unsatisfiable);
-    nqueens(3, Unsatisfiable);
+    test_nqueens(1, Satisfiable);
+    test_nqueens(2, Unsatisfiable);
+    test_nqueens(3, Unsatisfiable);
     for i in 4..12 {
-      nqueens(i, Satisfiable);
+      test_nqueens(i, Satisfiable);
     }
   }
 
   #[bench]
   fn bench_nqueens10(b: &mut Bencher) {
     b.iter(|| {
-        nqueens(10, Satisfiable)
+        test_nqueens(10, Satisfiable)
     });
   }
 
-  fn nqueens(n: usize, expect: Status<FDSpace>) {
+  fn test_nqueens(n: usize, expect: Status<FDSpace>) {
     let mut space = FDSpace::empty();
-    let mut queens = vec![];
-    // 2 queens can't share the same line.
-    for _ in 0..n {
-      queens.push(space.vstore.alloc((1, n as i32).to_interval()));
-    }
-    for i in 0..n-1 {
-      for j in i + 1..n {
-        // 2 queens can't share the same diagonal.
-        let q1 = (i + 1) as i32;
-        let q2 = (j + 1) as i32;
-        // Xi + i != Xj + j
-        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
-        // Xi - i != Xj - j
-        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
-      }
-    }
-    // 2 queens can't share the same column.
-    space.cstore.alloc(box Distinct::new(queens));
+    nqueens(n, &mut space);
 
-    let mut search: OneSolution<_, VectorStack<_>, FDSpace> = OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+    let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
+      OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
     search.start(&space);
     let (_, status) = search.enter(space);
     assert_eq!(status, expect);

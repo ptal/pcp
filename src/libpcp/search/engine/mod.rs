@@ -13,3 +13,4 @@
 // limitations under the License.
 
 pub mod one_solution;
+pub mod all_solution;
