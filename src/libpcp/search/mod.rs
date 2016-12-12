@@ -21,6 +21,8 @@ pub mod branching;
 pub mod search_tree_visitor;
 pub mod propagation;
 pub mod engine;
+pub mod monitor;
+pub mod statistics;
 
 pub use search::space::*;
 pub use search::search_tree_visitor::*;

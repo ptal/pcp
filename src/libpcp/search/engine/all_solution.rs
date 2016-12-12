@@ -56,6 +56,8 @@ impl<C, Space> SearchTreeVisitor<Space> for AllSolution<C> where
 mod test {
   use super::*;
   use search::test::*;
+  use search::monitor::*;
+  use search::statistics::*;
   use search::engine::one_solution::*;
   use search::propagation::*;
   use search::branching::binary_split::*;
@@ -66,19 +68,31 @@ mod test {
 
   #[test]
   fn example_nqueens() {
-    for i in 1..10 {
-      test_nqueens(i, EndOfSearch);
+    // Data from Wikipedia.
+    let nqueens_solution = vec![
+      1, 0, 0, 2, 10, 4, 40, 92, 352
+    ];
+
+    for (n, sol) in nqueens_solution.into_iter().enumerate() {
+      test_nqueens(n+1, sol, EndOfSearch);
     }
   }
 
-  fn test_nqueens(n: usize, expect: Status<FDSpace>) {
+  fn test_nqueens(n: usize, sol_expected: usize, expect: Status<FDSpace>) {
     let mut space = FDSpace::empty();
     nqueens(n, &mut space);
 
-    let mut search: AllSolution<OneSolution<_, VectorStack<_>, FDSpace>> =
-      AllSolution::new(OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit))));
-    search.start(&space);
-    let (_, status) = search.enter(space);
-    assert_eq!(status, expect);
+    let mut statistics = Statistics::new();
+    {
+      let mut search: AllSolution<Monitor<Statistics,
+        OneSolution<_, VectorStack<_>, FDSpace>>>
+      =
+        AllSolution::new(Monitor::new(&mut statistics,
+          OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)))));
+      search.start(&space);
+      let (_, status) = search.enter(space);
+      assert_eq!(status, expect);
+    }
+    assert_eq!(statistics.num_solution, sol_expected);
   }
 }
