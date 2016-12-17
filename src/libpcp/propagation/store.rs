@@ -23,8 +23,6 @@ use propagation::ops::*;
 use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
-use std::rc::*;
-use std::marker::PhantomData;
 use std::fmt::{Formatter, Debug, Error};
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
@@ -230,8 +228,7 @@ pub struct FrozenStore<VStore, Event, R, S> where
  R: Reactor + Clone,
  S: Scheduler
 {
-  cstore: Rc<(Vec<Box<PropagatorConcept<VStore, Event> + 'static>>, R)>,
-  phantom_scheduler: PhantomData<S>
+  cstore: Store<VStore, Event, R, S>
 }
 
 impl<VStore, Event, R, S> FrozenStore<VStore, Event, R, S> where
@@ -241,8 +238,7 @@ impl<VStore, Event, R, S> FrozenStore<VStore, Event, R, S> where
 {
   fn new(store: Store<VStore, Event, R, S>) -> Self {
     FrozenStore {
-      cstore: Rc::new((store.propagators, store.reactor)),
-      phantom_scheduler: PhantomData
+      cstore: store
     }
   }
 }
@@ -252,23 +248,16 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
  R: Reactor + Clone,
  S: Scheduler
 {
-  type Label = Rc<(Vec<Box<PropagatorConcept<VStore, Event> + 'static>>, R)>;
+  type Label = usize;
   type State = Store<VStore, Event, R, S>;
 
   fn label(&mut self) -> Self::Label {
-    self.cstore.clone()
+    self.cstore.propagators.len()
   }
 
-  fn restore(self, label: Self::Label) -> Self::State {
-    let (props, reactor) = Rc::try_unwrap(label).unwrap_or_else(|l| {
-      let props = l.0.iter().map(|p| p.boxed_clone()).collect();
-      (props, l.1.clone())
-    });
-    Store {
-      propagators: props,
-      reactor: reactor,
-      scheduler: Scheduler::new(0)
-    }
+  fn restore(mut self, label: Self::Label) -> Self::State {
+    self.cstore.propagators.truncate(label);
+    self.cstore
   }
 }
 
