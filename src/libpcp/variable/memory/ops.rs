@@ -12,28 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use variable::ops::*;
 use gcollections::kind::*;
-use gcollections::ops::*;
-use gcollections::ops::sequence::ordering::*;
-use std::ops::Index;
-use std::fmt::Display;
 
-pub trait ImmutableMemoryConcept:
-   Collection
- + AssociativeCollection
- + Cardinality<Size=usize>
- + Iterable
- + Empty
- + Index<usize, Output=<Self as Collection>::Item>
- + Display
- + Freeze
-{}
+pub trait TrailVariable : AssociativeCollection
+{
+  fn trail_variable(&mut self, loc: Self::Location, value: Self::Item);
+}
 
-pub trait MemoryConcept:
-   ImmutableMemoryConcept
- + AssociativeCollection<Location=usize>
- + Push<Back>
- + Replace
-{}
+pub trait TrailRestoration : Collection
+{
+  type Mark;
+  fn mark(&self) -> Self::Mark;
+  fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Self::Item>);
+}

@@ -12,28 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use variable::ops::*;
-use gcollections::kind::*;
-use gcollections::ops::*;
-use gcollections::ops::sequence::ordering::*;
-use std::ops::Index;
-use std::fmt::Display;
+mod memory_cell;
+pub mod single_value_trail;
 
-pub trait ImmutableMemoryConcept:
-   Collection
- + AssociativeCollection
- + Cardinality<Size=usize>
- + Iterable
- + Empty
- + Index<usize, Output=<Self as Collection>::Item>
- + Display
- + Freeze
-{}
-
-pub trait MemoryConcept:
-   ImmutableMemoryConcept
- + AssociativeCollection<Location=usize>
- + Push<Back>
- + Replace
-{}
+pub use variable::memory::trail::single_value_trail::SingleValueTrail;

@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod copy;
+pub mod copy_memory;
 pub mod concept;
-// pub mod trailed;
+pub mod trail_memory;
+pub mod trail;
+pub mod ops;
 
-pub use variable::memory::copy::*;
-// pub use variable::memory::trailed::*;
+pub use variable::memory::copy_memory::*;
+pub use variable::memory::trail_memory::*;
+pub use variable::memory::trail::*;
+
+pub type SingleTrailMemory<Dom> = TrailMemory<SingleValueTrail<Dom>, Dom>;
 
 #[cfg(test)]
 mod test {
@@ -110,23 +115,36 @@ mod test {
   fn configure_memory(test: &mut Test)
   {
     type MCopy = CopyMemory<Domain>;
-    // type MTrailed = TrailedStore<Domain>;
+    type MSingleTrail = SingleTrailMemory<Domain>;
 
     test.memory_config = String::from("CopyMemory");
     configure_queue::<MCopy>(test);
-    // test.memory_config = String::from("TrailedStore");
-    // configure_queue::<MTrailed>(test);
+    test.memory_config = String::from("TrailMemory with SingleValueTrail");
+    configure_dfs_queue::<MSingleTrail>(test);
   }
 
   fn configure_queue<Mem>(test: &mut Test) where
     Mem: MemoryConcept,
     Mem: Collection<Item=Domain>
   {
-    type Stack<Label> = VectorStack<QueueItem<Label>>;
-    type Queue<Label> = DequeFrontBackQueue<QueueItem<Label>>;
+    configure_dfs_queue::<Mem>(test);
+    configure_bfs_queue::<Mem>(test);
+  }
 
+  fn configure_dfs_queue<Mem>(test: &mut Test) where
+    Mem: MemoryConcept,
+    Mem: Collection<Item=Domain>
+  {
+    type Stack<Label> = VectorStack<QueueItem<Label>>;
     test.queue_config = String::from("VectorStack (Depth-first search)");
-    // test_restoration::<Mem, Stack<_>>(test);
+    test_restoration::<Mem, Stack<_>>(test);
+  }
+
+  fn configure_bfs_queue<Mem>(test: &mut Test) where
+    Mem: MemoryConcept,
+    Mem: Collection<Item=Domain>
+  {
+    type Queue<Label> = DequeFrontBackQueue<QueueItem<Label>>;
     test.queue_config = String::from("DequeFrontBackQueue (Breadth-first search)");
     test_restoration::<Mem, Queue<_>>(test);
   }

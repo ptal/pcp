@@ -128,6 +128,7 @@ pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
       println!("");
   	}
   	Unsatisfiable => println!("{}-analysis problem is unsatisfiable.", num_robot),
+    EndOfSearch => println!("Search terminated or was interrupted."),
   	Unknown(_) => unreachable!(
   	  "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
     }

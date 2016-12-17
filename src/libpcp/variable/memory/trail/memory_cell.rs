@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use variable::ops::*;
-use gcollections::kind::*;
-use gcollections::ops::*;
-use gcollections::ops::sequence::ordering::*;
-use std::ops::Index;
-use std::fmt::Display;
+use std::fmt::{Formatter, Display, Error};
 
-pub trait ImmutableMemoryConcept:
-   Collection
- + AssociativeCollection
- + Cardinality<Size=usize>
- + Iterable
- + Empty
- + Index<usize, Output=<Self as Collection>::Item>
- + Display
- + Freeze
-{}
+pub struct MemoryCell<Domain>
+{
+  pub location: usize,
+  pub value: Domain
+}
 
-pub trait MemoryConcept:
-   ImmutableMemoryConcept
- + AssociativeCollection<Location=usize>
- + Push<Back>
- + Replace
-{}
+impl<Domain> MemoryCell<Domain>
+{
+  pub fn new(location: usize, value: Domain) -> MemoryCell<Domain> {
+    MemoryCell {
+      location: location,
+      value: value
+    }
+  }
+}
+
+impl<Domain> Display for MemoryCell<Domain> where
+ Domain: Display
+{
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    formatter.write_str(format!(
+      "{}: {}", self.location, self.value
+    ).as_str())
+  }
+}

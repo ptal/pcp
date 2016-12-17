@@ -23,8 +23,31 @@ use pcp::search::*;
 use interval::interval::*;
 use gcollections::ops::*;
 
+use pcp::propagation::CStoreFD;
+use pcp::propagation::events::*;
+use pcp::variable::memory::*;
+use pcp::variable::store::*;
+use pcp::search::engine::one_solution::*;
+use pcp::search::branching::*;
+use pcp::search::propagation::*;
+use gcollections::VectorStack;
+
+type TVStore = Store<LinearTrail<Interval<i32>>, FDEvent>;
+
+type TCStore = CStoreFD<TVStore>;
+type TFDSpace = Space<TVStore, TCStore>;
+
+fn t_one_solution_engine() -> Box<SearchTreeVisitor<TFDSpace>> {
+  let search =
+    OneSolution::<_, VectorStack<_>, TFDSpace>::new(
+    Propagation::new(
+    Brancher::new(FirstSmallestVar, BinarySplit)));
+  Box::new(search)
+}
+
+
 pub fn nqueens(n: usize) {
-  let mut space = FDSpace::empty();
+  let mut space = TFDSpace::empty();
   let mut queens = vec![];
   // 2 queens can't share the same line.
   for _ in 0..n {
@@ -47,9 +70,9 @@ pub fn nqueens(n: usize) {
   space.cstore.alloc(box Distinct::new(queens));
 
   // Search step.
-  let mut search = one_solution_engine();
+  let mut search = t_one_solution_engine();
   search.start(&space);
-  let (mut frozen_space, status) = search.enter(space);
+  let (frozen_space, status) = search.enter(space);
   let space = frozen_space.unfreeze();
 
   // Print result.
@@ -63,6 +86,7 @@ pub fn nqueens(n: usize) {
       println!("]");
     }
     Unsatisfiable => println!("{}-queens problem is unsatisfiable.", n),
+    EndOfSearch => println!("Search terminated or was interrupted."),
     Unknown(_) => unreachable!(
       "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
   }
