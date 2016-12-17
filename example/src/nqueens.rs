@@ -32,7 +32,7 @@ use pcp::search::branching::*;
 use pcp::search::propagation::*;
 use gcollections::VectorStack;
 
-type TVStore = Store<LinearTrail<Interval<i32>>, FDEvent>;
+type TVStore = Store<CopyMemory<Interval<i32>>, FDEvent>;
 
 type TCStore = CStoreFD<TVStore>;
 type TFDSpace = Space<TVStore, TCStore>;

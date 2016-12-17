@@ -14,5 +14,7 @@
 
 mod memory_cell;
 pub mod single_value_trail;
+pub mod timestamp_trail;
 
 pub use variable::memory::trail::single_value_trail::SingleValueTrail;
+pub use variable::memory::trail::timestamp_trail::TimestampTrail;

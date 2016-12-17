@@ -12,67 +12,73 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use variable::memory::trail::memory_cell::MemoryCell;
+use variable::memory::trail::SingleValueTrail;
 
 use variable::memory::ops::*;
 use gcollections::ops::*;
 use gcollections::kind::*;
+use vec_map::VecMap;
 use std::fmt::{Formatter, Display, Error};
 
-pub struct SingleValueTrail<Domain>
+pub struct TimestampTrail<Domain>
 {
-  trail: Vec<MemoryCell<Domain>>
+  trail: SingleValueTrail<Domain>,
+  /// Contains the change on the domain of the current instant.
+  timestamp: VecMap<Domain>
 }
 
-impl<Domain> Collection for SingleValueTrail<Domain>
+impl<Domain> Collection for TimestampTrail<Domain>
 {
   type Item = Domain;
 }
 
-impl<Domain> AssociativeCollection for SingleValueTrail<Domain>
+impl<Domain> AssociativeCollection for TimestampTrail<Domain>
 {
   type Location = usize;
 }
 
-impl<Domain> TrailVariable for SingleValueTrail<Domain>
+impl<Domain> TrailVariable for TimestampTrail<Domain>
 {
+  /// We do not trail the intermediate value, just the first change.
   fn trail_variable(&mut self, loc: usize, value: Domain) {
-    self.trail.push(MemoryCell::new(loc, value))
+    self.timestamp.entry(loc).or_insert(value);
   }
 }
 
-impl<Domain> TrailRestoration for SingleValueTrail<Domain>
+impl<Domain> TrailRestoration for TimestampTrail<Domain> where
+ Domain: Clone
 {
   type Mark = usize;
 
+  fn commit(&mut self) {
+    for (loc, value) in self.timestamp.drain() {
+      self.trail.trail_variable(loc, value.clone());
+    }
+  }
+
   fn mark(&mut self) -> Self::Mark {
-    self.trail.len()
+    self.trail.mark()
   }
 
   fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Domain>) {
-    while self.trail.len() != mark {
-      let cell = self.trail.pop().unwrap();
-      memory[cell.location] = cell.value;
-    }
+    self.trail.undo(mark, memory);
   }
 }
 
-impl<Domain> Display for SingleValueTrail<Domain> where
+impl<Domain> Display for TimestampTrail<Domain> where
  Domain: Display
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    for cell in &self.trail {
-      formatter.write_str(format!("{}\n", cell).as_str())?;
-    }
-    Ok(())
+    self.trail.fmt(formatter)
   }
 }
 
-impl<Domain> Empty for SingleValueTrail<Domain>
+impl<Domain> Empty for TimestampTrail<Domain>
 {
-  fn empty() -> SingleValueTrail<Domain> {
-    SingleValueTrail {
-      trail: vec![]
+  fn empty() -> TimestampTrail<Domain> {
+    TimestampTrail {
+      trail: SingleValueTrail::empty(),
+      timestamp: VecMap::new()
     }
   }
 }

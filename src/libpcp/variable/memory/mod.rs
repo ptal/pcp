@@ -23,6 +23,7 @@ pub use variable::memory::trail_memory::*;
 pub use variable::memory::trail::*;
 
 pub type SingleTrailMemory<Dom> = TrailMemory<SingleValueTrail<Dom>, Dom>;
+pub type TimestampTrailMemory<Dom> = TrailMemory<TimestampTrail<Dom>, Dom>;
 
 #[cfg(test)]
 mod test {
@@ -116,11 +117,14 @@ mod test {
   {
     type MCopy = CopyMemory<Domain>;
     type MSingleTrail = SingleTrailMemory<Domain>;
+    type MTimestampTrail = TimestampTrailMemory<Domain>;
 
     test.memory_config = String::from("CopyMemory");
     configure_queue::<MCopy>(test);
     test.memory_config = String::from("TrailMemory with SingleValueTrail");
     configure_dfs_queue::<MSingleTrail>(test);
+    test.memory_config = String::from("TrailMemory with TimestampTrail");
+    configure_dfs_queue::<MTimestampTrail>(test);
   }
 
   fn configure_queue<Mem>(test: &mut Test) where
@@ -172,8 +176,8 @@ mod test {
       queue.insert((tree.root, child, frozen.label()));
     }
     while let Some((parent, child, label)) = queue.extract() {
-      println!("test_restoration: restore");
       mem = frozen.restore(label);
+      println!("test_restoration: restore to {}", mem[0]);
       test.assert_node_equality(mem[0], tree[parent].value, tree[current].value);
       println!("replace: {} with {}", mem[0], tree[child].value);
       mem.replace(0, tree[child].value);

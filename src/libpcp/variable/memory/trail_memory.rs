@@ -81,8 +81,6 @@ impl<Trail, Domain> Push<Back> for TrailMemory<Trail, Domain> where
  Domain: Clone
 {
   fn push(&mut self, dom: Domain) {
-    let dom_location = self.variables.size();
-    self.trail.trail_variable(dom_location, dom.clone());
     self.variables.push(dom);
   }
 }
@@ -119,8 +117,9 @@ impl<Trail, Domain> Freeze for TrailMemory<Trail, Domain> where
  Trail: TrailRestoration + Collection<Item=Domain>
 {
   type FrozenState = FrozenTrailMemory<Trail, Domain>;
-  fn freeze(self) -> Self::FrozenState
+  fn freeze(mut self) -> Self::FrozenState
   {
+    self.trail.commit();
     FrozenTrailMemory::new(self)
   }
 }

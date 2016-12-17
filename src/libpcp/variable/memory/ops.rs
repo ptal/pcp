@@ -22,6 +22,7 @@ pub trait TrailVariable : AssociativeCollection
 pub trait TrailRestoration : Collection
 {
   type Mark;
-  fn mark(&self) -> Self::Mark;
+  fn commit(&mut self) {}
+  fn mark(&mut self) -> Self::Mark;
   fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Self::Item>);
 }
