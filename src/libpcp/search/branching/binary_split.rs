@@ -34,17 +34,18 @@ pub type XLessEqC<X, C> = XLessEqY<Identity<X>, Constant<C>, C>;
 pub type XGreaterC<X, C> = XGreaterY<Identity<X>, Constant<C>>;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
-impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for BinarySplit where
+impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>> for BinarySplit where
   VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
   VStore: AssociativeCollection<Location=Identity<Domain>>,
   CStore: Freeze,
   CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
   Domain: Clone + Cardinality + Bounded + Collection<Item=Bound> + Add<Bound, Output=Domain> + Sub<Bound, Output=Domain> + 'static,
   Domain: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight + Empty + Singleton,
-  Bound: PrimInt + Num + Integer + PartialOrd + Clone + Debug + 'static
+  Bound: PrimInt + Num + Integer + PartialOrd + Clone + Debug + 'static,
+  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
-  fn distribute(&mut self, space: Space<VStore, CStore>, var_idx: usize) ->
-    (<Space<VStore, CStore> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore>>>)
+  fn distribute(&mut self, space: Space<VStore, CStore, R>, var_idx: usize) ->
+    (<Space<VStore, CStore, R> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore, R>>>)
   {
     let dom = nth_dom(&space.vstore, var_idx);
     assert!(!dom.is_singleton() && !dom.is_empty(),
@@ -57,10 +58,10 @@ impl<VStore, CStore, Domain, Bound> Distributor<Space<VStore, CStore>> for Binar
 
     Branch::distribute(space,
       vec![
-        Box::new(move |space: &mut Space<VStore, CStore>| {
+        Box::new(move |space: &mut Space<VStore, CStore, R>| {
           space.cstore.alloc(box x_less_mid);
         }),
-        Box::new(move |space: &mut Space<VStore, CStore>| {
+        Box::new(move |space: &mut Space<VStore, CStore, R>| {
           space.cstore.alloc(box x_geq_mid);
         })
       ]
@@ -83,15 +84,9 @@ mod test {
   use super::*;
   use search::branching::Distributor;
   use kernel::trilean::Trilean::*;
-  use variable::VStoreFD;
-  use propagation::CStoreFD;
+  use search::*;
   use interval::interval::*;
   use interval::ops::Range;
-
-  type Domain = Interval<i32>;
-  type VStore = VStoreFD;
-  type CStore = CStoreFD<VStore>;
-  type FDSpace = Space<VStore, CStore>;
 
   fn test_distributor<D>(mut distributor: D, distribution_index: usize,
     root: Vec<(i32, i32)>, children: Vec<(i32, i32)>) where

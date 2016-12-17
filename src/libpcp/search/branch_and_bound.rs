@@ -49,23 +49,24 @@ impl<V, Bound, C> BranchAndBound<V, Bound, C> {
   }
 }
 
-impl<C, Bound, Dom, V, VStore, CStore> SearchTreeVisitor<Space<VStore, CStore>> for
+impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
   BranchAndBound<V, Bound, C> where
  VStore: Freeze + Collection<Item=Dom>,
  V: StoreRead<VStore> + ViewDependencies<FDEvent>,
  V: StoreMonotonicUpdate<VStore> + Debug + Clone + 'static,
  CStore: Freeze + Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
- C: SearchTreeVisitor<Space<VStore, CStore>>,
+ C: SearchTreeVisitor<Space<VStore, CStore, R>>,
  Dom: Bounded + Collection<Item=Bound> + Cardinality + ShrinkLeft + ShrinkRight + Empty,
  Dom: StrictShrinkLeft + StrictShrinkRight + Singleton + 'static,
- Bound: Clone + Integer + Debug + 'static
+ Bound: Clone + Integer + Debug + 'static,
+ R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
-  fn start(&mut self, root: &Space<VStore, CStore>) {
+  fn start(&mut self, root: &Space<VStore, CStore, R>) {
     self.child.start(root);
   }
 
-  fn enter(&mut self, mut current: Space<VStore, CStore>)
-    -> (<Space<VStore, CStore> as Freeze>::FrozenState, Status<Space<VStore, CStore>>)
+  fn enter(&mut self, mut current: Space<VStore, CStore, R>)
+    -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
   {
     if let Some(bound) = self.value.clone() {
       let bound = Constant::new(bound);

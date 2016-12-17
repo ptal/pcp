@@ -21,12 +21,12 @@ use num::Integer;
 
 pub struct FirstSmallestVar;
 
-impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for FirstSmallestVar where
+impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for FirstSmallestVar where
   VStore: Iterable<Item=Domain>,
   Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned + Integer
 {
-  fn select(&mut self, space: &Space<VStore, CStore>) -> usize {
+  fn select(&mut self, space: &Space<VStore, CStore, R>) -> usize {
     space.vstore.iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
       .min_by_key(|&(_, v)| v.size())
@@ -38,16 +38,10 @@ impl<VStore, CStore, Domain, Size> VarSelection<Space<VStore, CStore>> for First
 #[cfg(test)]
 mod test {
   use super::*;
-  use variable::VStoreFD;
-  use propagation::CStoreFD;
+  use search::*;
   use search::branching::VarSelection;
   use interval::interval::*;
   use interval::ops::*;
-
-  type Domain = Interval<i32>;
-  type VStore = VStoreFD;
-  type CStore = CStoreFD<VStore>;
-  type FDSpace = Space<VStore, CStore>;
 
   fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
     S: VarSelection<FDSpace>

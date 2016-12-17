@@ -12,25 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub use search::recomputation::*;
 use kernel::*;
 use gcollections::ops::*;
+use std::marker::PhantomData;
 
-pub struct Space<VStore, CStore> {
+pub struct Space<VStore, CStore, Restoration> {
   pub vstore: VStore,
-  pub cstore: CStore
+  pub cstore: CStore,
+  phantom_restoration: PhantomData<Restoration>
 }
 
-impl<VStore, CStore> Space<VStore, CStore>
+impl<VStore, CStore, Restoration> Space<VStore, CStore, Restoration>
 {
-  pub fn new(vstore: VStore, cstore: CStore) -> Space<VStore, CStore> {
+  pub fn new(vstore: VStore, cstore: CStore) -> Self {
     Space {
       vstore: vstore,
-      cstore: cstore
+      cstore: cstore,
+      phantom_restoration: PhantomData
     }
   }
 }
 
-impl<VStore, CStore> Space<VStore, CStore> where
+impl<VStore, CStore, Restoration> Space<VStore, CStore, Restoration> where
   CStore: Consistency<VStore>
 {
   pub fn consistency(&mut self) -> Trilean {
@@ -38,66 +42,23 @@ impl<VStore, CStore> Space<VStore, CStore> where
   }
 }
 
-impl<VStore, CStore> Empty for Space<VStore, CStore> where
+impl<VStore, CStore, Restoration> Empty for Space<VStore, CStore, Restoration> where
   VStore: Empty,
   CStore: Empty
 {
-  fn empty() -> Space<VStore, CStore> {
-    Space {
-      vstore: VStore::empty(),
-      cstore: CStore::empty()
-    }
+  fn empty() -> Self {
+    Space::new(VStore::empty(), CStore::empty())
   }
 }
 
-impl<VStore, CStore> Freeze for Space<VStore, CStore> where
+impl<VStore, CStore, Restoration> Freeze for Space<VStore, CStore, Restoration> where
  VStore: Freeze,
- CStore: Freeze
+ CStore: Freeze,
+ Restoration: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, Restoration>>
 {
-  type FrozenState = FrozenSpace<VStore, CStore>;
+  type FrozenState = Restoration;
   fn freeze(self) -> Self::FrozenState
   {
-    FrozenSpace::new(self)
-  }
-}
-
-pub struct FrozenSpace<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
-{
-  frozen_vstore: VStore::FrozenState,
-  frozen_cstore: CStore::FrozenState
-}
-
-impl<VStore, CStore> FrozenSpace<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
-{
-  fn new(space: Space<VStore, CStore>) -> Self {
-    FrozenSpace {
-      frozen_vstore: space.vstore.freeze(),
-      frozen_cstore: space.cstore.freeze()
-    }
-  }
-}
-
-impl<VStore, CStore> Snapshot for FrozenSpace<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
-{
-  type Label = (
-    <VStore::FrozenState as Snapshot>::Label,
-    <CStore::FrozenState as Snapshot>::Label);
-  type State = Space<VStore, CStore>;
-
-  fn label(&mut self) -> Self::Label {
-    (self.frozen_vstore.label(), self.frozen_cstore.label())
-  }
-
-  fn restore(self, label: Self::Label) -> Self::State {
-    Space {
-      vstore: self.frozen_vstore.restore(label.0),
-      cstore: self.frozen_cstore.restore(label.1)
-    }
+    Restoration::freeze_space(self.vstore, self.cstore)
   }
 }

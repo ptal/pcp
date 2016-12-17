@@ -17,6 +17,7 @@
 //! The tree is constructed during the search and backtracking occurs when a node is failed (it does not lead to a solution). The exploration of the tree can be customized by different heuristics combined with *search combinators* implemented with `SearchTreeVisitor`.
 
 pub mod space;
+pub mod recomputation;
 pub mod branching;
 pub mod search_tree_visitor;
 pub mod propagation;
@@ -37,7 +38,7 @@ use gcollections::VectorStack;
 
 pub type VStore = VStoreFD;
 type CStore = CStoreFD<VStore>;
-pub type FDSpace = Space<VStore, CStore>;
+pub type FDSpace = Space<VStore, CStore, NoRecomputation<VStore, CStore>>;
 
 pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
   let search =
@@ -49,19 +50,12 @@ pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
 
 #[cfg(test)]
 mod test {
-  use variable::VStoreFD;
-  use propagation::CStoreFD;
+  pub use super::*;
   use propagators::cmp::*;
   use propagators::distinct::*;
   use term::*;
-  use search::space::*;
   use gcollections::ops::*;
   use interval::interval::*;
-
-  pub type Domain = Interval<i32>;
-  pub type VStore = VStoreFD;
-  pub type CStore = CStoreFD<VStore>;
-  pub type FDSpace = Space<VStore, CStore>;
 
   pub fn nqueens(n: usize, space: &mut FDSpace) {
     let mut queens = vec![];

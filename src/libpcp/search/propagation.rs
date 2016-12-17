@@ -29,17 +29,18 @@ impl<C> Propagation<C> {
   }
 }
 
-impl<VStore, CStore, C> SearchTreeVisitor<Space<VStore, CStore>> for Propagation<C> where
+impl<VStore, CStore, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Propagation<C> where
   VStore: Freeze,
   CStore: Freeze + Consistency<VStore>,
-  C: SearchTreeVisitor<Space<VStore, CStore>>
+  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
+  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
-  fn start(&mut self, root: &Space<VStore, CStore>) {
+  fn start(&mut self, root: &Space<VStore, CStore, R>) {
     self.child.start(root);
   }
 
-  fn enter(&mut self, mut current: Space<VStore, CStore>)
-    -> (<Space<VStore, CStore> as Freeze>::FrozenState, Status<Space<VStore, CStore>>)
+  fn enter(&mut self, mut current: Space<VStore, CStore, R>)
+    -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
   {
     let status = current.consistency();
     match status {
