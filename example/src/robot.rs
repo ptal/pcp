@@ -31,6 +31,11 @@
 // Es > Ps + Pd
 // Es end before max_time.
 //
+//cumulative constraints
+//add cumulative constraints
+//Two ressouces with capacity of one: 
+//    * Pipeting unit use by Loading and Put operations 
+//    * Mixing unit use by Take and Put operations  
 
 extern crate test;
 
@@ -41,9 +46,17 @@ use pcp::variable::ops::*;
 use pcp::search::search_tree_visitor::Status::*;
 use pcp::search::*;
 use interval::interval::*;
+use interval::ops::Range;
 use gcollections::ops::*;
 use pcp::term::constant::Constant;
 use pcp::term::Addition;
+use pcp::propagators::cumulative::Cumulative;
+use pcp::search::engine::one_solution::OneSolution;
+use gcollections::wrappers::vector::VectorStack;
+use pcp::search::propagation::Propagation;
+use pcp::search::branching::brancher::Brancher;
+use pcp::search::branching::first_smallest_var::FirstSmallestVar;
+use pcp::search::branching::binary_split::BinarySplit;
 
 //build the contraint for num_robot with max-time indicating that all robot must finish before.
 pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
@@ -53,38 +66,62 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
 
   let time_dom = (1, max_time as i32).to_interval();
 
-  //add task start variable
+//cumulative limit 
+  let mut pipeting_start = vec!();
+  let mut pipeting_duration = vec!();
+  let mut pipeting_resource = vec!();
+
+ //add task start variable
   for i in 0..num_robot {
 	  task.push(space.vstore.alloc(time_dom)); //Loading L start
-	  last.push(space.vstore.alloc((10, 15 as i32).to_interval())); //Loading L Duration
+    pipeting_start.push(Box::new(task[i * 5])); //add cumulative start
+	  last.push(space.vstore.alloc((10, 15 as i32).to_interval())); //Loading L Duration between 10 and 15
+    pipeting_duration.push(Box::new(last[i * 4])); //add cumulative duration variable
+    pipeting_resource.push(Box::new(space.vstore.alloc(Interval::new(1, 1)))); //add cumulative resource use
 	  task.push(space.vstore.alloc(time_dom)); //Take T start
-	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Take T Duration
+	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Take T Duration  between 25 and 35
 	  task.push(space.vstore.alloc(time_dom)); //Wait W start
-	  last.push(space.vstore.alloc((100, 250 as i32).to_interval())); //Wait W Duration
+	  last.push(space.vstore.alloc((240, 250 as i32).to_interval())); //Wait W Duration  between 100 and 250
 	  task.push(space.vstore.alloc(time_dom)); //Put P start
-	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Put P Duration
-	  task.push(space.vstore.alloc(time_dom)); //Park End E start
+    pipeting_start.push(Box::new(task[i * 5 + 2])); //add cumulative start
+	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Put P Duration  between 25 and 35
+    pipeting_duration.push(Box::new(last[i * 4 + 2])); //add cumulative duration variable
+    pipeting_resource.push(Box::new(space.vstore.alloc(Interval::new(1, 1)))); //add cumulative resource use
+	  task.push(space.vstore.alloc(time_dom)); //Park End E start. End takes no time.
 
-	  //contraints definition
-	  if i == 0 {space.cstore.alloc(box XEqY::new(task[0], Constant::new(3)));} // Ls = 0 first robot start condition
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 10))); // Take after Loading
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 25))); //Wait after Take
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 240))); //Put after Wait
+    space.cstore.alloc(box x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 25))); // End after Put 
 
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 15)));
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 15)));
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 15)));
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 15)));
+/*	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld
+	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td
+	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd
+	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd */
 
-/*	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd
-	  space.cstore.alloc(XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd
-*/
   }
+  // Ls = 0 for the first robot to force it to start first
+  space.cstore.alloc(box XEqY::new(task[0], Constant::new(3)));
+
+
+  let cumulative_pipeting = Cumulative::new(
+    pipeting_start,
+    pipeting_duration,
+    pipeting_resource,
+    box space.vstore.alloc(Interval::new(1,1))
+  );
+  cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
+
+
+
   space
 }
 
 pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
   // Search step.
-  let mut search = one_solution_engine();
+//  let mut search = one_solution_engine();
+let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
+      OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
   search.start(&space);
   let (mut space, status) = search.enter(space);
   let label = space.label();
@@ -94,16 +131,38 @@ pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
   	// Print result.
   	match status {
   	Satisfiable => {
+      //result are formated has follow foe each robot:
+      // Start_L, Duration_L, Pipeting_Cumum_Res_L, Start_T, Duration_T, Start_W, Duration_W, Start_P, Duration_P, Pipeting_Cumum_Res_P, Start_E
+      let mut start_list = vec!();
+      let mut duration_list = vec!();
+
+      let mut iter = space.vstore.iter();
+
+      for _ in 0 .. num_robot {
+        start_list.push(iter.next().unwrap().clone());
+        duration_list.push(iter.next().unwrap().clone());
+        iter.next(); //skip resource
+        start_list.push(iter.next().unwrap().clone());
+        duration_list.push(iter.next().unwrap().clone());
+        start_list.push(iter.next().unwrap().clone());
+        duration_list.push(iter.next().unwrap().clone());
+        start_list.push(iter.next().unwrap().clone());
+        duration_list.push(iter.next().unwrap().clone());
+        iter.next(); //skip resource
+        start_list.push(iter.next().unwrap().clone());
+      }
+
+
       println!("{}-robot scheduling is satisfiable. The first solution is:", num_robot);
       println!("task              : L,  T ,  W  , P , E ");
       let mut robot = 1;
       print!("start time robot {}: ", robot);
       let mut num = 0;
-      for dom in space.vstore.iter() {
+      for start in start_list.iter() {
         // At this stage, dom.lower() == dom.upper().
-        if num % 2 == 0 {print!("{}, ", dom.lower())};
+        print!("{}, ", start.lower());
         num+=1;
-        if num == 9 {
+        if num == 5 {
         	println!("");
 	        robot += 1;
             print!("start time robot {}: ", robot);
@@ -114,11 +173,11 @@ pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
       robot = 1;
       print!("duration robot {}: ", robot);
       let mut num = 0;
-      for dom in space.vstore.iter() {
+      for dur in duration_list.iter() {
         // At this stage, dom.lower() == dom.upper().
-        if num % 2 == 1  {print!("{}, ", dom.lower())};
+        print!("{}, ", dur.lower());
         num+=1;
-        if num == 9 {
+        if num == 4 {
         	println!("");
 	        robot += 1;
 	        print!("duration robot {}: ", robot);

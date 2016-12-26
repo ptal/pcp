@@ -30,6 +30,6 @@ mod robot;
 use nqueens::nqueens;
 
 fn main() {
-  nqueens(30);
-  // robot::solve_schedule(4, robot::build_store(4, 500), true);
+  nqueens(4);
+  robot::solve_schedule(2, robot::build_store(2, 500), true);
 }
