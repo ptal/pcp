@@ -23,27 +23,7 @@ use pcp::search::*;
 use interval::interval::*;
 use gcollections::ops::*;
 
-use pcp::search::engine::one_solution::*;
-use pcp::search::branching::*;
-use pcp::search::propagation::*;
-use gcollections::VectorStack;
-
-//type TVStore = Store<TimestampTrailMemory<Interval<i32>>, FDEvent>;
-
-//type TCStore = CStoreFD<TVStore>;
-//type TFDSpace = Space<TVStore, TCStore, usize>;
-
-/* fn t_one_solution_engine() -> Box<SearchTreeVisitor<TFDSpace>> {
-  let search =
-    OneSolution::<_, VectorStack<_>, TFDSpace>::new(
-    Propagation::new(
-    Brancher::new(FirstSmallestVar, BinarySplit)));
-  Box::new(search)
-}  */
-
-
 pub fn nqueens(n: usize) {
-//  let mut space = TFDSpace::empty();
   let mut space = FDSpace::empty();
 
   let mut queens = vec![];
@@ -68,9 +48,7 @@ pub fn nqueens(n: usize) {
   space.cstore.alloc(box Distinct::new(queens));
 
   // Search step.
-//  let mut search = t_one_solution_engine();
-  let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
-      OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+  let mut search = one_solution_engine();
   search.start(&space);
   let (frozen_space, status) = search.enter(space);
   let space = frozen_space.unfreeze();

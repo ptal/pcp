@@ -33,9 +33,12 @@
 //
 //cumulative constraints
 //add cumulative constraints
-//Two ressouces with capacity of one: 
-//    * Pipeting unit use by Loading and Put operations 
-//    * Mixing unit use by Take and Put operations  
+//Two ressouces with capacity of one:
+//    * Pipeting unit use by Loading and Put operations
+//    * Mixing unit use by Take and Put operations
+
+
+#![allow(unused_variables, non_snake_case)]
 
 extern crate test;
 
@@ -51,86 +54,84 @@ use gcollections::ops::*;
 use pcp::term::constant::Constant;
 use pcp::term::Addition;
 use pcp::propagators::cumulative::Cumulative;
-use pcp::search::engine::one_solution::OneSolution;
-use gcollections::wrappers::vector::VectorStack;
-use pcp::search::propagation::Propagation;
-use pcp::search::branching::brancher::Brancher;
-use pcp::search::branching::first_smallest_var::FirstSmallestVar;
-use pcp::search::branching::binary_split::BinarySplit;
 
 //build the contraint for num_robot with max-time indicating that all robot must finish before.
 pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
+  let TASKS = 5;
+  let L = 0; // Loading
+  let T = 1; // Take
+  let W = 2; // Wait
+  let P = 3; // Put
+  let E = 4; // End, go to park
+
   let mut space = FDSpace::empty();
-  let mut task = vec![];
-  let mut last = vec![];
+  let mut start = vec![];
+  let mut duration = vec![];
 
   let time_dom = (1, max_time as i32).to_interval();
 
-//cumulative limit 
   let mut pipeting_start = vec!();
   let mut pipeting_duration = vec!();
   let mut pipeting_resource = vec!();
 
- //add task start variable
+  let DUR: Vec<Interval<i32>> = vec![
+    (10, 15),   // Loading L duration between 10 and 15
+    (25, 35),   // Take T duration between 25 and 35
+    (240, 250), // Wait W duration between 100 and 250
+    (25, 35)    // Put P duration between 25 and 35
+  ].into_iter().map(|d| d.to_interval()).collect();
+
   for i in 0..num_robot {
-	  task.push(space.vstore.alloc(time_dom)); //Loading L start
-    pipeting_start.push(Box::new(task[i * 5])); //add cumulative start
-	  last.push(space.vstore.alloc((10, 15 as i32).to_interval())); //Loading L Duration between 10 and 15
-    pipeting_duration.push(Box::new(last[i * 4])); //add cumulative duration variable
-    pipeting_resource.push(Box::new(space.vstore.alloc(Interval::new(1, 1)))); //add cumulative resource use
-	  task.push(space.vstore.alloc(time_dom)); //Take T start
-	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Take T Duration  between 25 and 35
-	  task.push(space.vstore.alloc(time_dom)); //Wait W start
-	  last.push(space.vstore.alloc((240, 250 as i32).to_interval())); //Wait W Duration  between 100 and 250
-	  task.push(space.vstore.alloc(time_dom)); //Put P start
-    pipeting_start.push(Box::new(task[i * 5 + 2])); //add cumulative start
-	  last.push(space.vstore.alloc((25, 35 as i32).to_interval())); //Put P Duration  between 25 and 35
-    pipeting_duration.push(Box::new(last[i * 4 + 2])); //add cumulative duration variable
-    pipeting_resource.push(Box::new(space.vstore.alloc(Interval::new(1, 1)))); //add cumulative resource use
-	  task.push(space.vstore.alloc(time_dom)); //Park End E start. End takes no time.
+    // Start date for the different tasks.
+    for _ in 0..TASKS {
+      start.push(space.vstore.alloc(time_dom));
+    }
+    for t in 0..TASKS-1 {
+      duration.push(space.vstore.alloc(DUR[t]));
+    }
+    pipeting_start.push(box start[i * TASKS + L]);
+    pipeting_start.push(box start[i * TASKS + W]);
 
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 1], Addition::new(task[i * 5], 10))); // Take after Loading
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 2], Addition::new(task[i * 5 + 1], 25))); //Wait after Take
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 3], Addition::new(task[i * 5 + 2], 240))); //Put after Wait
-    space.cstore.alloc(box x_greater_y(task[i * 5 + 4], Addition::new(task[i * 5 + 3], 25))); // End after Put 
+    pipeting_duration.push(box duration[i * 4 + L]);
+    pipeting_duration.push(box duration[i * 4 + W]);
 
-/*	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 1], task[i * 5], last[i * 4])); // Ts > Ls + Ld
-	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 2], task[i * 5 + 1], last[i * 4 + 1])); // Ws > Ts + Td
-	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 3], task[i * 5 + 2], last[i * 4 + 2])); // Ps > Ws + Wd
-	  space.cstore.alloc(box XGreaterYPlusZ::new(task[i * 5 + 4], task[i * 5 + 3], last[i * 4 + 3])); // Es > Ps + Pd */
+    pipeting_resource.push(box space.vstore.alloc(Interval::singleton(1)));
+    pipeting_resource.push(box space.vstore.alloc(Interval::singleton(1)));
 
+    // Ensure that every task starts after the end time of the previous task. (S' > S + D).
+    for t in 0..TASKS-1 {
+      space.cstore.alloc(
+        box XGreaterYPlusZ::new(start[i * TASKS + t + 1], start[i * TASKS + t], duration[i * 4 + t]));
+    }
   }
   // Ls = 0 for the first robot to force it to start first
-  space.cstore.alloc(box XEqY::new(task[0], Constant::new(3)));
+  space.cstore.alloc(box XEqY::new(start[0], Constant::new(1)));
 
+  // for i in 0..num_robot*2 {
+  //   pipeting_resource.push(box Constant::new(1));
+  // }
 
-  let cumulative_pipeting = Cumulative::new(
-    pipeting_start,
-    pipeting_duration,
-    pipeting_resource,
-    box space.vstore.alloc(Interval::new(1,1))
-  );
-  cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
-
-
-
+  // let cumulative_pipeting = Cumulative::new(
+  //   pipeting_start,
+  //   pipeting_duration,
+  //   pipeting_resource,
+  //   box space.vstore.alloc(Interval::new(1,1))
+  // );
+  // cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
   space
 }
 
 pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
   // Search step.
-//  let mut search = one_solution_engine();
-let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
-      OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)));
+  let mut search = one_solution_engine();
   search.start(&space);
-  let (mut space, status) = search.enter(space);
-  let label = space.label();
-  let space = space.restore(label);
+  let (space, status) = search.enter(space);
+  let space = space.unfreeze();
 
   if show_trace {
-  	// Print result.
-  	match status {
-  	Satisfiable => {
+    // Print result.
+    match status {
+    Satisfiable => {
       //result are formated has follow foe each robot:
       // Start_L, Duration_L, Pipeting_Cumum_Res_L, Start_T, Duration_T, Start_W, Duration_W, Start_P, Duration_P, Pipeting_Cumum_Res_P, Start_E
       let mut start_list = vec!();
@@ -163,10 +164,10 @@ let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
         print!("{}, ", start.lower());
         num+=1;
         if num == 5 {
-        	println!("");
-	        robot += 1;
+          println!("");
+          robot += 1;
             print!("start time robot {}: ", robot);
-        	num=0;
+          num=0;
         }
       }
       println!("");
@@ -178,49 +179,48 @@ let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
         print!("{}, ", dur.lower());
         num+=1;
         if num == 4 {
-        	println!("");
-	        robot += 1;
-	        print!("duration robot {}: ", robot);
-        	num=0;
+          println!("");
+          robot += 1;
+          print!("duration robot {}: ", robot);
+          num=0;
         }
       }
       println!("");
-  	}
-  	Unsatisfiable => println!("{}-analysis problem is unsatisfiable.", num_robot),
+    }
+    Unsatisfiable => println!("{}-analysis problem is unsatisfiable.", num_robot),
     EndOfSearch => println!("Search terminated or was interrupted."),
-  	Unknown(_) => unreachable!(
-  	  "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
+    Unknown(_) => unreachable!(
+      "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
     }
   }
 }
-
 
  #[cfg(test)]
 mod tests {
   use test::Bencher;
 
-  #[test]
-  fn test_shedule() {
-      super::solve_schedule(4, super::build_store(4, 500), true);
-  }
+  // #[test]
+  // fn test_shedule() {
+  //     super::solve_schedule(4, super::build_store(4, 500), true);
+  // }
 
   #[bench]
   fn bench_schedule_2(b: &mut Bencher) {
-  	b.iter(|| super::solve_schedule(2, super::build_store(2, 500), false));
+    b.iter(|| super::solve_schedule(2, super::build_store(2, 500), false));
   }
 
-  #[bench]
-  fn bench_schedule_4(b: &mut Bencher) {
-  	b.iter(|| super::solve_schedule(4, super::build_store(4, 500), false));
-  }
+  // #[bench]
+  // fn bench_schedule_4(b: &mut Bencher) {
+  //   b.iter(|| super::solve_schedule(4, super::build_store(4, 500), false));
+  // }
 
-  #[bench]
-  fn bench_schedule_8(b: &mut Bencher) {
-  	b.iter(|| super::solve_schedule(8, super::build_store(8, 500), false));
-  }
+  // #[bench]
+  // fn bench_schedule_8(b: &mut Bencher) {
+  //   b.iter(|| super::solve_schedule(8, super::build_store(8, 500), false));
+  // }
 
-  #[bench]
-  fn bench_schedule_16(b: &mut Bencher) {
-  	b.iter(|| super::solve_schedule(16, super::build_store(16, 500), false));
-  }
+  // #[bench]
+  // fn bench_schedule_16(b: &mut Bencher) {
+  //   b.iter(|| super::solve_schedule(16, super::build_store(16, 500), false));
+  // }
 }
