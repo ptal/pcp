@@ -28,7 +28,7 @@ pub use variable::ops::Iterable;
 use variable::store::*;
 use variable::memory::TimestampTrailMemory;
 use propagation::events::FDEvent;
-use interval::interval::*;
+use interval::interval_set::*;
 
-pub type VStoreCopy<Domain> = Store<TimestampTrailMemory<Domain>, FDEvent>;
-pub type VStoreFD = VStoreCopy<Interval<i32>>;
+pub type VStoreTrail<Domain> = Store<TimestampTrailMemory<Domain>, FDEvent>;
+pub type VStoreFD = VStoreTrail<IntervalSet<i32>>;

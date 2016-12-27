@@ -48,7 +48,7 @@ use pcp::propagators::*;
 use pcp::variable::ops::*;
 use pcp::search::search_tree_visitor::Status::*;
 use pcp::search::*;
-use interval::interval::*;
+use interval::interval_set::*;
 use interval::ops::Range;
 use gcollections::ops::*;
 use pcp::term::constant::Constant;
@@ -68,44 +68,44 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
   let mut start = vec![];
   let mut duration = vec![];
 
-  let time_dom = (1, max_time as i32).to_interval();
+  let time_dom = IntervalSet::new(1, max_time as i32);
 
   let mut pipeting_start = vec!();
   let mut pipeting_duration = vec!();
   let mut pipeting_resource = vec!();
 
-  let DUR: Vec<Interval<i32>> = vec![
+  let DUR: Vec<IntervalSet<i32>> = vec![
     (10, 15),   // Loading L duration between 10 and 15
     (25, 35),   // Take T duration between 25 and 35
     (240, 250), // Wait W duration between 100 and 250
     (25, 35)    // Put P duration between 25 and 35
-  ].into_iter().map(|d| d.to_interval()).collect();
+  ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
 
   for i in 0..num_robot {
     // Start date for the different tasks.
     for _ in 0..TASKS {
-      start.push(space.vstore.alloc(time_dom));
+      start.push(space.vstore.alloc(time_dom.clone()));
     }
     for t in 0..TASKS-1 {
-      duration.push(space.vstore.alloc(DUR[t]));
+      duration.push(space.vstore.alloc(DUR[t].clone()));
     }
-    pipeting_start.push(box start[i * TASKS + L]);
-    pipeting_start.push(box start[i * TASKS + W]);
+    pipeting_start.push(box start[i * TASKS + L].clone());
+    pipeting_start.push(box start[i * TASKS + W].clone());
 
-    pipeting_duration.push(box duration[i * 4 + L]);
-    pipeting_duration.push(box duration[i * 4 + W]);
+    pipeting_duration.push(box duration[i * 4 + L].clone());
+    pipeting_duration.push(box duration[i * 4 + W].clone());
 
-    pipeting_resource.push(box space.vstore.alloc(Interval::singleton(1)));
-    pipeting_resource.push(box space.vstore.alloc(Interval::singleton(1)));
+    pipeting_resource.push(box space.vstore.alloc(IntervalSet::singleton(1)));
+    pipeting_resource.push(box space.vstore.alloc(IntervalSet::singleton(1)));
 
     // Ensure that every task starts after the end time of the previous task. (S' > S + D).
     for t in 0..TASKS-1 {
       space.cstore.alloc(
-        box XGreaterYPlusZ::new(start[i * TASKS + t + 1], start[i * TASKS + t], duration[i * 4 + t]));
+        box XGreaterYPlusZ::new(start[i * TASKS + t + 1].clone(), start[i * TASKS + t].clone(), duration[i * 4 + t].clone()));
     }
   }
   // Ls = 0 for the first robot to force it to start first
-  space.cstore.alloc(box XEqY::new(start[0], Constant::new(1)));
+  space.cstore.alloc(box XEqY::new(start[0].clone(), Constant::new(1)));
 
   // for i in 0..num_robot*2 {
   //   pipeting_resource.push(box Constant::new(1));
@@ -115,7 +115,7 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
     pipeting_start,
     pipeting_duration,
     pipeting_resource,
-    box space.vstore.alloc(Interval::new(1,1))
+    box space.vstore.alloc(IntervalSet::new(1,1))
   );
   cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
   space

@@ -20,7 +20,8 @@ use pcp::variable::ops::*;
 use pcp::term::*;
 use pcp::search::search_tree_visitor::Status::*;
 use pcp::search::*;
-use interval::interval::*;
+use interval::ops::Range;
+use interval::interval_set::*;
 use gcollections::ops::*;
 
 pub fn nqueens(n: usize) {
@@ -29,7 +30,7 @@ pub fn nqueens(n: usize) {
   let mut queens = vec![];
   // 2 queens can't share the same line.
   for _ in 0..n {
-    queens.push(space.vstore.alloc((1, n as i32).to_interval()));
+    queens.push(space.vstore.alloc(IntervalSet::new(1, n as i32)));
   }
   for i in 0..n-1 {
     for j in i + 1..n {
@@ -38,10 +39,10 @@ pub fn nqueens(n: usize) {
       let q2 = (j + 1) as i32;
       // Xi + i != Xj + j reformulated as: Xi != Xj + j - i
       space.cstore.alloc(box XNeqY::new(
-        queens[i], Addition::new(queens[j], q2 - q1)));
+        queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
       // Xi - i != Xj - j reformulated as: Xi != Xj - j + i
       space.cstore.alloc(box XNeqY::new(
-        queens[i], Addition::new(queens[j], -q2 + q1)));
+        queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
     }
   }
   // 2 queens can't share the same column.
