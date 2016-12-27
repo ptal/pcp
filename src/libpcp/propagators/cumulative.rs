@@ -17,14 +17,11 @@ use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use term::bool2int::*;
-use interval::ops::{Range};
 use gcollections::ops::*;
 use gcollections::*;
-use gcollections::IntervalKind;
-use num::{Integer, PrimInt, Signed};
-use std::ops::{Add, Sub, Mul};
 use std::marker::PhantomData;
 use std::fmt::Debug;
+use concept::*;
 
 pub struct Cumulative<V, VStore>
 {
@@ -58,11 +55,8 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
   V: StoreMonotonicUpdate<VStore>,
   V: StoreRead<VStore>,
   V: Clone + Debug + 'static,
-  Dom: Bounded<Item=Bound> + Add<Bound, Output=Dom> + Add<Output=Dom> + Sub<Bound, Output=Dom> + Mul<Output=Dom> + Clone,
-  Dom: Singleton + Overlap + Intersection<Output=Dom> + Cardinality + Range,
-  Dom: Empty + ShrinkLeft + ShrinkRight + IntervalKind + 'static,
-  Bound: PartialOrd + Debug,
-  Bound: Integer + PrimInt + Signed + 'static
+  Dom: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
 {
   // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
   // forall( j in tasks ) (
@@ -127,6 +121,7 @@ mod test {
   use kernel::*;
   use kernel::Trilean::*;
   use interval::interval::*;
+  use interval::ops::Range;
   use variable::VStoreCopy;
   use propagation::CStoreFD;
 

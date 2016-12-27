@@ -23,8 +23,8 @@ use propagation::concept::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
-use num::Integer;
 use std::fmt::Debug;
+use concept::*;
 
 pub enum Mode {
   Minimize,
@@ -56,9 +56,8 @@ impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore
  V: StoreMonotonicUpdate<VStore> + Debug + Clone + 'static,
  CStore: Freeze + Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
- Dom: Bounded + Collection<Item=Bound> + Cardinality + ShrinkLeft + ShrinkRight + Empty,
- Dom: StrictShrinkLeft + StrictShrinkRight + Singleton + 'static,
- Bound: Clone + Integer + Debug + 'static,
+ Dom: IntDomain<Item=Bound> + 'static,
+ Bound: IntBound + 'static,
  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
   fn start(&mut self, root: &Space<VStore, CStore, R>) {

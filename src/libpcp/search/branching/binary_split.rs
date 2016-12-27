@@ -23,10 +23,8 @@ use propagation::concept::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
-use num::traits::Num;
-use num::{Integer, PrimInt};
 use std::ops::*;
-use std::fmt::Debug;
+use concept::*;
 
 pub struct BinarySplit;
 
@@ -39,9 +37,8 @@ impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>> for
   VStore: AssociativeCollection<Location=Identity<Domain>>,
   CStore: Freeze,
   CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
-  Domain: Clone + Cardinality + Bounded + Collection<Item=Bound> + Add<Bound, Output=Domain> + Sub<Bound, Output=Domain> + 'static,
-  Domain: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight + Empty + Singleton,
-  Bound: PrimInt + Num + Integer + PartialOrd + Clone + Debug + 'static,
+  Domain: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
   fn distribute(&mut self, space: Space<VStore, CStore, R>, var_idx: usize) ->

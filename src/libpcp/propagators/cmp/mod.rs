@@ -20,7 +20,7 @@ pub mod x_less_y_plus_z;
 pub mod x_eq_y_plus_z;
 pub mod x_eq_y_mul_z;
 
-use num::{PrimInt, Signed};
+use num::{Signed, Num};
 use term::*;
 pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
 pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
@@ -41,25 +41,25 @@ pub fn x_greater_y<X, Y>(x: X, y: Y) -> XGreaterY<X, Y> {
 }
 
 pub fn x_geq_y<X, Y, Bound>(x: X, y: Y) -> XGreaterEqY<X, Y, Bound> where
-  Bound: PrimInt
+  Bound: Num
 {
   x_greater_y(Addition::new(x, Bound::one()), y)
 }
 
 pub fn x_leq_y<X, Y, Bound>(x: X, y: Y) -> XLessEqY<X, Y, Bound> where
-  Bound: PrimInt
+  Bound: Num
 {
   XLessY::new(x, Addition::new(y, Bound::one()))
 }
 
 pub fn x_geq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y, Z, Bound> where
-  Bound: PrimInt
+  Bound: Num
 {
   XGreaterYPlusZ::new(Addition::new(x, Bound::one()), y, z)
 }
 
 pub fn x_leq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, Bound> where
-  Bound: PrimInt + Signed
+  Bound: Num + Signed
 {
   XLessYPlusZ::new(Addition::new(x, -Bound::one()), y, z)
 }

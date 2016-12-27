@@ -111,13 +111,13 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
   //   pipeting_resource.push(box Constant::new(1));
   // }
 
-  // let cumulative_pipeting = Cumulative::new(
-  //   pipeting_start,
-  //   pipeting_duration,
-  //   pipeting_resource,
-  //   box space.vstore.alloc(Interval::new(1,1))
-  // );
-  // cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
+  let cumulative_pipeting = Cumulative::new(
+    pipeting_start,
+    pipeting_duration,
+    pipeting_resource,
+    box space.vstore.alloc(Interval::new(1,1))
+  );
+  cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
   space
 }
 

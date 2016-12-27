@@ -18,7 +18,7 @@ use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_
 use propagation::*;
 use propagation::events::*;
 use std::fmt::{Formatter, Debug, Error};
-use num::{Signed, PrimInt};
+use num::{Signed, Num};
 
 #[derive(Clone, Copy)]
 pub struct XEqYPlusZ<X, Y, Z, B>
@@ -33,7 +33,7 @@ impl<X, Y, Z, B> XEqYPlusZ<X, Y, Z, B> where
   X: Clone,
   Y: Clone,
   Z: Clone,
-  B: PrimInt + Signed,
+  B: Num + Signed,
 {
   pub fn new(x: X, y: Y, z: Z) -> XEqYPlusZ<X, Y, Z, B> {
     XEqYPlusZ {
