@@ -40,7 +40,7 @@ mod test {
   use super::*;
   use search::*;
   use search::branching::VarSelection;
-  use interval::interval::*;
+  use interval::interval_set::*;
   use interval::ops::*;
 
   fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
@@ -49,7 +49,7 @@ mod test {
     let mut space = FDSpace::empty();
 
     for (l,u) in vars {
-      space.vstore.alloc(Interval::new(l,u));
+      space.vstore.alloc(IntervalSet::new(l,u));
     }
 
     assert_eq!(selector.select(&space), expect);

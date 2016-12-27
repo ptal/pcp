@@ -82,7 +82,7 @@ mod test {
   use search::branching::Distributor;
   use kernel::trilean::Trilean::*;
   use search::*;
-  use interval::interval::*;
+  use interval::interval_set::*;
   use interval::ops::Range;
 
   fn test_distributor<D>(mut distributor: D, distribution_index: usize,
@@ -92,7 +92,7 @@ mod test {
     let mut space = FDSpace::empty();
 
     for (l,u) in root {
-      space.vstore.alloc(Interval::new(l,u));
+      space.vstore.alloc(IntervalSet::new(l,u));
     }
 
     let (mut immutable_state, branches) = distributor.distribute(space, distribution_index);
@@ -103,7 +103,7 @@ mod test {
       space = branch.commit(immutable_state);
       assert_eq!(space.consistency(), True);
       let split_dom = nth_dom(&space.vstore, distribution_index);
-      assert_eq!(split_dom, Interval::new(l,u));
+      assert_eq!(split_dom, IntervalSet::new(l,u));
       immutable_state = space.freeze();
     }
   }

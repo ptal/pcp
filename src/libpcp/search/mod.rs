@@ -30,13 +30,13 @@ pub use search::space::*;
 pub use search::search_tree_visitor::*;
 
 use propagation::CStoreFD;
-use variable::VStoreFD;
+use variable::VStoreSet;
 use search::engine::one_solution::*;
 use search::branching::*;
 use search::propagation::*;
 use gcollections::VectorStack;
 
-pub type VStore = VStoreFD;
+pub type VStore = VStoreSet;
 type CStore = CStoreFD<VStore>;
 pub type FDSpace = Space<VStore, CStore, NoRecomputation<VStore, CStore>>;
 
@@ -55,13 +55,13 @@ mod test {
   use propagators::distinct::*;
   use term::*;
   use gcollections::ops::*;
-  use interval::interval::*;
+  use interval::interval_set::*;
 
   pub fn nqueens(n: usize, space: &mut FDSpace) {
     let mut queens = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {
-      queens.push(space.vstore.alloc((1, n as i32).to_interval()));
+      queens.push(space.vstore.alloc((1, n as i32).to_interval_set()));
     }
     for i in 0..n-1 {
       for j in i + 1..n {

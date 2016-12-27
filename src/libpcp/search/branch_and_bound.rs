@@ -94,7 +94,7 @@ mod test {
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
-  use interval::interval::*;
+  use interval::interval_set::*;
   use gcollections::VectorStack;
 
   #[test]
@@ -109,8 +109,8 @@ mod test {
 
   fn simple_optimization_test(mode: Mode, expect: i32) {
     let mut space = FDSpace::empty();
-    let x = space.vstore.alloc((0,10).to_interval());
-    let y = space.vstore.alloc((0,10).to_interval());
+    let x = space.vstore.alloc((0,10).to_interval_set());
+    let y = space.vstore.alloc((0,10).to_interval_set());
     space.cstore.alloc(box XLessY::new(x.clone(), y));
 
     let mut search: AllSolution<OneSolution<_, VectorStack<_>, FDSpace>>
