@@ -26,10 +26,10 @@ use gcollections::*;
 use std::ops::*;
 use concept::*;
 
-pub struct BinarySplit;
+pub struct Enumerate;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
-impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bound> for BinarySplit where
+impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bound> for Enumerate where
   VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
   VStore: AssociativeCollection<Location=Identity<Domain>>,
   CStore: Freeze,
@@ -43,16 +43,17 @@ impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bou
   {
     let x = Identity::<Domain>::new(var_idx);
     let v = Constant::new(val);
-    let x_less_v = x_leq_y::<_,_,Bound>(x.clone(), v.clone());
-    let x_geq_v = x_greater_y(x, v);
+
+    let x_eq_v = XEqY::new(x.clone(), v.clone());
+    let x_neq_v = XNeqY::new(x, v);
 
     Branch::distribute(space,
       vec![
         Box::new(move |space: &mut Space<VStore, CStore, R>| {
-          space.cstore.alloc(box x_less_v);
+          space.cstore.alloc(box x_eq_v);
         }),
         Box::new(move |space: &mut Space<VStore, CStore, R>| {
-          space.cstore.alloc(box x_geq_v);
+          space.cstore.alloc(box x_neq_v);
         })
       ]
     )
@@ -60,58 +61,23 @@ impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bou
 }
 
 #[cfg(test)]
-pub mod test {
+mod test {
   use super::*;
-  use search::branching::Distributor;
-  use search::branching::MiddleVal;
-  use term::ops::*;
-  use kernel::trilean::Trilean::*;
-  use search::*;
-  use interval::interval_set::*;
-  use interval::ops::Range;
-
-  type Domain = IntervalSet<i32>;
-
-  pub fn test_distributor<D, Val>(mut distributor: D, mut val_selection: Val, distribution_index: usize,
-    root: Vec<(i32, i32)>, children: Vec<(i32, i32)>) where
-   Val: ValSelection<Domain>,
-   D: Distributor<FDSpace, i32>
-  {
-    let mut space = FDSpace::empty();
-
-    for (l,u) in root {
-      space.vstore.alloc(IntervalSet::new(l,u));
-    }
-
-    let x = Identity::<Domain>::new(distribution_index);
-    let d = x.read(&space.vstore);
-    let b = val_selection.select(d);
-
-    let (mut immutable_state, branches) = distributor.distribute(space, distribution_index, b);
-
-    assert_eq!(branches.len(), children.len());
-
-    for (branch, (l,u)) in branches.into_iter().zip(children.into_iter()) {
-      space = branch.commit(immutable_state);
-      assert_eq!(space.consistency(), True);
-      let split_dom = x.read(&space.vstore);
-      assert_eq!(split_dom, IntervalSet::new(l,u));
-      immutable_state = space.freeze();
-    }
-  }
+  use search::branching::binary_split::test::test_distributor;
+  use search::branching::MinVal;
 
   #[test]
   fn binary_split_distribution() {
     let vars = vec![(1,10),(2,4),(1,2)];
-    test_distributor(BinarySplit, MiddleVal, 0,
+    test_distributor(Enumerate, MinVal, 0,
       vars.clone(),
-      vec![(1,5),(6,10)]
+      vec![(1,1),(2,10)]
     );
-    test_distributor(BinarySplit, MiddleVal, 1,
+    test_distributor(Enumerate, MinVal, 1,
       vars.clone(),
-      vec![(2,3),(4,4)]
+      vec![(2,2),(3,4)]
     );
-    test_distributor(BinarySplit, MiddleVal, 2,
+    test_distributor(Enumerate, MinVal, 2,
       vars.clone(),
       vec![(1,1),(2,2)]
     );
@@ -120,7 +86,7 @@ pub mod test {
   #[test]
   #[should_panic]
   fn binary_split_impossible_distribution() {
-    test_distributor(BinarySplit, MiddleVal, 0,
+    test_distributor(Enumerate, MinVal, 0,
       vec![(1,1)],
       vec![]
     );
@@ -129,7 +95,7 @@ pub mod test {
   #[test]
   #[should_panic]
   fn binary_split_impossible_distribution_2() {
-    test_distributor(BinarySplit, MiddleVal, 2,
+    test_distributor(Enumerate, MinVal, 2,
       vec![(1,5),(2,4),(4,4)],
       vec![]
     );

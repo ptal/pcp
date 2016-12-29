@@ -34,7 +34,7 @@ pub trait IntDomain:
   Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range +
   ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight +
   Difference<<Self as Collection>::Item, Output=Self> +
-  Intersection<Output=Self> + Overlap + Subset +
+  Intersection<Output=Self> + Overlap + Subset + Disjoint +
   Add<<Self as Collection>::Item, Output=Self> + Sub<<Self as Collection>::Item, Output=Self> +
   Add<Output=Self> + Sub<Output=Self> + Mul<Output=Self> +
   Clone + Debug
@@ -46,7 +46,7 @@ impl<R> IntDomain for R where
   R: Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range,
   R: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight,
   R: Difference<<R as Collection>::Item, Output=R>,
-  R: Intersection<Output=R> + Overlap + Subset,
+  R: Intersection<Output=R> + Overlap + Subset + Disjoint,
   R: Add<<R as Collection>::Item, Output=R> + Sub<<R as Collection>::Item, Output=R>,
   R: Add<Output=R> + Sub<Output=R> + Mul<Output=R>,
   R: Clone + Debug,

@@ -17,13 +17,18 @@ pub mod brancher;
 pub mod first_smallest_var;
 pub mod input_order;
 pub mod middle_val;
+pub mod min_val;
 pub mod binary_split;
+pub mod enumerate;
 
 pub use search::branching::binary_split::*;
+pub use search::branching::enumerate::*;
 pub use search::branching::brancher::*;
 pub use search::branching::first_smallest_var::*;
 pub use search::branching::input_order::*;
 pub use search::branching::middle_val::*;
+pub use search::branching::min_val::*;
+
 
 use search::branching::branch::*;
 use gcollections::*;
