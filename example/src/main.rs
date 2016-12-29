@@ -28,8 +28,10 @@ mod nqueens;
 mod robot;
 
 use nqueens::nqueens;
+use robot::*;
 
 fn main() {
   // nqueens(60);
-  robot::solve_schedule(2, robot::build_store(2, 500), true);
+  let robot = RobotScheduling::new(1, 500).solve();
+  println!("{}", robot);
 }

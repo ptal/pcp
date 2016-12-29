@@ -38,15 +38,13 @@
 //    * Mixing unit use by Take and Put operations
 
 
-#![allow(unused_variables, non_snake_case)]
+#![allow(unused_variables, non_snake_case, dead_code)]
 
 extern crate test;
 
 //use env_logger;
 use pcp::kernel::*;
 use pcp::propagators::*;
-use pcp::variable::ops::*;
-use pcp::search::search_tree_visitor::Status::*;
 use pcp::search::*;
 use pcp::search::branching::*;
 use pcp::search::engine::one_solution::*;
@@ -56,157 +54,158 @@ use gcollections::VectorStack;
 use interval::interval_set::*;
 use interval::ops::Range;
 use gcollections::ops::*;
-use pcp::term::constant::Constant;
-use pcp::term::Addition;
+use pcp::term::*;
+use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
+use std::fmt::{Formatter, Display, Error};
 
-//build the contraint for num_robot with max-time indicating that all robot must finish before.
-pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
-  let TASKS = 5;
-  let L = 0; // Loading
-  let T = 1; // Take
-  let W = 2; // Wait
-  let P = 3; // Put
-  let E = 4; // End, go to park
+pub type Domain = IntervalSet<i32>;
 
-  let mut space = FDSpace::empty();
-  let mut start = vec![];
-  let mut duration = vec![];
-
-  let time_dom = IntervalSet::new(1, max_time as i32);
-
-  let mut pipeting_start = vec!();
-  let mut pipeting_duration = vec!();
-  let mut pipeting_resource = vec!();
-
-  let DUR: Vec<IntervalSet<i32>> = vec![
-    (10, 15),   // Loading L duration between 10 and 15
-    (25, 35),   // Take T duration between 25 and 35
-    (240, 250), // Wait W duration between 100 and 250
-    (25, 35)    // Put P duration between 25 and 35
-  ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
-
-
-  // Start date for the different tasks.
-  for i in 0..num_robot {
-    for _ in 0..TASKS {
-      start.push(space.vstore.alloc(time_dom.clone()));
-    }
-  }
-
-  for i in 0..num_robot {
-    for t in 0..TASKS-1 {
-      duration.push(space.vstore.alloc(DUR[t].clone()));
-    }
-    pipeting_start.push(box start[i * TASKS + L].clone());
-    pipeting_start.push(box start[i * TASKS + W].clone());
-
-    pipeting_duration.push(box duration[i * 4 + L].clone());
-    pipeting_duration.push(box duration[i * 4 + W].clone());
-
-    pipeting_resource.push(box space.vstore.alloc(IntervalSet::singleton(1)));
-    pipeting_resource.push(box space.vstore.alloc(IntervalSet::singleton(1)));
-
-    // Ensure that every task starts after the end time of the previous task. (S' > S + D).
-    for t in 0..TASKS-1 {
-      space.cstore.alloc(
-        box XGreaterYPlusZ::new(start[i * TASKS + t + 1].clone(), start[i * TASKS + t].clone(), duration[i * 4 + t].clone()));
-    }
-  }
-  // Ls = 0 for the first robot to force it to start first
-  space.cstore.alloc(box XEqY::new(start[0].clone(), Constant::new(1)));
-
-  // for i in 0..num_robot*2 {
-  //   pipeting_resource.push(box Constant::new(1));
-  // }
-
-  let cumulative_pipeting = Cumulative::new(
-    pipeting_start,
-    pipeting_duration,
-    pipeting_resource,
-    box space.vstore.alloc(IntervalSet::new(1,1))
-  );
-  cumulative_pipeting.join(&mut space.vstore, &mut space.cstore);
-  space
+pub struct RobotScheduling {
+  pub num_robot: usize,
+  pub max_time: usize,
+  pub start: Vec<Identity<Domain>>,
+  pub duration: Vec<Identity<Domain>>,
+  pub pipeting_start: Vec<Box<Identity<Domain>>>,
+  pub pipeting_duration: Vec<Box<Identity<Domain>>>,
+  pub pipeting_resource: Vec<Box<Identity<Domain>>>,
+  pub space: FDSpace,
+  pub status: Status<FDSpace>,
 }
 
-pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
-  // Search step.
-  let search =
-    OneSolution::<_, VectorStack<_>, FDSpace>::new(
-    Debugger::new(
-    Propagation::new(
-    Brancher::new(InputOrder, MinVal, Enumerate))));
-  let mut search = Box::new(search);
+static TASKS: usize = 5;
+static L: usize = 0; // Loading
+static T: usize = 1; // Take
+static W: usize = 2; // Wait
+static P: usize = 3; // Put
+static E: usize = 4; // End, go to park
 
-  search.start(&space);
-  let (space, status) = search.enter(space);
-  let space = space.unfreeze();
+impl RobotScheduling
+{
+  pub fn new(num_robot: usize, max_time: usize) -> Self {
+    let mut robot = RobotScheduling {
+      num_robot: num_robot,
+      max_time: max_time,
+      start: vec![],
+      duration: vec![],
+      pipeting_start: vec![],
+      pipeting_duration: vec![],
+      pipeting_resource: vec![],
+      space: FDSpace::empty(),
+      status: Status::Unsatisfiable,
+    };
+    robot.initialize();
+    robot
+  }
 
-  if show_trace {
-    // Print result.
-    match status {
-    Satisfiable => {
-      //result are formated has follow foe each robot:
-      // Start_L, Duration_L, Pipeting_Cumum_Res_L, Start_T, Duration_T, Start_W, Duration_W, Start_P, Duration_P, Pipeting_Cumum_Res_P, Start_E
-      let mut start_list = vec!();
-      let mut duration_list = vec!();
+  fn initialize(&mut self) {
+    let one = IntervalSet::singleton(1);
+    let time_dom = IntervalSet::new(1, self.max_time as i32);
 
-      let mut iter = space.vstore.iter();
+    let DUR: Vec<Domain> = vec![
+      (10, 15),   // Loading L duration between 10 and 15
+      (25, 35),   // Take T duration between 25 and 35
+      (240, 250), // Wait W duration between 100 and 250
+      (25, 35)    // Put P duration between 25 and 35
+    ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
 
-      for _ in 0 .. num_robot {
-        start_list.push(iter.next().unwrap().clone());
-        duration_list.push(iter.next().unwrap().clone());
-        iter.next(); //skip resource
-        start_list.push(iter.next().unwrap().clone());
-        duration_list.push(iter.next().unwrap().clone());
-        start_list.push(iter.next().unwrap().clone());
-        duration_list.push(iter.next().unwrap().clone());
-        start_list.push(iter.next().unwrap().clone());
-        duration_list.push(iter.next().unwrap().clone());
-        iter.next(); //skip resource
-        start_list.push(iter.next().unwrap().clone());
+
+    // Start date for the different tasks.
+    for i in 0..self.num_robot {
+      for _ in 0..TASKS {
+        self.start.push(self.space.vstore.alloc(time_dom.clone()));
       }
+    }
 
+    for i in 0..self.num_robot {
+      for t in 0..TASKS-1 {
+        self.duration.push(self.space.vstore.alloc(DUR[t].clone()));
+      }
+      self.pipeting_start.push(box self.start[i * TASKS + L].clone());
+      self.pipeting_start.push(box self.start[i * TASKS + W].clone());
 
-      println!("{}-robot scheduling is satisfiable. The first solution is:", num_robot);
-      println!("task              : L,  T ,  W  , P , E ");
-      let mut robot = 1;
-      print!("start time robot {}: ", robot);
-      let mut num = 0;
-      for start in start_list.iter() {
-        // At this stage, dom.lower() == dom.upper().
-        print!("{}, ", start.lower());
-        num+=1;
-        if num == 5 {
-          println!("");
-          robot += 1;
-            print!("start time robot {}: ", robot);
-          num=0;
+      self.pipeting_duration.push(box self.duration[i * 4 + L].clone());
+      self.pipeting_duration.push(box self.duration[i * 4 + W].clone());
+
+      self.pipeting_resource.push(box self.space.vstore.alloc(one.clone()));
+      self.pipeting_resource.push(box self.space.vstore.alloc(one.clone()));
+
+      // Ensure that every task starts after the end time of the previous task. (S' > S + D).
+      for t in 0..TASKS-1 {
+        self.space.cstore.alloc(
+          box XGreaterYPlusZ::new(
+            self.start[i * TASKS + t + 1].clone(),
+            self.start[i * TASKS + t].clone(),
+            self.duration[i * 4 + t].clone()));
+      }
+    }
+    // Ls = 0 for the first robot to force it to start first
+    self.space.cstore.alloc(box XEqY::new(self.start[0].clone(), Constant::new(1)));
+
+    // for i in 0..num_robot*2 {
+    //   self.pipeting_resource.push(box Constant::new(1));
+    // }
+
+    let cumulative_pipeting = Cumulative::new(
+      self.pipeting_start.clone(),
+      self.pipeting_duration.clone(),
+      self.pipeting_resource.clone(),
+      box self.space.vstore.alloc(one.clone())
+    );
+    cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
+  }
+
+  pub fn solve(mut self) -> Self {
+    let search =
+      OneSolution::<_, VectorStack<_>, FDSpace>::new(
+      // Debugger::new(
+      Propagation::new(
+      Brancher::new(InputOrder, MinVal, Enumerate)));
+    let mut search = Box::new(search);
+    search.start(&self.space);
+    let (frozen_space, status) = search.enter(self.space);
+    self.space = frozen_space.unfreeze();
+    self.status = status;
+    self
+  }
+
+  fn start_at(&self, i: usize) -> i32 {
+    self.start[i].read(&self.space.vstore).lower()
+  }
+
+  fn duration_at(&self, i: usize) -> i32 {
+    self.duration[i].read(&self.space.vstore).lower()
+  }
+}
+
+impl Display for RobotScheduling
+{
+  fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+    use pcp::search::search_tree_visitor::Status::*;
+    match self.status {
+      Unsatisfiable => fmt.write_fmt(format_args!("{}-analysis problem is unsatisfiable.", self.num_robot))?,
+      EndOfSearch => fmt.write_str("Search terminated or was interrupted.")?,
+      Unknown(_) => unreachable!(
+        "After the search step, the problem instance should be either satisfiable or unsatisfiable."),
+      Satisfiable => {
+        fmt.write_fmt(format_args!("{}-robot scheduling is satisfiable. The first solution is:\n", self.num_robot))?;
+        fmt.write_fmt(format_args!("tasks             : {:<8}{:<8}{:<8}{:<8}{:<8}\n", 'L', 'T', 'W', 'P', 'E'))?;
+        for i in 0..self.num_robot {
+          fmt.write_fmt(format_args!("start time robot {}: ", i+1))?;
+          for j in 0..TASKS {
+            fmt.write_fmt(format_args!("{:<8}", self.start_at(i+j)))?;
+          }
+          fmt.write_str("\n")?;
+        }
+        for i in 0..self.num_robot {
+          fmt.write_fmt(format_args!("duration robot {}  : ", i+1))?;
+          for j in 0..TASKS-1 {
+            fmt.write_fmt(format_args!("{:<8}", self.duration_at(i+j)))?;
+          }
         }
       }
-      println!("");
-      robot = 1;
-      print!("duration robot {}: ", robot);
-      let mut num = 0;
-      for dur in duration_list.iter() {
-        // At this stage, dom.lower() == dom.upper().
-        print!("{}, ", dur.lower());
-        num+=1;
-        if num == 4 {
-          println!("");
-          robot += 1;
-          print!("duration robot {}: ", robot);
-          num=0;
-        }
-      }
-      println!("");
     }
-    Unsatisfiable => println!("{}-analysis problem is unsatisfiable.", num_robot),
-    EndOfSearch => println!("Search terminated or was interrupted."),
-    Unknown(_) => unreachable!(
-      "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
-    }
+    Ok(())
   }
 }
 
