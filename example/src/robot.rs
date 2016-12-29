@@ -48,6 +48,11 @@ use pcp::propagators::*;
 use pcp::variable::ops::*;
 use pcp::search::search_tree_visitor::Status::*;
 use pcp::search::*;
+use pcp::search::branching::*;
+use pcp::search::engine::one_solution::*;
+use pcp::search::debugger::*;
+use pcp::search::propagation::*;
+use gcollections::VectorStack;
 use interval::interval_set::*;
 use interval::ops::Range;
 use gcollections::ops::*;
@@ -81,11 +86,15 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
     (25, 35)    // Put P duration between 25 and 35
   ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
 
+
+  // Start date for the different tasks.
   for i in 0..num_robot {
-    // Start date for the different tasks.
     for _ in 0..TASKS {
       start.push(space.vstore.alloc(time_dom.clone()));
     }
+  }
+
+  for i in 0..num_robot {
     for t in 0..TASKS-1 {
       duration.push(space.vstore.alloc(DUR[t].clone()));
     }
@@ -123,7 +132,13 @@ pub fn build_store(num_robot: usize, max_time: usize) -> FDSpace {
 
 pub fn solve_schedule(num_robot: usize, space: FDSpace, show_trace: bool) {
   // Search step.
-  let mut search = one_solution_engine();
+  let search =
+    OneSolution::<_, VectorStack<_>, FDSpace>::new(
+    Debugger::new(
+    Propagation::new(
+    Brancher::new(InputOrder, MinVal, Enumerate))));
+  let mut search = Box::new(search);
+
   search.start(&space);
   let (space, status) = search.enter(space);
   let space = space.unfreeze();

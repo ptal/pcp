@@ -25,6 +25,7 @@ pub mod engine;
 pub mod monitor;
 pub mod statistics;
 pub mod branch_and_bound;
+pub mod debugger;
 
 pub use search::space::*;
 pub use search::search_tree_visitor::*;

@@ -46,7 +46,8 @@ impl<C, Q, Space> OneSolution<C, Q, Space> where
 
   fn push_branches(&mut self, branches: Vec<Branch<Space>>)
   {
-    for branch in branches {
+    // For traversing the tree from left to right.
+    for branch in branches.into_iter().rev() {
       self.queue.insert(branch);
     }
   }
