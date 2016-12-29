@@ -19,9 +19,9 @@ use gcollections::ops::*;
 use num::traits::Unsigned;
 use num::Integer;
 
-pub struct FirstSmallestVar;
+pub struct InputOrder;
 
-impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for FirstSmallestVar where
+impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for InputOrder where
   VStore: Iterable<Item=Domain>,
   Domain: Cardinality<Size=Size>,
   Size: Ord + Unsigned + Integer
@@ -29,43 +29,28 @@ impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for
   fn select(&mut self, space: &Space<VStore, CStore, R>) -> usize {
     space.vstore.iter().enumerate()
       .filter(|&(_, v)| v.size() > Size::one())
-      .min_by_key(|&(_, v)| v.size())
+      .next()
       .expect("Cannot select a variable in a space where all variables are assigned.")
       .0
   }
 }
 
 #[cfg(test)]
-pub mod test {
+mod test {
   use super::*;
-  use search::*;
-  use search::branching::VarSelection;
-  use interval::interval_set::*;
-  use interval::ops::*;
-
-  pub fn test_selector<S>(mut selector: S, vars: Vec<(i32, i32)>, expect: usize) where
-    S: VarSelection<FDSpace>
-  {
-    let mut space = FDSpace::empty();
-
-    for (l,u) in vars {
-      space.vstore.alloc(IntervalSet::new(l,u));
-    }
-
-    assert_eq!(selector.select(&space), expect);
-  }
+  use search::branching::first_smallest_var::test::test_selector;
 
   #[test]
   fn smallest_var_selection() {
-    test_selector(FirstSmallestVar, vec![(1,10),(2,4),(1,1)], 1);
-    test_selector(FirstSmallestVar, vec![(1,10),(2,4),(2,4)], 1);
-    test_selector(FirstSmallestVar,
-      vec![(1,1),(1,1),(1,10),(1,1),(2,4),(1,1),(1,1)], 4);
+    test_selector(InputOrder, vec![(1,10),(2,4),(1,1)], 0);
+    test_selector(InputOrder, vec![(1,10),(2,4),(2,4)], 0);
+    test_selector(InputOrder,
+      vec![(1,1),(1,1),(1,10),(1,1),(2,4),(1,1),(1,1)], 2);
   }
 
   #[should_panic]
   #[test]
   fn smallest_var_selection_all_assigned() {
-    test_selector(FirstSmallestVar, vec![(0, 0),(2,2),(1,1)], 0);
+    test_selector(InputOrder, vec![(0, 0),(2,2),(1,1)], 0);
   }
 }
