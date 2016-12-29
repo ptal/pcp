@@ -15,27 +15,25 @@
 use propagators::*;
 use propagation::*;
 use propagation::events::*;
-use term::ops::*;
 use term::bool2int::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::marker::PhantomData;
-use std::fmt::Debug;
 use concept::*;
 
-pub struct Cumulative<V, VStore>
+pub struct Cumulative<VS, VD, VR, VC, VStore>
 {
-  starts: Vec<Box<V>>,
-  durations: Vec<Box<V>>,
-  resources: Vec<Box<V>>,
-  capacity: Box<V>,
+  starts: Vec<Box<VS>>,
+  durations: Vec<Box<VD>>,
+  resources: Vec<Box<VR>>,
+  capacity: Box<VC>,
   vstore_phantom: PhantomData<VStore>
 }
 
-impl<V, VStore> Cumulative<V, VStore>
+impl<VS, VD, VR, VC, VStore> Cumulative<VS, VD, VR, VC, VStore>
 {
-  pub fn new(starts: Vec<Box<V>>, durations: Vec<Box<V>>,
-   resources: Vec<Box<V>>, capacity: Box<V>) -> Self
+  pub fn new(starts: Vec<Box<VS>>, durations: Vec<Box<VD>>,
+   resources: Vec<Box<VR>>, capacity: Box<VC>) -> Self
   {
     assert_eq!(starts.len(), durations.len());
     assert_eq!(starts.len(), resources.len());
@@ -49,12 +47,13 @@ impl<V, VStore> Cumulative<V, VStore>
   }
 }
 
-impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
+impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> where
   VStore: AssociativeCollection<Item=Dom, Location=V> + Alloc,
-  V: ViewDependencies<FDEvent>,
-  V: StoreMonotonicUpdate<VStore>,
-  V: StoreRead<VStore>,
-  V: Clone + Debug + 'static,
+  VS: IntVariable<VStore> + 'static,
+  VD: IntVariable<VStore> + 'static,
+  VR: IntVariable<VStore> + 'static,
+  VC: IntVariable<VStore> + 'static,
+  V: IntVariable<VStore> + 'static,
   Dom: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
@@ -101,16 +100,16 @@ impl<V, Bound, VStore, Dom> Cumulative<V, VStore> where
     }
   }
 
-  fn start_at(&self, i: usize) -> V {
+  fn start_at(&self, i: usize) -> VS {
     *self.starts[i].clone()
   }
-  fn duration_at(&self, i: usize) -> V {
+  fn duration_at(&self, i: usize) -> VD {
     *self.durations[i].clone()
   }
-  fn resource_at(&self, i: usize) -> V {
+  fn resource_at(&self, i: usize) -> VR {
     *self.resources[i].clone()
   }
-  fn capacity_var(&self) -> V {
+  fn capacity_var(&self) -> VC {
     *self.capacity.clone()
   }
 }

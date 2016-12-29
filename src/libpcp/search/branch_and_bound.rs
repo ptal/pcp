@@ -17,13 +17,11 @@ use search::space::*;
 use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use term::*;
-use term::ops::*;
 use propagators::cmp::*;
 use propagation::concept::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::Debug;
 use concept::*;
 
 pub enum Mode {
@@ -52,8 +50,7 @@ impl<V, Bound, C> BranchAndBound<V, Bound, C> {
 impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
   BranchAndBound<V, Bound, C> where
  VStore: Freeze + Collection<Item=Dom>,
- V: StoreRead<VStore> + ViewDependencies<FDEvent>,
- V: StoreMonotonicUpdate<VStore> + Debug + Clone + 'static,
+ V: IntVariable<VStore> + 'static,
  CStore: Freeze + Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
  Dom: IntDomain<Item=Bound> + 'static,

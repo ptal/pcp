@@ -59,7 +59,8 @@ use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
 use std::fmt::{Formatter, Display, Error};
 
-pub type Domain = IntervalSet<i32>;
+pub type Bound = i32;
+pub type Domain = IntervalSet<Bound>;
 
 pub struct RobotScheduling {
   pub num_robot: usize,
@@ -68,7 +69,7 @@ pub struct RobotScheduling {
   pub duration: Vec<Identity<Domain>>,
   pub pipeting_start: Vec<Box<Identity<Domain>>>,
   pub pipeting_duration: Vec<Box<Identity<Domain>>>,
-  pub pipeting_resource: Vec<Box<Identity<Domain>>>,
+  pub pipeting_resource: Vec<Box<Constant<Bound>>>,
   pub space: FDSpace,
   pub status: Status<FDSpace>,
 }
@@ -99,7 +100,7 @@ impl RobotScheduling
   }
 
   fn initialize(&mut self) {
-    let one = IntervalSet::singleton(1);
+    // let one = IntervalSet::singleton(1);
     let time_dom = IntervalSet::new(1, self.max_time as i32);
 
     let DUR: Vec<Domain> = vec![
@@ -108,7 +109,6 @@ impl RobotScheduling
       (240, 250), // Wait W duration between 100 and 250
       (25, 35)    // Put P duration between 25 and 35
     ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
-
 
     // Start date for the different tasks.
     for i in 0..self.num_robot {
@@ -124,33 +124,30 @@ impl RobotScheduling
       self.pipeting_start.push(box self.start[i * TASKS + L].clone());
       self.pipeting_start.push(box self.start[i * TASKS + W].clone());
 
-      self.pipeting_duration.push(box self.duration[i * 4 + L].clone());
-      self.pipeting_duration.push(box self.duration[i * 4 + W].clone());
-
-      self.pipeting_resource.push(box self.space.vstore.alloc(one.clone()));
-      self.pipeting_resource.push(box self.space.vstore.alloc(one.clone()));
+      self.pipeting_duration.push(box self.duration[i * TASKS-1 + L].clone());
+      self.pipeting_duration.push(box self.duration[i * TASKS-1 + W].clone());
 
       // Ensure that every task starts after the end time of the previous task. (S' > S + D).
       for t in 0..TASKS-1 {
         self.space.cstore.alloc(
-          box XGreaterYPlusZ::new(
+          box x_geq_y_plus_z::<_,_,_,Bound>(
             self.start[i * TASKS + t + 1].clone(),
             self.start[i * TASKS + t].clone(),
-            self.duration[i * 4 + t].clone()));
+            self.duration[i * TASKS-1 + t].clone()));
       }
     }
     // Ls = 0 for the first robot to force it to start first
     self.space.cstore.alloc(box XEqY::new(self.start[0].clone(), Constant::new(1)));
 
-    // for i in 0..num_robot*2 {
-    //   self.pipeting_resource.push(box Constant::new(1));
-    // }
+    for i in 0..self.num_robot*2 {
+      self.pipeting_resource.push(box Constant::new(1));
+    }
 
     let cumulative_pipeting = Cumulative::new(
       self.pipeting_start.clone(),
       self.pipeting_duration.clone(),
       self.pipeting_resource.clone(),
-      box self.space.vstore.alloc(one.clone())
+      box Constant::new(1)
     );
     cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
   }

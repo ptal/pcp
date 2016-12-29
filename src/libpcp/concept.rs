@@ -14,6 +14,8 @@
 
 use gcollections::*;
 use gcollections::ops::*;
+use term::ops::*;
+use propagation::events::*;
 use interval::ops::Range;
 use num::{Signed, Integer};
 use std::ops::*;
@@ -51,4 +53,20 @@ impl<R> IntDomain for R where
   R: Add<Output=R> + Sub<Output=R> + Mul<Output=R>,
   R: Clone + Debug,
   <R as Collection>::Item: IntBound
+{}
+
+pub trait IntVariable<VStore>:
+  ViewDependencies<FDEvent> +
+  StoreMonotonicUpdate<VStore> +
+  StoreRead<VStore> +
+  Clone + Debug
+ where VStore: Collection
+{}
+
+impl<R, VStore> IntVariable<VStore> for R where
+  R: ViewDependencies<FDEvent>,
+  R: StoreMonotonicUpdate<VStore>,
+  R: StoreRead<VStore>,
+  R: Clone + Debug,
+  VStore: Collection
 {}
