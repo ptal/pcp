@@ -15,13 +15,16 @@
 pub mod branch;
 pub mod brancher;
 pub mod first_smallest_var;
+pub mod middle_val;
 pub mod binary_split;
 
 pub use search::branching::binary_split::*;
 pub use search::branching::brancher::*;
 pub use search::branching::first_smallest_var::*;
+pub use search::branching::middle_val::*;
 
 use search::branching::branch::*;
+use gcollections::*;
 
 use kernel::*;
 
@@ -31,7 +34,12 @@ pub trait VarSelection<Space> {
   fn select(&mut self, space: &Space) -> usize;
 }
 
-pub trait Distributor<Space> where Space: Freeze {
+pub trait ValSelection<Domain> where Domain: Collection
+{
+  fn select(&mut self, dom: Domain) -> Domain::Item;
+}
+
+pub trait Distributor<Space, Bound> where Space: Freeze {
   // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
-  fn distribute(&mut self, space: Space, var_idx: usize) -> (Space::FrozenState, Vec<Branch<Space>>);
+  fn distribute(&mut self, space: Space, var_idx: usize, val: Bound) -> (Space::FrozenState, Vec<Branch<Space>>);
 }

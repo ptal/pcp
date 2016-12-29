@@ -12,34 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::branching::*;
 use search::search_tree_visitor::*;
-use kernel::*;
 
-pub struct Brancher<S,D>
+use kernel::*;
+use search::branching::*;
+use search::space::*;
+use variable::ops::*;
+use term::*;
+use term::ops::*;
+use gcollections::*;
+use std::ops::*;
+use concept::*;
+
+pub struct Brancher<Var,Val,D>
 {
-  selector: S,
+  var_selector: Var,
+  val_selector: Val,
   distributor: D
 }
 
-impl<S,D> Brancher<S,D>
+impl<Var,Val,D> Brancher<Var,Val,D>
 {
-  pub fn new(selector: S, distributor: D) -> Brancher<S,D> {
+  pub fn new(var_selector: Var, val_selector: Val, distributor: D) -> Self {
     Brancher {
-      selector: selector,
+      var_selector: var_selector,
+      val_selector: val_selector,
       distributor: distributor
     }
   }
 }
 
-impl<Space,S,D> SearchTreeVisitor<Space> for Brancher<S,D> where
-  Space: Freeze,
-  S: VarSelection<Space>,
-  D: Distributor<Space>
+impl<Var, Val, D, VStore, CStore, R, Domain, Bound> SearchTreeVisitor<Space<VStore, CStore, R>> for Brancher<Var,Val,D> where
+  VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
+  VStore: AssociativeCollection<Location=Identity<Domain>>,
+  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>,
+  CStore: Freeze,
+  Var: VarSelection<Space<VStore, CStore, R>>,
+  Val: ValSelection<Domain>,
+  Domain: IntDomain<Item=Bound>,
+  Bound: IntBound,
+  D: Distributor<Space<VStore, CStore, R>, Bound>
 {
-  fn enter(&mut self, current: Space) -> (Space::FrozenState, Status<Space>) {
-    let var_idx = self.selector.select(&current);
-    let (immutable_space, branches) = self.distributor.distribute(current, var_idx);
+  fn enter(&mut self, current: Space<VStore, CStore, R>) -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>) {
+    let var_idx = self.var_selector.select(&current);
+
+    let x = Identity::<Domain>::new(var_idx);
+    let dom = x.read(&current.vstore);
+    assert!(!dom.is_singleton() && !dom.is_empty(),
+      "Can not distribute over assigned or failed variables.");
+    let val = self.val_selector.select(dom);
+
+    let (immutable_space, branches) = self.distributor.distribute(current, var_idx, val);
     (immutable_space, Status::Unknown(branches))
   }
 }

@@ -94,6 +94,7 @@ mod test {
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
+  use search::branching::middle_val::*;
   use interval::interval_set::*;
   use gcollections::VectorStack;
 
@@ -117,7 +118,7 @@ mod test {
       = AllSolution::new(
           OneSolution::new(
             BranchAndBound::new(mode, x.clone(),
-              Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)))));
+              Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)))));
     search.start(&space);
     let (_, status) = search.enter(space);
     assert_eq!(status, EndOfSearch);

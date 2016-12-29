@@ -63,6 +63,7 @@ mod test {
   use search::branching::binary_split::*;
   use search::branching::brancher::*;
   use search::branching::first_smallest_var::*;
+  use search::branching::middle_val::*;
   use gcollections::VectorStack;
   use gcollections::ops::*;
 
@@ -88,7 +89,7 @@ mod test {
         OneSolution<_, VectorStack<_>, FDSpace>>>
       =
         AllSolution::new(Monitor::new(&mut statistics,
-          OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, BinarySplit)))));
+          OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)))));
       search.start(&space);
       let (_, status) = search.enter(space);
       assert_eq!(status, expect);

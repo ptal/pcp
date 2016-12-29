@@ -44,7 +44,7 @@ pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
   let search =
     OneSolution::<_, VectorStack<_>, FDSpace>::new(
     Propagation::new(
-    Brancher::new(FirstSmallestVar, BinarySplit)));
+    Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)));
   Box::new(search)
 }
 
