@@ -13,12 +13,11 @@
 // limitations under the License.
 
 use kernel::*;
-use variable::ops::*;
 use gcollections::ops::*;
 use search::space::*;
 use search::search_tree_visitor::*;
-use std::fmt::{Debug, Display};
 use std::io::{self};
+use concept::*;
 
 pub struct Debugger<C> {
   child: C
@@ -33,8 +32,8 @@ impl<C> Debugger<C> {
 }
 
 impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Debugger<C> where
-  VStore: Freeze + Display + Iterable<Item=Domain> + Cardinality<Size=usize>,
-  CStore: Freeze + Consistency<VStore> + Debug,
+  VStore: IntVStore<Item=Domain>,
+  CStore: IntCStore<VStore>,
   C: SearchTreeVisitor<Space<VStore, CStore, R>>,
   Domain: IsSingleton,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>

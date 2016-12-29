@@ -14,12 +14,16 @@
 
 use gcollections::*;
 use gcollections::ops::*;
+use kernel::*;
 use term::ops::*;
+use variable::ops::*;
 use propagation::events::*;
+use propagation::concept::*;
+use propagation::ops::*;
 use interval::ops::Range;
 use num::{Signed, Integer};
 use std::ops::*;
-use std::fmt::Debug;
+use std::fmt::{Display, Debug};
 
 
 pub trait IntBound:
@@ -69,4 +73,28 @@ impl<R, VStore> IntVariable<VStore> for R where
   R: StoreRead<VStore>,
   R: Clone + Debug,
   VStore: Collection
+{}
+
+pub trait IntVStore:
+  AssociativeCollection + Alloc + Display + Cardinality<Size=usize> +
+  Freeze + Iterable + Index<usize> + MonotonicUpdate
+{}
+
+impl<R> IntVStore for R where
+  R: AssociativeCollection + Alloc + Display + Cardinality<Size=usize>,
+  R: Freeze + Iterable + Index<usize> + MonotonicUpdate
+{}
+
+pub trait IntCStore<VStore>:
+  Alloc + Empty + Clone + Freeze + Debug +
+  Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>> +
+  Consistency<VStore> +
+  PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
+{}
+
+impl<R, VStore> IntCStore<VStore> for R where
+  R: Alloc + Empty + Clone + Freeze + Debug,
+  R: Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
+  R: Consistency<VStore>,
+  R: PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
 {}

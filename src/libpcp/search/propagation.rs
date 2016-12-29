@@ -16,6 +16,7 @@ use kernel::*;
 use kernel::Trilean::*;
 use search::space::*;
 use search::search_tree_visitor::*;
+use concept::*;
 
 pub struct Propagation<C> {
   child: C
@@ -30,8 +31,8 @@ impl<C> Propagation<C> {
 }
 
 impl<VStore, CStore, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Propagation<C> where
-  VStore: Freeze,
-  CStore: Freeze + Consistency<VStore>,
+  VStore: IntVStore,
+  CStore: IntCStore<VStore>,
   C: SearchTreeVisitor<Space<VStore, CStore, R>>,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {

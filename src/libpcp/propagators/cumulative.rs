@@ -13,11 +13,7 @@
 // limitations under the License.
 
 use propagators::*;
-use propagation::*;
-use propagation::events::*;
 use term::bool2int::*;
-use gcollections::ops::*;
-use gcollections::*;
 use std::marker::PhantomData;
 use concept::*;
 
@@ -48,12 +44,12 @@ impl<VS, VD, VR, VC, VStore> Cumulative<VS, VD, VR, VC, VStore>
 }
 
 impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> where
-  VStore: AssociativeCollection<Item=Dom, Location=V> + Alloc,
+  VStore: IntVStore<Item=Dom, Location=V>,
+  V: IntVariable<VStore> + 'static,
   VS: IntVariable<VStore> + 'static,
   VD: IntVariable<VStore> + 'static,
   VR: IntVariable<VStore> + 'static,
   VC: IntVariable<VStore> + 'static,
-  V: IntVariable<VStore> + 'static,
   Dom: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
@@ -62,8 +58,7 @@ impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> w
   //   c >= r[j] + sum( i in tasks where i != j ) (
   //     bool2int( s[i] <= s[j] /\ s[j] < s[i] + d[i] ) * r[i]));
   pub fn join<CStore>(&self, vstore: &mut VStore, cstore: &mut CStore) where
-    CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>
-          + Empty + Clone + PropagatorConcept<VStore, FDEvent> + Propagator<VStore> + 'static
+    CStore: IntCStore<VStore> + 'static
   {
     let tasks = self.starts.len();
     // forall( j in tasks ) (...)
@@ -119,10 +114,11 @@ mod test {
   use super::*;
   use kernel::*;
   use kernel::Trilean::*;
-  use interval::interval::*;
-  use interval::ops::Range;
   use variable::VStoreCopy;
   use propagation::CStoreFD;
+  use interval::interval::*;
+  use interval::ops::Range;
+  use gcollections::ops::*;
 
   type VStoreFD = VStoreCopy<Interval<i32>>;
 

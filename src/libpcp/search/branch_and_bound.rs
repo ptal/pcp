@@ -18,10 +18,6 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use term::*;
 use propagators::cmp::*;
-use propagation::concept::*;
-use propagation::events::*;
-use gcollections::ops::*;
-use gcollections::*;
 use concept::*;
 
 pub enum Mode {
@@ -49,12 +45,12 @@ impl<V, Bound, C> BranchAndBound<V, Bound, C> {
 
 impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
   BranchAndBound<V, Bound, C> where
- VStore: Freeze + Collection<Item=Dom>,
- V: IntVariable<VStore> + 'static,
- CStore: Freeze + Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
- C: SearchTreeVisitor<Space<VStore, CStore, R>>,
+ VStore: IntVStore<Item=Dom>,
+ CStore: IntCStore<VStore>,
  Dom: IntDomain<Item=Bound> + 'static,
  Bound: IntBound + 'static,
+ V: IntVariable<VStore> + 'static,
+ C: SearchTreeVisitor<Space<VStore, CStore, R>>,
  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
   fn start(&mut self, root: &Space<VStore, CStore, R>) {
@@ -94,6 +90,7 @@ mod test {
   use search::branching::middle_val::*;
   use interval::interval_set::*;
   use gcollections::VectorStack;
+  use gcollections::ops::*;
 
   #[test]
   fn simple_maximize_test() {

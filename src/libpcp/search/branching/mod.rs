@@ -29,7 +29,6 @@ pub use search::branching::input_order::*;
 pub use search::branching::middle_val::*;
 pub use search::branching::min_val::*;
 
-
 use search::branching::branch::*;
 use gcollections::*;
 

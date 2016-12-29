@@ -16,24 +16,16 @@ use kernel::*;
 use search::branching::*;
 use search::branching::branch::*;
 use search::space::*;
-use variable::ops::*;
 use term::*;
 use propagators::cmp::*;
-use propagation::concept::*;
-use propagation::events::*;
-use gcollections::ops::*;
-use gcollections::*;
-use std::ops::*;
 use concept::*;
 
 pub struct BinarySplit;
 
 // See discussion about type bounds: https://github.com/ptal/pcp/issues/11
 impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bound> for BinarySplit where
-  VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
-  VStore: AssociativeCollection<Location=Identity<Domain>>,
-  CStore: Freeze,
-  CStore: Alloc + Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
+  VStore: IntVStore<Item=Domain, Location=Identity<Domain>, Output=Domain>,
+  CStore: IntCStore<VStore>,
   Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
@@ -69,6 +61,7 @@ pub mod test {
   use search::*;
   use interval::interval_set::*;
   use interval::ops::Range;
+  use gcollections::ops::*;
 
   type Domain = IntervalSet<i32>;
 

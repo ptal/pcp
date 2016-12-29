@@ -17,11 +17,8 @@ use search::search_tree_visitor::*;
 use kernel::*;
 use search::branching::*;
 use search::space::*;
-use variable::ops::*;
 use term::*;
 use term::ops::*;
-use gcollections::*;
-use std::ops::*;
 use concept::*;
 
 pub struct Brancher<Var,Val,D>
@@ -43,10 +40,9 @@ impl<Var,Val,D> Brancher<Var,Val,D>
 }
 
 impl<Var, Val, D, VStore, CStore, R, Domain, Bound> SearchTreeVisitor<Space<VStore, CStore, R>> for Brancher<Var,Val,D> where
-  VStore: Freeze + Iterable<Item=Domain> + Index<usize, Output=Domain> + MonotonicUpdate,
-  VStore: AssociativeCollection<Location=Identity<Domain>>,
+  VStore: IntVStore<Item=Domain, Location=Identity<Domain>, Output=Domain>,
+  CStore: IntCStore<VStore>,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>,
-  CStore: Freeze,
   Var: VarSelection<Space<VStore, CStore, R>>,
   Val: ValSelection<Domain>,
   Domain: IntDomain<Item=Bound>,
