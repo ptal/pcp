@@ -75,6 +75,7 @@ pub struct RobotScheduling {
 }
 
 static TASKS: usize = 5;
+static DTASKS: usize = 4;
 static L: usize = 0; // Loading
 static T: usize = 1; // Take
 static W: usize = 2; // Wait
@@ -100,7 +101,6 @@ impl RobotScheduling
   }
 
   fn initialize(&mut self) {
-    // let one = IntervalSet::singleton(1);
     let time_dom = IntervalSet::new(1, self.max_time as i32);
 
     let DUR: Vec<Domain> = vec![
@@ -118,22 +118,21 @@ impl RobotScheduling
     }
 
     for i in 0..self.num_robot {
-      for t in 0..TASKS-1 {
+      for t in 0..DTASKS {
         self.duration.push(self.space.vstore.alloc(DUR[t].clone()));
       }
-      self.pipeting_start.push(box self.start[i * TASKS + L].clone());
-      self.pipeting_start.push(box self.start[i * TASKS + W].clone());
+      for t in vec![L, W] {
+        self.pipeting_start.push(box self.start[i * TASKS + t].clone());
+        self.pipeting_duration.push(box self.duration[i * DTASKS + t].clone());
+      }
 
-      self.pipeting_duration.push(box self.duration[i * TASKS-1 + L].clone());
-      self.pipeting_duration.push(box self.duration[i * TASKS-1 + W].clone());
-
-      // Ensure that every task starts after the end time of the previous task. (S' > S + D).
-      for t in 0..TASKS-1 {
+      // Ensure that every task starts after the end time of the previous task. (S' >= S + D).
+      for t in 0..DTASKS {
         self.space.cstore.alloc(
           box x_geq_y_plus_z::<_,_,_,Bound>(
             self.start[i * TASKS + t + 1].clone(),
             self.start[i * TASKS + t].clone(),
-            self.duration[i * TASKS-1 + t].clone()));
+            self.duration[i * DTASKS + t].clone()));
       }
     }
     // Ls = 0 for the first robot to force it to start first
@@ -196,7 +195,7 @@ impl Display for RobotScheduling
         }
         for i in 0..self.num_robot {
           fmt.write_fmt(format_args!("duration robot {}  : ", i+1))?;
-          for j in 0..TASKS-1 {
+          for j in 0..DTASKS {
             fmt.write_fmt(format_args!("{:<8}", self.duration_at(i+j)))?;
           }
         }
@@ -208,30 +207,11 @@ impl Display for RobotScheduling
 
  #[cfg(test)]
 mod tests {
+  use super::*;
   use test::Bencher;
-
-  // #[test]
-  // fn test_shedule() {
-  //     super::solve_schedule(4, super::build_store(4, 500), true);
-  // }
 
   #[bench]
   fn bench_schedule_2(b: &mut Bencher) {
-    b.iter(|| super::solve_schedule(2, super::build_store(2, 500), false));
+    b.iter(|| RobotScheduling::new(2, 500).solve());
   }
-
-  // #[bench]
-  // fn bench_schedule_4(b: &mut Bencher) {
-  //   b.iter(|| super::solve_schedule(4, super::build_store(4, 500), false));
-  // }
-
-  // #[bench]
-  // fn bench_schedule_8(b: &mut Bencher) {
-  //   b.iter(|| super::solve_schedule(8, super::build_store(8, 500), false));
-  // }
-
-  // #[bench]
-  // fn bench_schedule_16(b: &mut Bencher) {
-  //   b.iter(|| super::solve_schedule(16, super::build_store(16, 500), false));
-  // }
 }
