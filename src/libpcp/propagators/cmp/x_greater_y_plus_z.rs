@@ -45,7 +45,7 @@ impl<X, Y, Z> Debug for XGreaterYPlusZ<X, Y, Z> where
   Z: Debug
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} < {:?} + {:?}", self.x, self.y, self.z))
+    formatter.write_fmt(format_args!("{:?} > {:?} + {:?}", self.x, self.y, self.z))
   }
 }
 

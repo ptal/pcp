@@ -17,8 +17,10 @@ pub mod constant;
 pub mod addition;
 pub mod ops;
 pub mod bool2int;
+pub mod sum;
 
 pub use term::identity::Identity;
 pub use term::constant::Constant;
 pub use term::addition::Addition;
 pub use term::bool2int::Bool2Int;
+pub use term::sum::Sum;

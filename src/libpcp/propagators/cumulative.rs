@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use propagators::*;
-use term::bool2int::*;
+use term::*;
 use std::marker::PhantomData;
 use concept::*;
 
@@ -23,6 +23,7 @@ pub struct Cumulative<VS, VD, VR, VC, VStore>
   durations: Vec<Box<VD>>,
   resources: Vec<Box<VR>>,
   capacity: Box<VC>,
+  intermediate: Vec<Vec<usize>>, // Given intermediate[j][i], if i left-overlap j, then it contains the number of resources used by i.
   vstore_phantom: PhantomData<VStore>
 }
 
@@ -31,21 +32,22 @@ impl<VS, VD, VR, VC, VStore> Cumulative<VS, VD, VR, VC, VStore>
   pub fn new(starts: Vec<Box<VS>>, durations: Vec<Box<VD>>,
    resources: Vec<Box<VR>>, capacity: Box<VC>) -> Self
   {
-    assert_eq!(starts.len(), durations.len());
-    assert_eq!(starts.len(), resources.len());
+    let tasks = starts.len();
+    assert_eq!(tasks, durations.len());
+    assert_eq!(tasks, resources.len());
     Cumulative {
       starts: starts,
       durations: durations,
       resources: resources,
       capacity: capacity,
+      intermediate: vec![],
       vstore_phantom: PhantomData
     }
   }
 }
 
-impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> where
-  VStore: IntVStore<Item=Dom, Location=V>,
-  V: IntVariable<VStore> + 'static,
+impl<VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> where
+  VStore: IntVStore<Item=Dom, Location=Identity<Dom>, Output=Dom>,
   VS: IntVariable<VStore> + 'static,
   VD: IntVariable<VStore> + 'static,
   VR: IntVariable<VStore> + 'static,
@@ -54,10 +56,11 @@ impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> w
   Bound: IntBound + 'static,
 {
   // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
+  // Intuitively, it says that for each task j, the sum of the resources used by the other tasks overlapping with j must not exceed the capacity.
   // forall( j in tasks ) (
   //   c >= r[j] + sum( i in tasks where i != j ) (
   //     bool2int( s[i] <= s[j] /\ s[j] < s[i] + d[i] ) * r[i]));
-  pub fn join<CStore>(&self, vstore: &mut VStore, cstore: &mut CStore) where
+  pub fn join<CStore>(&mut self, vstore: &mut VStore, cstore: &mut CStore) where
     CStore: IntCStore<VStore> + 'static
   {
     let tasks = self.starts.len();
@@ -82,17 +85,27 @@ impl<V, VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> w
           resource_vars.push(r);
         }
       }
+
+      self.intermediate.push(
+        resource_vars.iter().map(|v| v.index()).collect());
       //  sum( i in tasks where i != j )(...)
-      let mut sum = resource_vars.pop().expect("Need at least two tasks.");
-      for r in resource_vars {
-        let sum2_dom = sum.read(vstore) + r.read(vstore);
-        let sum2 = vstore.alloc(sum2_dom);
-        cstore.alloc(box XEqYPlusZ::<_,_,_,Bound>::new(sum2.clone(), sum, r));
-        sum = sum2;
-      }
+      let sum = Sum::new(resource_vars);
+
+      // resource_vars.pop().expect("Need at least two tasks.");
+      // for r in resource_vars {
+      //   let sum2_dom = sum.read(vstore) + r.read(vstore);
+      //   let sum2 = vstore.alloc(sum2_dom);
+      //   cstore.alloc(box XEqYPlusZ::<_,_,_,Bound>::new(sum2.clone(), sum, r));
+      //   sum = sum2;
+      // }
+
       // c >= r[j] + sum
       cstore.alloc(box x_geq_y_plus_z::<_,_,_,Bound>(self.capacity_var(), self.resource_at(j), sum));
     }
+  }
+
+  pub fn intermediate_vars(&self) -> Vec<Vec<usize>> {
+    self.intermediate.clone()
   }
 
   fn start_at(&self, i: usize) -> VS {

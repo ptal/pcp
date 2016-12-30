@@ -45,8 +45,12 @@ impl Model
   {
     let loc = vstore.alloc(dom);
     let name = self.make_name();
-    self.var_names.insert(loc.index(), name);
+    self.register_var(loc.index(), name);
     loc
+  }
+
+  pub fn register_var(&mut self, var: usize, name: String) {
+    self.var_names.insert(var, name);
   }
 
   pub fn var_name(&self, idx: usize) -> String {
@@ -56,13 +60,17 @@ impl Model
     }
   }
 
+  pub fn inc_group(&mut self) {
+    self.groups.last_mut()
+      .expect("Open a group with `open_group` before allocating a variable.").1 += 1;
+  }
+
   fn make_name(&mut self) -> String {
     let mut name = String::new();
     for (g, i) in self.groups.clone() {
       name.push_str(&format!("{}{}", g, i));
     }
-    self.groups.last_mut()
-      .expect("Open a group with `open_group` before allocating a variable.").1 += 1;
+    self.inc_group();
     name
   }
 }

@@ -130,7 +130,6 @@ impl RobotScheduling
         self.pipeting_start.push(box self.start[i * TASKS + t].clone());
         self.pipeting_duration.push(box self.duration[i * DTASKS + t].clone());
       }
-
       // Ensure that every task starts after the end time of the previous task. (S' >= S + D).
       for t in 0..DTASKS {
         self.space.cstore.alloc(
@@ -139,6 +138,7 @@ impl RobotScheduling
             self.start[i * TASKS + t].clone(),
             self.duration[i * DTASKS + t].clone()));
       }
+      self.model.inc_group();
     }
     self.model.close_group();
     // Ls = 0 for the first robot to force it to start first
@@ -148,13 +148,21 @@ impl RobotScheduling
       self.pipeting_resource.push(box Constant::new(1));
     }
 
-    let cumulative_pipeting = Cumulative::new(
+    let mut cumulative_pipeting = Cumulative::new(
       self.pipeting_start.clone(),
       self.pipeting_duration.clone(),
       self.pipeting_resource.clone(),
       box Constant::new(1)
     );
     cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
+    let inter_tasks = cumulative_pipeting.intermediate_vars();
+    for (nti, ti) in inter_tasks.into_iter().enumerate() {
+      for (ntj, var) in ti.into_iter().enumerate() {
+        self.model.register_var(
+          var,
+          format!("t{}_{}", nti, ntj));
+      }
+    }
   }
 
   pub fn solve(mut self) -> Self {
