@@ -13,9 +13,11 @@
 // limitations under the License.
 
 use term::ops::*;
+use model::*;
+use kernel::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Constant<V>
@@ -32,11 +34,11 @@ impl<V> Constant<V>
   }
 }
 
-impl<V> Debug for Constant<V> where
+impl<V> DisplayStateful<Model> for Constant<V> where
   V: Debug
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?}", self.value))
+  fn display(&self, _model: &Model) {
+    print!("{:?}", self.value);
   }
 }
 

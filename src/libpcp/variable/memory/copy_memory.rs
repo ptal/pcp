@@ -24,6 +24,7 @@ use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
 
+#[derive(Clone)]
 pub struct CopyMemory<Domain>
 {
   variables: Vec<Domain>

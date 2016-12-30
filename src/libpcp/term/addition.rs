@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
+use model::*;
 use term::ops::*;
 use gcollections::kind::*;
 use std::ops::*;
-use std::fmt::{Formatter, Debug, Error};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Addition<X, V>
@@ -33,12 +35,13 @@ impl<X, V> Addition<X, V> {
   }
 }
 
-impl<X, V> Debug for Addition<X, V> where
-  X: Debug,
-  V: Debug
+impl<X, V> DisplayStateful<Model> for Addition<X, V> where
+ X: DisplayStateful<Model>,
+ V: Debug
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} + {:?}", self.x, self.v))
+  fn display(&self, model: &Model) {
+    self.x.display(model);
+    print!(" + {:?}", self.v);
   }
 }
 

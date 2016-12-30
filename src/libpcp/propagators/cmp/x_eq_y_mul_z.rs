@@ -14,13 +14,13 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use model::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
 use std::ops::*;
 
 // x = y * z
@@ -40,13 +40,17 @@ impl<X, Y, Z> XEqYMulZ<X, Y, Z> {
   }
 }
 
-impl<X, Y, Z> Debug for XEqYMulZ<X, Y, Z> where
-  X: Debug,
-  Y: Debug,
-  Z: Debug
+impl<X, Y, Z> DisplayStateful<Model> for XEqYMulZ<X, Y, Z> where
+  X: DisplayStateful<Model>,
+  Y: DisplayStateful<Model>,
+  Z: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} = {:?} * {:?}", self.x, self.y, self.z))
+  fn display(&self, model: &Model) {
+    self.x.display(model);
+    print!(" = ");
+    self.y.display(model);
+    print!(" * ");
+    self.z.display(model);
   }
 }
 

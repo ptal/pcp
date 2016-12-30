@@ -35,8 +35,8 @@ impl<C> Debugger<C> {
 }
 
 impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Debugger<C> where
-  VStore: IntVStore<Item=Domain>,
-  CStore: IntCStore<VStore>,
+  VStore: IntVStore<Item=Domain> + Clone,
+  CStore: IntCStore<VStore> + DisplayStateful<(Model, VStore)>,
   C: SearchTreeVisitor<Space<VStore, CStore, R>>,
   Domain: IsSingleton,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
@@ -54,7 +54,8 @@ impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> f
     println!("  Number of variables: {}", current.vstore.size());
     println!("  Number of variables assigned: {}", current.vstore.iter().filter(|v| v.is_singleton()).count());
     current.vstore.display(&self.model);
-    // println!("  Constraint store:\n{:?}\n", current.cstore);
+    println!("Constraint store:");
+    current.cstore.display(&(self.model.clone(), current.vstore.clone()));
     println!("Status {:?}", status);
     println!("Press enter to continue...");
     let mut buffer = String::new();

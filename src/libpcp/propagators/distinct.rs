@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use model::*;
 use kernel::Trilean::*;
 use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
@@ -21,21 +22,20 @@ use propagation::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone)]
-pub struct Distinct<V>
+pub struct Distinct<X>
 {
-  props: Vec<XNeqY<V,V>>,
-  vars: Vec<V>
+  props: Vec<XNeqY<X,X>>,
+  vars: Vec<X>
 }
 
-impl<V> PropagatorKind for Distinct<V> {}
+impl<X> PropagatorKind for Distinct<X> {}
 
-impl<V> Distinct<V> where
-  V: Clone
+impl<X> Distinct<X> where
+  X: Clone
 {
-  pub fn new(vars: Vec<V>) -> Distinct<V> {
+  pub fn new(vars: Vec<X>) -> Distinct<X> {
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
@@ -50,21 +50,25 @@ impl<V> Distinct<V> where
   }
 }
 
-impl<V> Debug for Distinct<V> where
-  V: Debug
+impl<X> DisplayStateful<Model> for Distinct<X> where
+  X: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    try!(formatter.write_str("distinct("));
-    for v in &self.vars {
-      try!(formatter.write_fmt(format_args!("{:?} ", v)));
+  fn display(&self, model: &Model) {
+    print!("distinct(");
+    let mut i = 0;
+    while i < self.vars.len() - 1 {
+      self.vars[i].display(model);
+      print!(", ");
+      i += 1;
     }
-    formatter.write_str(")")
+    self.vars[i].display(model);
+    print!(") (decomposed)");
   }
 }
 
-impl<Store, Dom, Bound, V> Subsumption<Store> for Distinct<V> where
+impl<Store, Dom, Bound, X> Subsumption<Store> for Distinct<X> where
   Store: Collection<Item=Dom>,
-  V: StoreRead<Store> + Clone,
+  X: StoreRead<Store> + Clone,
   Dom: Bounded<Item=Bound> + Disjoint,
   Bound: PartialOrd
 {
@@ -82,9 +86,9 @@ impl<Store, Dom, Bound, V> Subsumption<Store> for Distinct<V> where
   }
 }
 
-impl<Store, Dom, Bound, V> Propagator<Store> for Distinct<V> where
+impl<Store, Dom, Bound, X> Propagator<Store> for Distinct<X> where
   Store: Collection<Item=Dom>,
-  V: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
   Dom: Bounded<Item=Bound> + Cardinality,
   Dom: Difference<<Dom as Collection>::Item, Output=Dom>,
   Bound: PartialOrd
@@ -99,8 +103,8 @@ impl<Store, Dom, Bound, V> Propagator<Store> for Distinct<V> where
   }
 }
 
-impl<V> PropagatorDependencies<FDEvent> for Distinct<V> where
-  V: ViewDependencies<FDEvent> + Clone
+impl<X> PropagatorDependencies<FDEvent> for Distinct<X> where
+  X: ViewDependencies<FDEvent> + Clone
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     self.vars.iter().flat_map(|v| v.dependencies(FDEvent::Inner)).collect()

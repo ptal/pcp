@@ -14,13 +14,13 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use model::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
 pub struct XLessY<X, Y>
@@ -37,12 +37,14 @@ impl<X, Y> XLessY<X, Y> {
   }
 }
 
-impl<X, Y> Debug for XLessY<X, Y> where
-  X: Debug,
-  Y: Debug
+impl<X, Y> DisplayStateful<Model> for XLessY<X, Y> where
+  X: DisplayStateful<Model>,
+  Y: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} < {:?}", self.x, self.y))
+  fn display(&self, model: &Model) {
+    self.x.display(model);
+    print!(" < ");
+    self.y.display(model);
   }
 }
 

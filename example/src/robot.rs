@@ -105,6 +105,7 @@ impl RobotScheduling
 
   fn initialize(&mut self) {
     let time_dom = IntervalSet::new(1, self.max_time as i32);
+    let cumul_tasks = vec![L, P];
 
     let DUR: Vec<Domain> = vec![
       (10, 15),   // Loading L duration between 10 and 15
@@ -126,7 +127,7 @@ impl RobotScheduling
         self.duration.push(self.model.alloc_var(&mut self.space.vstore, DUR[t].clone()));
       }
       self.model.close_group();
-      for t in vec![L, W] {
+      for t in cumul_tasks.clone() {
         self.pipeting_start.push(box self.start[i * TASKS + t].clone());
         self.pipeting_duration.push(box self.duration[i * DTASKS + t].clone());
       }
@@ -192,7 +193,6 @@ impl Display for RobotScheduling
 {
   fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
     use pcp::search::search_tree_visitor::Status::*;
-    println!("Var: {:?}", self.space.cstore);
     match self.status {
       Unsatisfiable => fmt.write_fmt(format_args!("{}-analysis problem is unsatisfiable.", self.num_robot))?,
       EndOfSearch => fmt.write_str("Search terminated or was interrupted.")?,

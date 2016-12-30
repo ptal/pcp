@@ -24,6 +24,7 @@ use std::slice;
 use std::ops::{Index, DerefMut};
 use std::fmt::{Formatter, Display, Error};
 
+#[derive(Clone)]
 pub struct TrailMemory<Trail, Domain>
 {
   variables: CopyMemory<Domain>,

@@ -64,7 +64,7 @@ pub trait IntVariable<VStore>:
   ViewDependencies<FDEvent> +
   StoreMonotonicUpdate<VStore> +
   StoreRead<VStore> +
-  Clone + Debug
+  Clone + DisplayStateful<Model>
  where VStore: Collection
 {}
 
@@ -72,7 +72,7 @@ impl<R, VStore> IntVariable<VStore> for R where
   R: ViewDependencies<FDEvent>,
   R: StoreMonotonicUpdate<VStore>,
   R: StoreRead<VStore>,
-  R: Clone + Debug,
+  R: Clone + DisplayStateful<Model>,
   VStore: Collection
 {}
 
@@ -87,14 +87,14 @@ impl<R> IntVStore for R where
 {}
 
 pub trait IntCStore<VStore>:
-  Alloc + Empty + Clone + Freeze + Debug +
+  Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)> +
   Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>> +
   Consistency<VStore> +
   PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
 {}
 
 impl<R, VStore> IntCStore<VStore> for R where
-  R: Alloc + Empty + Clone + Freeze + Debug,
+  R: Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)>,
   R: Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
   R: Consistency<VStore>,
   R: PropagatorConcept<VStore, FDEvent> + Propagator<VStore>

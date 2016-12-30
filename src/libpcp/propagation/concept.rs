@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::consistency::*;
+use kernel::{DisplayStateful, Consistency};
 use propagation::ops::*;
-use std::fmt::Debug;
+use model::*;
 
 pub trait PropagatorConcept<VStore, Event> :
     Consistency<VStore>
   + Subsumption<VStore>
   + PropagatorDependencies<Event>
-  + Debug
+  + DisplayStateful<Model>
   + BoxedClone<VStore, Event>
 {}
 
@@ -28,7 +28,7 @@ impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
  R: Consistency<VStore>,
  R: Subsumption<VStore>,
  R: PropagatorDependencies<Event>,
- R: Debug,
+ R: DisplayStateful<Model>,
  R: BoxedClone<VStore, Event>
 {}
 

@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
+use model::*;
 use term::ops::*;
 use variable::ops::*;
 use gcollections::kind::*;
 use std::marker::PhantomData;
-use std::fmt::{Formatter, Debug, Error};
 use std::ops::Index;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -38,10 +39,10 @@ impl<Domain> Identity<Domain> {
   }
 }
 
-impl<Domain> Debug for Identity<Domain>
+impl<Domain> DisplayStateful<Model> for Identity<Domain>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("_{}", self.idx))
+  fn display(&self, model: &Model) {
+    print!("{}", model.var_name(self.idx));
   }
 }
 

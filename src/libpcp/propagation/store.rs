@@ -16,6 +16,7 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use model::*;
 use propagation::Reactor;
 use propagation::Scheduler;
 use propagation::concept::*;
@@ -23,7 +24,6 @@ use propagation::ops::*;
 use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
-use std::fmt::{Formatter, Debug, Error};
 
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
@@ -56,14 +56,53 @@ impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
   type Location = ();
 }
 
-impl<VStore, Event, R, S> Debug for Store<VStore, Event, R, S>
+impl<VStore, Event, R, S> Store<VStore, Event, R, S>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    for p in &self.propagators {
-      p.fmt(formatter)?;
-      formatter.write_str("\n")?;
+  fn display_constraints(&self, model: &Model, indexes: Vec<usize>, header: &str) {
+    let header_width = 15;
+    print!("{:>width$} ", header, width=header_width);
+    let mut idx = 0;
+    while idx < indexes.len() {
+      self.propagators[indexes[idx]].display(model);
+      if idx < indexes.len() - 1 {
+        print!(" /\\ \n{:>width$} ", "", width=header_width);
+      }
+      idx += 1;
     }
-    Ok(())
+    println!();
+  }
+}
+
+impl<VStore, Event, R, S> DisplayStateful<(Model, VStore)> for Store<VStore, Event, R, S>
+{
+  fn display(&self, &(ref model, ref vstore): &(Model, VStore)) {
+    let mut subsumed = vec![];
+    let mut unknown = vec![];
+    let mut unsatisfiable = vec![];
+    for (i, p) in self.propagators.iter().enumerate() {
+      match p.is_subsumed(&vstore) {
+        False => unsatisfiable.push(i),
+        True => subsumed.push(i),
+        Unknown => unknown.push(i)
+      };
+    }
+    self.display_constraints(&model, unsatisfiable, "unsatisfiable:");
+    self.display_constraints(&model, subsumed, "subsumed:");
+    self.display_constraints(&model, unknown, "unknown:");
+  }
+}
+
+impl<VStore, Event, R, S> DisplayStateful<Model> for Store<VStore, Event, R, S>
+{
+  fn display(&self, model: &Model) {
+    let mut i = 0;
+    while i < self.propagators.len() {
+      self.propagators[i].display(model);
+      if i < self.propagators.len() - 1 {
+        print!(" /\\ ");
+      }
+      i += 1;
+    }
   }
 }
 
@@ -100,7 +139,6 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     let mut consistent = true;
     while let Some(p_idx) = self.scheduler.pop() {
       if !self.propagate_one(p_idx, store) {
-        println!("Unsatisfiable constraint: {:?}", self.propagators[p_idx]);
         consistent = false;
         break;
       }

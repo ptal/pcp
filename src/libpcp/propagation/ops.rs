@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::trilean::*;
-use kernel::consistency::*;
+use kernel::{DisplayStateful, Trilean, Consistency};
 use propagation::concept::*;
-use std::fmt::Debug;
+use model::*;
 
 pub trait Subsumption<Store>
 {
@@ -40,7 +39,7 @@ pub trait BoxedClone<VStore, Event>
 }
 
 impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
-  R: Clone + Debug,
+  R: Clone + DisplayStateful<Model>,
   R: Consistency<VStore>,
   R: Subsumption<VStore>,
   R: PropagatorDependencies<Event>,

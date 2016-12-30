@@ -13,12 +13,13 @@
 // limitations under the License.
 
 use kernel::*;
+use model::*;
 use propagators::PropagatorKind;
 use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
-use std::fmt::{Formatter, Debug, Error};
 use num::{Signed, Num};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy)]
 pub struct XEqYPlusZ<X, Y, Z, B>
@@ -43,16 +44,19 @@ impl<X, Y, Z, B> XEqYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<X, Y, Z, B> Debug for XEqYPlusZ<X, Y, Z, B> where
-  X: Debug,
-  Y: Debug,
-  Z: Debug,
+impl<X, Y, Z, B> DisplayStateful<Model> for XEqYPlusZ<X, Y, Z, B> where
+  X: DisplayStateful<Model>,
+  Y: DisplayStateful<Model>,
+  Z: DisplayStateful<Model>,
   B: Debug
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!(
-      "X = Y + Z (decomposed into: {:?} and {:?}).",
-      self.geq, self.leq))
+  fn display(&self, model: &Model) {
+    self.geq.x.display(model);
+    print!(" = ");
+    self.geq.y.display(model);
+    print!(" + ");
+    self.geq.z.display(model);
+    print!(" (decomposed)");
   }
 }
 

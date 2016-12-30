@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
+use model::*;
 use num::Integer;
 use term::ops::*;
 use propagation::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
 use interval::ops::Range;
-use std::fmt::{Formatter, Debug, Error};
 
 /// bool2int(c), read-only view.
 #[derive(Clone, Copy)]
@@ -35,11 +36,13 @@ impl<P> Bool2Int<P> {
   }
 }
 
-impl<P> Debug for Bool2Int<P> where
-  P: Debug
+impl<P> DisplayStateful<Model> for Bool2Int<P> where
+ P: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("bool2int({:?})", self.p))
+  fn display(&self, model: &Model) {
+    print!("bool2int(");
+    self.p.display(model);
+    print!(")");
   }
 }
 

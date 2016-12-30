@@ -12,38 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use kernel::*;
 use term::ops::*;
+use model::*;
 use concept::*;
 use gcollections::kind::*;
-use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone)]
-pub struct Sum<V>
+pub struct Sum<X>
 {
-  vars: Vec<V>
+  vars: Vec<X>
 }
 
-impl<V> Sum<V> {
-  pub fn new(vars: Vec<V>) -> Self {
+impl<X> Sum<X> {
+  pub fn new(vars: Vec<X>) -> Self {
     Sum {
       vars: vars
     }
   }
 }
 
-impl<V> Debug for Sum<V> where
-  V: Debug
+impl<X> DisplayStateful<Model> for Sum<X> where
+ X: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("sum({:?})", self.vars))
+  fn display(&self, model: &Model) {
+    print!("sum(");
+    self.vars[0].display(model);
+    let mut i = 1;
+    while i < self.vars.len() {
+      print!(" + ");
+      self.vars[i].display(model);
+      i += 1;
+    }
+    print!(")");
   }
 }
 
-impl<Domain, Bound, V, Store> StoreMonotonicUpdate<Store> for Sum<V> where
+impl<Domain, Bound, X, Store> StoreMonotonicUpdate<Store> for Sum<X> where
  Store: Collection<Item=Domain>,
  Domain: IntDomain<Item=Bound>,
  Bound: IntBound,
- V: StoreRead<Store>
+ X: StoreRead<Store>
 {
   fn update(&mut self, store: &mut Store, value: Domain) -> bool {
     let sum = self.read(store);
@@ -51,11 +60,11 @@ impl<Domain, Bound, V, Store> StoreMonotonicUpdate<Store> for Sum<V> where
   }
 }
 
-impl<Domain, Bound, V, Store> StoreRead<Store> for Sum<V> where
+impl<Domain, Bound, X, Store> StoreRead<Store> for Sum<X> where
  Store: Collection<Item=Domain>,
  Domain: IntDomain<Item=Bound>,
  Bound: IntBound,
- V: StoreRead<Store>
+ X: StoreRead<Store>
 {
   fn read(&self, store: &Store) -> Domain {
     let mut iter = self.vars.iter();
@@ -64,8 +73,8 @@ impl<Domain, Bound, V, Store> StoreRead<Store> for Sum<V> where
   }
 }
 
-impl<V, Event> ViewDependencies<Event> for Sum<V> where
-  V: ViewDependencies<Event>,
+impl<X, Event> ViewDependencies<Event> for Sum<X> where
+  X: ViewDependencies<Event>,
   Event: Clone
 {
   fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {

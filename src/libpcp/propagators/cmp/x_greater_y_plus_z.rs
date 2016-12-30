@@ -14,21 +14,21 @@
 
 use kernel::*;
 use kernel::Trilean::*;
+use model::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
 use num::traits::Num;
 
 #[derive(Clone, Copy)]
 pub struct XGreaterYPlusZ<X, Y, Z>
 {
-  x: X,
-  y: Y,
-  z: Z,
+  pub x: X,
+  pub y: Y,
+  pub z: Z,
 }
 
 impl<X, Y, Z> PropagatorKind for XGreaterYPlusZ<X, Y, Z> {}
@@ -39,13 +39,17 @@ impl<X, Y, Z> XGreaterYPlusZ<X, Y, Z> {
   }
 }
 
-impl<X, Y, Z> Debug for XGreaterYPlusZ<X, Y, Z> where
-  X: Debug,
-  Y: Debug,
-  Z: Debug
+impl<X, Y, Z> DisplayStateful<Model> for XGreaterYPlusZ<X, Y, Z> where
+  X: DisplayStateful<Model>,
+  Y: DisplayStateful<Model>,
+  Z: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} > {:?} + {:?}", self.x, self.y, self.z))
+  fn display(&self, model: &Model) {
+    self.x.display(model);
+    print!(" > ");
+    self.y.display(model);
+    print!(" + ");
+    self.z.display(model);
   }
 }
 

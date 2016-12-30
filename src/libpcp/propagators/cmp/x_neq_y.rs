@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use model::*;
 use propagators::cmp::x_eq_y::*;
 use propagators::PropagatorKind;
 use propagation::*;
@@ -20,7 +21,6 @@ use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
-use std::fmt::{Formatter, Debug, Error};
 
 #[derive(Clone, Copy)]
 pub struct XNeqY<X, Y>
@@ -37,12 +37,14 @@ impl<X, Y> XNeqY<X, Y> {
   }
 }
 
-impl<X, Y> Debug for XNeqY<X, Y> where
-  X: Debug,
-  Y: Debug
+impl<X, Y> DisplayStateful<Model> for XNeqY<X, Y> where
+  X: DisplayStateful<Model>,
+  Y: DisplayStateful<Model>
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_fmt(format_args!("{:?} != {:?}", self.x, self.y))
+  fn display(&self, model: &Model) {
+    self.x.display(model);
+    print!(" != ");
+    self.y.display(model);
   }
 }
 

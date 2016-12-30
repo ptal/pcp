@@ -25,6 +25,7 @@ use std::marker::PhantomData;
 use std::fmt::{Display};
 use std::ops::Index;
 
+#[derive(Clone)]
 pub struct Store<Memory, Event>
 {
   memory: Memory,
@@ -169,12 +170,13 @@ impl<Memory, Event, Domain> Store<Memory, Event> where
   {
     let header_width = 15;
     let var_width = 20;
+    let num_columns = 8;
     print!("{:>width$} ", header, width=header_width);
-    for (i,assigned) in var_idx.into_iter().enumerate() {
-      if (i+1) % 9 == 0 {
+    for (i,idx) in var_idx.into_iter().enumerate() {
+      if (i+1) % (num_columns+1) == 0 {
         print!("\n{:>width$} ", "", width=header_width);
       }
-      let var_str = format!("{:<6} = {}", model.var_name(assigned), self[assigned]);
+      let var_str = format!("{:<6} = {}", model.var_name(idx), self[idx]);
       print!("{:<width$}", var_str, width=var_width);
     }
     println!();
