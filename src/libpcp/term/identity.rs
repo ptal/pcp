@@ -20,7 +20,7 @@ use gcollections::kind::*;
 use std::marker::PhantomData;
 use std::ops::Index;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>

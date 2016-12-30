@@ -169,9 +169,9 @@ impl RobotScheduling
   pub fn solve(mut self) -> Self {
     let search =
       OneSolution::<_, VectorStack<_>, FDSpace>::new(
-      Debugger::new(self.model.clone(),
+      // Debugger::new(self.model.clone(),
       Propagation::new(
-      Brancher::new(InputOrder, MinVal, Enumerate))));
+      Brancher::new(InputOrder, MinVal, Enumerate)));
     let mut search = Box::new(search);
     search.start(&self.space);
     let (frozen_space, status) = search.enter(self.space);

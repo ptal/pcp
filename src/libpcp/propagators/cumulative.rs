@@ -166,7 +166,7 @@ mod test {
     }
 
     fn instantiate(self, vstore: &mut VStoreFD, cstore: &mut CStoreFD<VStoreFD>) {
-      let cumulative = Cumulative::new(
+      let mut cumulative = Cumulative::new(
         self.starts.into_iter().map(|s| box vstore.alloc(s)).collect(),
         self.durations.into_iter().map(|d| box vstore.alloc(d)).collect(),
         self.resources.into_iter().map(|r| box vstore.alloc(r)).collect(),

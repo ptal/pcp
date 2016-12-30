@@ -79,7 +79,6 @@ impl<X, V, Event> ViewDependencies<Event> for Addition<X, V> where
 mod test {
   use super::*;
   use gcollections::ops::*;
-  use kernel::*;
   use kernel::trilean::Trilean::*;
   use variable::VStoreFD;
   use propagation::events::FDEvent;

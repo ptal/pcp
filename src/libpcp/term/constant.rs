@@ -71,7 +71,6 @@ impl<V, Event> ViewDependencies<Event> for Constant<V>
 #[cfg(test)]
 mod test {
   use super::*;
-  use kernel::*;
   use kernel::trilean::Trilean::*;
   use propagation::*;
   use propagation::events::FDEvent;
