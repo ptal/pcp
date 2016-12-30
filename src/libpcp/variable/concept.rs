@@ -16,6 +16,7 @@ pub use variable::memory::concept::*;
 use kernel::*;
 use variable::ops::*;
 use gcollections::ops::*;
+use model::*;
 
 pub trait EventConcept<Domain>:
   MonotonicEvent<Domain> + Merge + Clone
@@ -29,4 +30,5 @@ pub trait StoreConcept:
    ImmutableMemoryConcept
  + Alloc
  + MonotonicUpdate
+ + DisplayStateful<Model>
 {}

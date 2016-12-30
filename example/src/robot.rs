@@ -57,6 +57,7 @@ use gcollections::ops::*;
 use pcp::term::*;
 use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
+use pcp::model::*;
 use std::fmt::{Formatter, Display, Error};
 
 pub type Bound = i32;
@@ -70,6 +71,7 @@ pub struct RobotScheduling {
   pub pipeting_start: Vec<Box<Identity<Domain>>>,
   pub pipeting_duration: Vec<Box<Identity<Domain>>>,
   pub pipeting_resource: Vec<Box<Constant<Bound>>>,
+  pub model: Model,
   pub space: FDSpace,
   pub status: Status<FDSpace>,
 }
@@ -93,6 +95,7 @@ impl RobotScheduling
       pipeting_start: vec![],
       pipeting_duration: vec![],
       pipeting_resource: vec![],
+      model: Model::new(),
       space: FDSpace::empty(),
       status: Status::Unsatisfiable,
     };
@@ -111,16 +114,18 @@ impl RobotScheduling
     ].into_iter().map(|(b,e)| IntervalSet::new(b, e)).collect();
 
     // Start date for the different tasks.
+    self.model.open_group("r");
     for i in 0..self.num_robot {
+      self.model.open_group("s");
       for _ in 0..TASKS {
-        self.start.push(self.space.vstore.alloc(time_dom.clone()));
+        self.start.push(self.model.alloc_var(&mut self.space.vstore, time_dom.clone()));
       }
-    }
-
-    for i in 0..self.num_robot {
+      self.model.close_group();
+      self.model.open_group("d");
       for t in 0..DTASKS {
-        self.duration.push(self.space.vstore.alloc(DUR[t].clone()));
+        self.duration.push(self.model.alloc_var(&mut self.space.vstore, DUR[t].clone()));
       }
+      self.model.close_group();
       for t in vec![L, W] {
         self.pipeting_start.push(box self.start[i * TASKS + t].clone());
         self.pipeting_duration.push(box self.duration[i * DTASKS + t].clone());
@@ -135,6 +140,7 @@ impl RobotScheduling
             self.duration[i * DTASKS + t].clone()));
       }
     }
+    self.model.close_group();
     // Ls = 0 for the first robot to force it to start first
     self.space.cstore.alloc(box XEqY::new(self.start[0].clone(), Constant::new(1)));
 
@@ -154,9 +160,9 @@ impl RobotScheduling
   pub fn solve(mut self) -> Self {
     let search =
       OneSolution::<_, VectorStack<_>, FDSpace>::new(
-      // Debugger::new(
+      Debugger::new(self.model.clone(),
       Propagation::new(
-      Brancher::new(InputOrder, MinVal, Enumerate)));
+      Brancher::new(InputOrder, MinVal, Enumerate))));
     let mut search = Box::new(search);
     search.start(&self.space);
     let (frozen_space, status) = search.enter(self.space);
@@ -165,12 +171,12 @@ impl RobotScheduling
     self
   }
 
-  fn start_at(&self, i: usize) -> i32 {
-    self.start[i].read(&self.space.vstore).lower()
+  fn start_at(&self, robot: usize, task: usize) -> i32 {
+    self.start[robot*TASKS + task].read(&self.space.vstore).lower()
   }
 
-  fn duration_at(&self, i: usize) -> i32 {
-    self.duration[i].read(&self.space.vstore).lower()
+  fn duration_at(&self, robot: usize, task: usize) -> i32 {
+    self.duration[robot*DTASKS + task].read(&self.space.vstore).lower()
   }
 }
 
@@ -178,6 +184,7 @@ impl Display for RobotScheduling
 {
   fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
     use pcp::search::search_tree_visitor::Status::*;
+    println!("Var: {:?}", self.space.cstore);
     match self.status {
       Unsatisfiable => fmt.write_fmt(format_args!("{}-analysis problem is unsatisfiable.", self.num_robot))?,
       EndOfSearch => fmt.write_str("Search terminated or was interrupted.")?,
@@ -189,15 +196,16 @@ impl Display for RobotScheduling
         for i in 0..self.num_robot {
           fmt.write_fmt(format_args!("start time robot {}: ", i+1))?;
           for j in 0..TASKS {
-            fmt.write_fmt(format_args!("{:<8}", self.start_at(i+j)))?;
+            fmt.write_fmt(format_args!("{:<8}", self.start_at(i,j)))?;
           }
           fmt.write_str("\n")?;
         }
         for i in 0..self.num_robot {
           fmt.write_fmt(format_args!("duration robot {}  : ", i+1))?;
           for j in 0..DTASKS {
-            fmt.write_fmt(format_args!("{:<8}", self.duration_at(i+j)))?;
+            fmt.write_fmt(format_args!("{:<8}", self.duration_at(i,j)))?;
           }
+          fmt.write_str("\n")?;
         }
       }
     }
@@ -205,7 +213,7 @@ impl Display for RobotScheduling
   }
 }
 
- #[cfg(test)]
+#[cfg(test)]
 mod tests {
   use super::*;
   use test::Bencher;

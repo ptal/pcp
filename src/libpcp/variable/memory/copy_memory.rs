@@ -123,7 +123,7 @@ impl<Domain> Display for CopyMemory<Domain> where
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     for v in &self.variables {
-      try!(formatter.write_fmt(format_args!("{} ", v)));
+      formatter.write_fmt(format_args!("{} ", v))?;
     }
     Ok(())
   }

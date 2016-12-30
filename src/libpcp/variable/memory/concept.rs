@@ -18,7 +18,6 @@ use gcollections::kind::*;
 use gcollections::ops::*;
 use gcollections::ops::sequence::ordering::*;
 use std::ops::Index;
-use std::fmt::Display;
 
 pub trait ImmutableMemoryConcept:
    Collection
@@ -27,7 +26,6 @@ pub trait ImmutableMemoryConcept:
  + Iterable
  + Empty
  + Index<usize, Output=<Self as Collection>::Item>
- + Display
  + Freeze
 {}
 

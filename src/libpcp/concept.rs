@@ -15,6 +15,7 @@
 use gcollections::*;
 use gcollections::ops::*;
 use kernel::*;
+use model::*;
 use term::ops::*;
 use variable::ops::*;
 use propagation::events::*;
@@ -23,7 +24,7 @@ use propagation::ops::*;
 use interval::ops::Range;
 use num::{Signed, Integer};
 use std::ops::*;
-use std::fmt::{Display, Debug};
+use std::fmt::Debug;
 
 
 pub trait IntBound:
@@ -76,12 +77,12 @@ impl<R, VStore> IntVariable<VStore> for R where
 {}
 
 pub trait IntVStore:
-  AssociativeCollection + Alloc + Display + Cardinality<Size=usize> +
+  AssociativeCollection + Alloc + DisplayStateful<Model> + Cardinality<Size=usize> +
   Freeze + Iterable + Index<usize> + MonotonicUpdate
 {}
 
 impl<R> IntVStore for R where
-  R: AssociativeCollection + Alloc + Display + Cardinality<Size=usize>,
+  R: AssociativeCollection + Alloc + DisplayStateful<Model> + Cardinality<Size=usize>,
   R: Freeze + Iterable + Index<usize> + MonotonicUpdate
 {}
 

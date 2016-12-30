@@ -18,14 +18,17 @@ use search::space::*;
 use search::search_tree_visitor::*;
 use std::io::{self};
 use concept::*;
+use model::*;
 
 pub struct Debugger<C> {
+  model: Model,
   child: C
 }
 
 impl<C> Debugger<C> {
-  pub fn new(child: C) -> Debugger<C> {
+  pub fn new(model: Model, child: C) -> Debugger<C> {
     Debugger {
+      model: model,
       child: child
     }
   }
@@ -45,16 +48,17 @@ impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> f
   fn enter(&mut self, current: Space<VStore, CStore, R>)
     -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
   {
-    println!("Enter debugging:");
-    println!("  Variable store:\n{}\n", current.vstore);
-    println!("  Number of variables: {}\n", current.vstore.size());
-    println!("  Number of variables assigned: {}\n", current.vstore.iter().filter(|v| v.is_singleton()).count());
-    // println!("  Constraint store:\n{:?}\n", current.cstore);
     let (frozen, status) = self.child.enter(current);
-    println!("Exit debugging with status {:?}", status);
+    let current = frozen.unfreeze();
+    println!("Variable store:");
+    println!("  Number of variables: {}", current.vstore.size());
+    println!("  Number of variables assigned: {}", current.vstore.iter().filter(|v| v.is_singleton()).count());
+    current.vstore.display(&self.model);
+    // println!("  Constraint store:\n{:?}\n", current.cstore);
+    println!("Status {:?}", status);
     println!("Press enter to continue...");
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer).unwrap();
-    (frozen, status)
+    (current.freeze(), status)
   }
 }

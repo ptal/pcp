@@ -79,8 +79,8 @@ impl<Store, Dom, X, Y, Z> Subsumption<Store> for XEqYMulZ<X, Y, Z> where
 impl<Store, Dom, X, Y, Z> Propagator<Store> for XEqYMulZ<X, Y, Z> where
   Store: Collection<Item=Dom>,
   X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Z: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+  Y: StoreRead<Store>,
+  Z: StoreRead<Store>,
   Dom: Bounded + Intersection<Output=Dom> + Mul<Output=Dom>
 {
   fn propagate(&mut self, store: &mut Store) -> bool {

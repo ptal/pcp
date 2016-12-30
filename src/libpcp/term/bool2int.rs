@@ -20,7 +20,7 @@ use gcollections::ops::*;
 use interval::ops::Range;
 use std::fmt::{Formatter, Debug, Error};
 
-/// x = bool2int(c)
+/// bool2int(c), read-only view.
 #[derive(Clone, Copy)]
 pub struct Bool2Int<P>
 {
@@ -40,30 +40,6 @@ impl<P> Debug for Bool2Int<P> where
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     formatter.write_fmt(format_args!("bool2int({:?})", self.p))
-  }
-}
-
-// A propagator using this view will not be subsumed unless (1) the propagator `p` of this view is subsumed (because `read` will return [0..1] until `p` is subsumed) or (2) if the parent propagator is subsumed whatever the value of this view becomes.
-
-impl<Domain, B, P, Store> StoreMonotonicUpdate<Store> for Bool2Int<P> where
- Store: Collection<Item=Domain>,
- Domain: Collection<Item=B> + Bounded + IsSingleton,
- B: Integer,
- P: Propagator<Store>
-{
-  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
-    if value.is_singleton() {
-      if value.lower() == B::one() {
-        self.p.propagate(store)
-      }
-      else {
-        assert!(value.lower().is_zero(),
-          "bool2int view can only be updated with a 'integer boolean' value: 0 or 1.");
-        // We can not propagate the inverse of `P` (we do not know what it is).
-        false
-      }
-    }
-    else { true }
   }
 }
 
@@ -128,48 +104,5 @@ mod test {
     bool2int_read_x_eq_y(dom10_10, dom10_10, dom1_1);
     bool2int_read_x_eq_y(dom9_9, dom10_10, dom0_0);
     bool2int_read_x_eq_y(dom9_10, dom9_10, dom0_1);
-  }
-
-  fn bool2int_update_x_eq_y(dom_x: Interval<i32>, dom_y: Interval<i32>,
-    narrow_z: Interval<i32>, expected_x: Interval<i32>, expected: bool)
-  {
-    let dom0_1 = (0,1).to_interval();
-    let mut store = VStore::empty();
-    let x = store.alloc(dom_x);
-    let y = store.alloc(dom_y);
-
-    // z = bool2int(x == y)
-    let mut z = Bool2Int::new(XEqY::new(x, y));
-    if expected {
-      assert_eq!(z.read(&store), dom0_1);
-    }
-
-    let res_z = z.update(&mut store, narrow_z);
-    assert_eq!(res_z, expected);
-    assert_eq!(x.read(&store), expected_x);
-  }
-
-  #[test]
-  fn bool2int_update() {
-    let dom1_1 = (1,1).to_interval();
-    let dom0_1 = (0,1).to_interval();
-    let dom10_10 = (10,10).to_interval();
-    let dom9_9 = (9,9).to_interval();
-    let dom9_10 = (9,10).to_interval();
-
-    bool2int_update_x_eq_y(dom9_10, dom10_10, dom1_1, dom10_10, true);
-    bool2int_update_x_eq_y(dom9_10, dom9_10, dom1_1, dom9_10, true);
-    bool2int_update_x_eq_y(dom9_9, dom10_10, dom1_1, dom9_9, false);
-    bool2int_update_x_eq_y(dom9_10, dom9_10, dom0_1, dom9_10, true);
-  }
-
-  #[test]
-  #[should_panic]
-  fn bool2int_panic_update() {
-    let dom10_10 = (10,10).to_interval();
-    let dom9_9 = (9,9).to_interval();
-    let dom9_10 = (9,10).to_interval();
-    let dom0_0 = (0,0).to_interval();
-    bool2int_update_x_eq_y(dom9_10, dom10_10, dom0_0, dom9_9, true);
   }
 }

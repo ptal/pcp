@@ -100,6 +100,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     let mut consistent = true;
     while let Some(p_idx) = self.scheduler.pop() {
       if !self.propagate_one(p_idx, store) {
+        println!("Unsatisfiable constraint: {:?}", self.propagators[p_idx]);
         consistent = false;
         break;
       }

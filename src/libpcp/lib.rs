@@ -33,3 +33,4 @@ pub mod term;
 pub mod variable;
 pub mod search;
 pub mod concept;
+pub mod model;

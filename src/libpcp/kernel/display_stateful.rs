@@ -12,26 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This example example of PCP use.
-//
-// to run all example : cargo run.
-// to test : cargo test -- --nocapture
-// to bench: cargo bench
-
-#![feature(test, box_syntax)]
-extern crate pcp;
-extern crate interval;
-extern crate gcollections;
-extern crate test;
-
-mod nqueens;
-mod robot;
-
-use nqueens::nqueens;
-use robot::*;
-
-fn main() {
-  // nqueens(60);
-  let robot = RobotScheduling::new(2, 500).solve();
-  println!("{}", robot);
+pub trait DisplayStateful<State> {
+    fn display(&self, state: &State);
 }

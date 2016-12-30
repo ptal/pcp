@@ -18,10 +18,11 @@ use variable::concept::*;
 use term::identity::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
+use model::*;
 use vec_map::{Drain, VecMap};
 use std::slice;
 use std::marker::PhantomData;
-use std::fmt::{Formatter, Display, Error};
+use std::fmt::{Display};
 use std::ops::Index;
 
 pub struct Store<Memory, Event>
@@ -42,14 +43,13 @@ impl<Memory, Event> AssociativeCollection for Store<Memory, Event> where
   type Location = Identity<<Memory as Collection>::Item>;
 }
 
-impl<Memory, Event> ImmutableMemoryConcept for Store<Memory, Event> where
- Memory: MemoryConcept
+impl<Memory, Event, Domain> ImmutableMemoryConcept for Store<Memory, Event> where
+ Memory: MemoryConcept<Item=Domain>
 {}
 
 impl<Memory, Domain, Event> StoreConcept for Store<Memory, Event> where
- Memory: MemoryConcept,
- Memory: Collection<Item=Domain>,
- Domain: Subset + Cardinality + Bounded,
+ Memory: MemoryConcept<Item=Domain>,
+ Domain: Subset + Cardinality + Bounded + Display,
  Event: EventConcept<Domain>
 {}
 
@@ -160,11 +160,44 @@ impl<Memory, Event> Index<usize> for Store<Memory, Event> where
   }
 }
 
-impl<Memory, Event> Display for Store<Memory, Event> where
- Memory: MemoryConcept
+impl<Memory, Event, Domain> Store<Memory, Event> where
+ Memory: MemoryConcept<Item=Domain>,
+ Domain: Display + IsSingleton
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    self.memory.fmt(formatter)
+  fn display_var_matrix(&self, model: &Model,
+    var_idx: Vec<usize>, header: &str)
+  {
+    let header_width = 15;
+    let var_width = 20;
+    print!("{:>width$} ", header, width=header_width);
+    for (i,assigned) in var_idx.into_iter().enumerate() {
+      if (i+1) % 9 == 0 {
+        print!("\n{:>width$} ", "", width=header_width);
+      }
+      let var_str = format!("{:<6} = {}", model.var_name(assigned), self[assigned]);
+      print!("{:<width$}", var_str, width=var_width);
+    }
+    println!();
+  }
+}
+
+impl<Memory, Event, Domain> DisplayStateful<Model> for Store<Memory, Event> where
+ Memory: MemoryConcept<Item=Domain>,
+ Domain: Display + IsSingleton
+{
+  fn display(&self, model: &Model) {
+    let mut idx_assigned = vec![];
+    let mut idx_others = vec![];
+    for (i,dom) in self.memory.iter().enumerate() {
+      if dom.is_singleton() {
+        idx_assigned.push(i);
+      }
+      else {
+        idx_others.push(i);
+      }
+    }
+    self.display_var_matrix(model, idx_assigned, "assigned:");
+    self.display_var_matrix(model, idx_others, "not assigned:");
   }
 }
 
