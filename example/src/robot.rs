@@ -48,7 +48,7 @@ use pcp::propagators::*;
 use pcp::search::*;
 use pcp::search::branching::*;
 use pcp::search::engine::one_solution::*;
-use pcp::search::debugger::*;
+//use pcp::search::debugger::*;
 use pcp::search::propagation::*;
 use gcollections::VectorStack;
 use interval::interval_set::*;

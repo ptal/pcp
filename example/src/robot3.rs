@@ -147,12 +147,6 @@ impl RobotScheduling
         self.pipeting_duration.push(box Identity::new(self.durations[d]));
       }
       // Ensure that every task starts after the end time of the previous task. (S' >= S + D).
-      for t in 1..robot.tasks.len() {
-        self.space.cstore.alloc(
-          box x_greater_y(
-            self.start[task_counter + t].clone(),
-            Addition::new(self.start[task_counter + t - 1].clone(), self.durations[t - 1] as i32)));
-      }
       self.model.inc_group();
 
       task_counter += robot.tasks.len();
