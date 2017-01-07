@@ -25,6 +25,7 @@ use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
 
+#[derive(Debug)]
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
   propagators: Vec<Box<PropagatorConcept<VStore, Event> + 'static>>,
@@ -122,6 +123,10 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     for (p_idx, p) in self.propagators.iter().enumerate() {
       let p_deps = p.dependencies();
       for (v, ev) in p_deps {
+        debug_assert!(v < store.size(), format!(
+          "The propagator {:?} has a dependency to the variable {} which is not in the store (of size {}).\n\
+          Hint: you should not manually create `Identity` struct, if you do make sure they contain relevant index to the variable store.",
+          p, v, store.size()));
         self.reactor.subscribe(v, ev, p_idx);
       }
     }
@@ -244,7 +249,7 @@ impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
   fn clone(&self) -> Self {
     let mut store = Store::empty();
     store.propagators = self.propagators.iter()
-      .map(|p| p.boxed_clone())
+      .map(|p| p.bclone())
       .collect();
     store
   }

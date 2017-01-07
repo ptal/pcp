@@ -22,9 +22,9 @@ use gcollections::ops::*;
 use gcollections::ops::sequence::ordering::*;
 use std::slice;
 use std::ops::{Index, DerefMut};
-use std::fmt::{Formatter, Display, Error};
+use std::fmt::{Formatter, Display, Error, Debug};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TrailMemory<Trail, Domain>
 {
   variables: CopyMemory<Domain>,
@@ -32,13 +32,13 @@ pub struct TrailMemory<Trail, Domain>
 }
 
 impl<Trail, Domain> MemoryConcept for TrailMemory<Trail, Domain> where
- Trail: TrailRestoration + AssociativeCollection<Location=usize, Item=Domain> + TrailVariable + Empty,
- Domain: Clone + Display
+ Trail: TrailRestoration + AssociativeCollection<Location=usize, Item=Domain> + TrailVariable + Empty + Debug,
+ Domain: Clone + Display + Debug
 {}
 
 impl<Trail, Domain> ImmutableMemoryConcept for TrailMemory<Trail, Domain> where
- Trail: TrailRestoration + AssociativeCollection<Location=usize, Item=Domain> + Empty,
- Domain: Clone + Display
+ Trail: TrailRestoration + AssociativeCollection<Location=usize, Item=Domain> + Empty + Debug,
+ Domain: Clone + Display + Debug
 {}
 
 impl<Trail, Domain> Collection for TrailMemory<Trail, Domain>

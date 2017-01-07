@@ -19,7 +19,7 @@ use gcollections::ops::*;
 use gcollections::kind::*;
 use std::fmt::{Formatter, Display, Error};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SingleValueTrail<Domain>
 {
   trail: Vec<MemoryCell<Domain>>

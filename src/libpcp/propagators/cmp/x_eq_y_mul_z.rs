@@ -22,28 +22,34 @@ use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::ops::*;
+use concept::*;
 
 // x = y * z
-#[derive(Clone, Copy)]
-pub struct XEqYMulZ<X, Y, Z>
+#[derive(Debug)]
+pub struct XEqYMulZ<VStore>
 {
-  x: X,
-  y: Y,
-  z: Z,
+  x: Var<VStore>,
+  y: Var<VStore>,
+  z: Var<VStore>,
 }
 
-impl<X, Y, Z> PropagatorKind for XEqYMulZ<X, Y, Z> {}
+impl<VStore> PropagatorKind for XEqYMulZ<VStore> {}
 
-impl<X, Y, Z> XEqYMulZ<X, Y, Z> {
-  pub fn new(x: X, y: Y, z: Z) -> XEqYMulZ<X, Y, Z> {
+impl<VStore> XEqYMulZ<VStore> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
     XEqYMulZ { x: x, y: y, z: z }
   }
 }
 
-impl<X, Y, Z> DisplayStateful<Model> for XEqYMulZ<X, Y, Z> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>,
-  Z: DisplayStateful<Model>
+impl<VStore> Clone for XEqYMulZ<VStore>  where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    XEqYMulZ::new(self.x.bclone(), self.y.bclone(), self.z.bclone())
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for XEqYMulZ<VStore>
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -54,14 +60,11 @@ impl<X, Y, Z> DisplayStateful<Model> for XEqYMulZ<X, Y, Z> where
   }
 }
 
-impl<Store, Dom, X, Y, Z> Subsumption<Store> for XEqYMulZ<X, Y, Z> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store>,
-  Y: StoreRead<Store>,
-  Z: StoreRead<Store>,
+impl<VStore, Dom> Subsumption<VStore> for XEqYMulZ<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded + IsSingleton + Mul<Output=Dom> + Overlap
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     // False: x and y*z do not overlap.
     // True: x and y*z are singletons and equal.
     // Unknown: x and y*z overlap but are not singletons.
@@ -80,14 +83,11 @@ impl<Store, Dom, X, Y, Z> Subsumption<Store> for XEqYMulZ<X, Y, Z> where
   }
 }
 
-impl<Store, Dom, X, Y, Z> Propagator<Store> for XEqYMulZ<X, Y, Z> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store>,
-  Z: StoreRead<Store>,
+impl<VStore, Dom> Propagator<VStore> for XEqYMulZ<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded + Intersection<Output=Dom> + Mul<Output=Dom>
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
     let z = self.z.read(store);
@@ -96,10 +96,7 @@ impl<Store, Dom, X, Y, Z> Propagator<Store> for XEqYMulZ<X, Y, Z> where
   }
 }
 
-impl<X, Y, Z> PropagatorDependencies<FDEvent> for XEqYMulZ<X, Y, Z> where
-  X: ViewDependencies<FDEvent>,
-  Y: ViewDependencies<FDEvent>,
-  Z: ViewDependencies<FDEvent>
+impl<VStore> PropagatorDependencies<FDEvent> for XEqYMulZ<VStore>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let mut deps = self.x.dependencies(FDEvent::Bound);

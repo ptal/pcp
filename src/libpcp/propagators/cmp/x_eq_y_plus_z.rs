@@ -18,37 +18,35 @@ use propagators::PropagatorKind;
 use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
+use gcollections::*;
 use num::{Signed, Num};
 use std::fmt::Debug;
+use concept::*;
 
-#[derive(Clone, Copy)]
-pub struct XEqYPlusZ<X, Y, Z, B>
+#[derive(Clone, Debug)]
+pub struct XEqYPlusZ<VStore: Collection>
 {
-  geq: XGreaterEqYPlusZ<X, Y, Z, B>,
-  leq: XLessEqYPlusZ<X, Y, Z, B>
+  geq: XGreaterEqYPlusZ<VStore>,
+  leq: XLessEqYPlusZ<VStore>
 }
 
-impl<X, Y, Z, B> PropagatorKind for XEqYPlusZ<X, Y, Z, B> {}
+impl<VStore: Collection> PropagatorKind for XEqYPlusZ<VStore> {}
 
-impl<X, Y, Z, B> XEqYPlusZ<X, Y, Z, B> where
-  X: Clone,
-  Y: Clone,
-  Z: Clone,
-  B: Num + Signed,
+impl<VStore, Domain, Bound> XEqYPlusZ<VStore> where
+ VStore: VStoreConcept<Item=Domain> + 'static,
+ Domain: Collection<Item=Bound> + IntDomain,
+ Bound: IntBound
 {
-  pub fn new(x: X, y: Y, z: Z) -> XEqYPlusZ<X, Y, Z, B> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
     XEqYPlusZ {
-      geq: x_geq_y_plus_z(x.clone(), y.clone(), z.clone()),
+      geq: x_geq_y_plus_z(x.bclone(), y.bclone(), z.bclone()),
       leq: x_leq_y_plus_z(x, y, z)
     }
   }
 }
 
-impl<X, Y, Z, B> DisplayStateful<Model> for XEqYPlusZ<X, Y, Z, B> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>,
-  Z: DisplayStateful<Model>,
-  B: Debug
+impl<VStore> DisplayStateful<Model> for XEqYPlusZ<VStore> where
+  VStore: Collection
 {
   fn display(&self, model: &Model) {
     self.geq.x.display(model);
@@ -60,28 +58,31 @@ impl<X, Y, Z, B> DisplayStateful<Model> for XEqYPlusZ<X, Y, Z, B> where
   }
 }
 
-impl<Store, X, Y, Z, B> Subsumption<Store> for XEqYPlusZ<X, Y, Z, B> where
-  XGreaterEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
-  XLessEqYPlusZ<X, Y, Z, B>: Subsumption<Store>,
+impl<VStore> Subsumption<VStore> for XEqYPlusZ<VStore> where
+  VStore: Collection,
+  XGreaterEqYPlusZ<VStore>: Subsumption<VStore>,
+  XLessEqYPlusZ<VStore>: Subsumption<VStore>,
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     self.geq.is_subsumed(store).and(self.leq.is_subsumed(store))
   }
 }
 
-impl<Store, X, Y, Z, B> Propagator<Store> for XEqYPlusZ<X, Y, Z, B> where
-  XGreaterEqYPlusZ<X, Y, Z, B>: Propagator<Store>,
-  XLessEqYPlusZ<X, Y, Z, B>: Propagator<Store>
+impl<VStore> Propagator<VStore> for XEqYPlusZ<VStore> where
+  VStore: Collection,
+  XGreaterEqYPlusZ<VStore>: Propagator<VStore>,
+  XLessEqYPlusZ<VStore>: Propagator<VStore>
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     self.geq.propagate(store) &&
     self.leq.propagate(store)
   }
 }
 
-impl<X, Y, Z, B> PropagatorDependencies<FDEvent> for XEqYPlusZ<X, Y, Z, B> where
-  XGreaterEqYPlusZ<X, Y, Z, B>: PropagatorDependencies<FDEvent>,
-  XLessEqYPlusZ<X, Y, Z, B>: PropagatorDependencies<FDEvent>
+impl<VStore> PropagatorDependencies<FDEvent> for XEqYPlusZ<VStore> where
+  VStore: Collection,
+  XGreaterEqYPlusZ<VStore>: PropagatorDependencies<FDEvent>,
+  XLessEqYPlusZ<VStore>: PropagatorDependencies<FDEvent>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let geq_deps = self.geq.dependencies();

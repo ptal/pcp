@@ -22,24 +22,25 @@ use propagation::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
+use concept::*;
 
-#[derive(Clone)]
-pub struct Distinct<X>
+#[derive(Debug)]
+pub struct Distinct<VStore>
 {
-  props: Vec<XNeqY<X,X>>,
-  vars: Vec<X>
+  props: Vec<XNeqY<VStore>>,
+  vars: Vec<Var<VStore>>
 }
 
-impl<X> PropagatorKind for Distinct<X> {}
+impl<VStore> PropagatorKind for Distinct<VStore> {}
 
-impl<X> Distinct<X> where
-  X: Clone
+impl<VStore> Distinct<VStore> where
+ VStore: Collection
 {
-  pub fn new(vars: Vec<X>) -> Distinct<X> {
+  pub fn new(vars: Vec<Var<VStore>>) -> Self {
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
-        let i_neq_j = XNeqY::new(vars[i].clone(), vars[j].clone());
+        let i_neq_j = XNeqY::new(vars[i].bclone(), vars[j].bclone());
         props.push(i_neq_j);
       }
     }
@@ -50,8 +51,18 @@ impl<X> Distinct<X> where
   }
 }
 
-impl<X> DisplayStateful<Model> for Distinct<X> where
-  X: DisplayStateful<Model>
+impl<VStore> Clone for Distinct<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    Distinct {
+      props: self.props.clone(),
+      vars: self.vars.iter().map(|v| v.bclone()).collect()
+    }
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for Distinct<VStore>
 {
   fn display(&self, model: &Model) {
     print!("distinct(");
@@ -66,13 +77,10 @@ impl<X> DisplayStateful<Model> for Distinct<X> where
   }
 }
 
-impl<Store, Dom, Bound, X> Subsumption<Store> for Distinct<X> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + Clone,
-  Dom: Bounded<Item=Bound> + Disjoint,
-  Bound: PartialOrd
+impl<VStore> Subsumption<VStore> for Distinct<VStore> where
+  XNeqY<VStore>: Subsumption<VStore>
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     let mut all_entailed = true;
     for p in &self.props {
       match p.is_subsumed(store) {
@@ -86,14 +94,10 @@ impl<Store, Dom, Bound, X> Subsumption<Store> for Distinct<X> where
   }
 }
 
-impl<Store, Dom, Bound, X> Propagator<Store> for Distinct<X> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Dom: Bounded<Item=Bound> + Cardinality,
-  Dom: Difference<<Dom as Collection>::Item, Output=Dom>,
-  Bound: PartialOrd
+impl<VStore> Propagator<VStore> for Distinct<VStore> where
+  XNeqY<VStore>: Propagator<VStore>
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     for p in &mut self.props {
       if !p.propagate(store) {
         return false;
@@ -103,8 +107,7 @@ impl<Store, Dom, Bound, X> Propagator<Store> for Distinct<X> where
   }
 }
 
-impl<X> PropagatorDependencies<FDEvent> for Distinct<X> where
-  X: ViewDependencies<FDEvent> + Clone
+impl<VStore> PropagatorDependencies<FDEvent> for Distinct<VStore>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     self.vars.iter().flat_map(|v| v.dependencies(FDEvent::Inner)).collect()

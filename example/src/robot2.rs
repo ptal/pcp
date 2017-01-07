@@ -58,6 +58,7 @@ use pcp::term::*;
 use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
 use pcp::model::*;
+use pcp::concept::*;
 use std::fmt::{Formatter, Display, Error};
 
 pub type Bound = i32;
@@ -74,7 +75,7 @@ static E: usize = 4; // End, go to park
 #[derive(Clone)]
 pub enum RobotType {
   Simple,  //task has a fixed duration
-  Duration{vdurations: Vec<Identity<Domain>>, variation: usize}, //task duration is a variable 
+  Duration{vdurations: Vec<Identity<Domain>>, variation: usize}, //task duration is a variable
 }
 
 pub struct Robot {
@@ -96,9 +97,9 @@ impl Robot {
           start: vec!(),
           tasks: vec!(L, T, W, P, E),
           durations: vec!(Lduration, Tduration, Wduration, Pduration), //Fixed duration variable
-          cumultasks: vec!((0,0), (3,3)), 
+          cumultasks: vec!((0,0), (3,3)),
         }
-        
+
       } else {
         Robot {
           robot_type : robot_type.clone(),
@@ -107,7 +108,7 @@ impl Robot {
           durations: vec!(Lduration, Tduration, Pduration), //fixed duration variable
           cumultasks: vec!((0,0), (2,2)),
         }
-        
+
       };
       robotschel.push(robot)
     }
@@ -129,7 +130,7 @@ impl Robot {
   pub fn add_robot_duration_variables(&mut self, space: &mut FDSpace, model: &mut Model) {
     if let RobotType::Duration{ref mut vdurations, variation} = self.robot_type {
       self.durations.iter()
-      .map(|duration| 
+      .map(|duration|
           vdurations.push(model.alloc_var(&mut space.vstore, IntervalSet::new(*duration as i32, (*duration + variation) as i32)))
       ).collect::<Vec<()>>();
     }
@@ -188,7 +189,7 @@ pub struct RobotScheduling {
   pub robots: Vec<Robot>,
   pub max_time: usize,
   pub pipeting_start: Vec<Box<Identity<Domain>>>,
-  pub pipeting_duration: Vec<Box<Identity<Domain>>>,
+  pub pipeting_duration: Vec<Box<IntVariable<VStore>>>,
   pub pipeting_resource: Vec<Box<Constant<Bound>>>,
   pub model: Model,
   pub space: FDSpace,
@@ -241,7 +242,7 @@ impl RobotScheduling
 
        //create task start variables.
       self.model.open_group("s");
-      for _ in 0..robot.tasks.len() { 
+      for _ in 0..robot.tasks.len() {
         robot.start.push(self.model.alloc_var(&mut self.space.vstore, time_dom.clone()));
       }
       self.model.close_group();
@@ -249,7 +250,7 @@ impl RobotScheduling
       //create duration variable if needed.
       self.model.open_group("d");
       robot.add_robot_duration_variables(&mut self.space, &mut self.model);
-      self.model.close_group();        
+      self.model.close_group();
 
       // Ensure that every task starts after the end time of the previous task. (S' >= S + D).
       robot.add_robot_task_sequencing_variable(&mut self.space);

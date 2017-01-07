@@ -20,9 +20,10 @@ use propagation::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
 use interval::ops::Range;
+use concept::*;
 
 /// bool2int(c), read-only view.
-#[derive(Clone, Copy)]
+#[derive(Clone, Debug)]
 pub struct Bool2Int<P>
 {
   p: P
@@ -46,18 +47,26 @@ impl<P> DisplayStateful<Model> for Bool2Int<P> where
   }
 }
 
-impl<Domain, B, P, Store> StoreRead<Store> for Bool2Int<P> where
- Store: Collection<Item=Domain>,
- Domain: Collection<Item=B> + Bounded + Range + Singleton,
- B: Integer,
- P: Subsumption<Store>
+impl<VStore, P> StoreMonotonicUpdate<VStore> for Bool2Int<P> where
+ VStore: VStoreConcept
 {
-  fn read(&self, store: &Store) -> Domain {
+  fn update(&mut self, store: &mut VStore, value: VStore::Item) -> bool {
+    panic!("Cannot update a bool2int view.");
+  }
+}
+
+impl<VStore, Domain, Bound, P> StoreRead<VStore> for Bool2Int<P> where
+ VStore: VStoreConcept<Item=Domain>,
+ Domain: Bounded<Item=Bound> + Range + Singleton,
+ Bound: Integer,
+ P: Subsumption<VStore>
+{
+  fn read(&self, store: &VStore) -> Domain {
     use kernel::trilean::Trilean::*;
     match self.p.is_subsumed(store) {
-      True => Domain::singleton(B::one()),
-      False => Domain::singleton(B::zero()),
-      Unknown => Domain::new(B::zero(), B::one())
+      True => Domain::singleton(Bound::one()),
+      False => Domain::singleton(Bound::zero()),
+      Unknown => Domain::new(Bound::zero(), Bound::one())
     }
   }
 }

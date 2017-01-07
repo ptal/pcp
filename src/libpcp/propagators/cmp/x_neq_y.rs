@@ -21,25 +21,32 @@ use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
+use concept::*;
 
-#[derive(Clone, Copy)]
-pub struct XNeqY<X, Y>
+#[derive(Debug)]
+pub struct XNeqY<VStore>
 {
-  x: X,
-  y: Y
+  x: Var<VStore>,
+  y: Var<VStore>
 }
 
-impl<X, Y> PropagatorKind for XNeqY<X, Y> {}
+impl<VStore> PropagatorKind for XNeqY<VStore> {}
 
-impl<X, Y> XNeqY<X, Y> {
-  pub fn new(x: X, y: Y) -> XNeqY<X, Y> {
+impl<VStore> XNeqY<VStore> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>) -> Self {
     XNeqY { x: x, y: y }
   }
 }
 
-impl<X, Y> DisplayStateful<Model> for XNeqY<X, Y> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>
+impl<VStore> Clone for XNeqY<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    XNeqY::new(self.x.bclone(), self.y.bclone())
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for XNeqY<VStore>
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -48,26 +55,21 @@ impl<X, Y> DisplayStateful<Model> for XNeqY<X, Y> where
   }
 }
 
-impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XNeqY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + Clone,
-  Y: StoreRead<Store> + Clone,
-  Dom: Bounded<Item=Bound> + Disjoint,
-  Bound: PartialOrd
+impl<VStore> Subsumption<VStore> for XNeqY<VStore> where
+ VStore: Collection,
+ XEqY<VStore>: Subsumption<VStore>
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
-    !XEqY::new(self.x.clone(), self.y.clone()).is_subsumed(store)
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
+    !XEqY::new(self.x.bclone(), self.y.bclone()).is_subsumed(store)
   }
 }
 
-impl<Store, Dom, Bound, X, Y> Propagator<Store> for XNeqY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+impl<VStore, Dom, Bound> Propagator<VStore> for XNeqY<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound> + Cardinality + Difference<Bound, Output=Dom>,
   Bound: PartialOrd
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
 
@@ -83,12 +85,12 @@ impl<Store, Dom, Bound, X, Y> Propagator<Store> for XNeqY<X, Y> where
   }
 }
 
-impl<X, Y> PropagatorDependencies<FDEvent> for XNeqY<X, Y> where
-  X: ViewDependencies<FDEvent> + Clone,
-  Y: ViewDependencies<FDEvent> + Clone
+impl<VStore> PropagatorDependencies<FDEvent> for XNeqY<VStore> where
+ VStore: Collection,
+ XEqY<VStore>: PropagatorDependencies<FDEvent>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
-    XEqY::new(self.x.clone(), self.y.clone()).dependencies()
+    XEqY::new(self.x.bclone(), self.y.bclone()).dependencies()
   }
 }
 

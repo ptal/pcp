@@ -40,7 +40,7 @@ impl<Var,Val,D> Brancher<Var,Val,D>
 }
 
 impl<Var, Val, D, VStore, CStore, R, Domain, Bound> SearchTreeVisitor<Space<VStore, CStore, R>> for Brancher<Var,Val,D> where
-  VStore: IntVStore<Item=Domain, Location=Identity<Domain>, Output=Domain>,
+  VStore: VStoreConcept<Item=Domain, Location=Identity<Domain>, Output=Domain>,
   CStore: IntCStore<VStore>,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>,
   Var: VarSelection<Space<VStore, CStore, R>>,

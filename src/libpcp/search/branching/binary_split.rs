@@ -22,9 +22,8 @@ use concept::*;
 
 pub struct BinarySplit;
 
-// See discussion about type bounds: https://github.com/ptal/pcp/issues/11
 impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bound> for BinarySplit where
-  VStore: IntVStore<Item=Domain, Location=Identity<Domain>, Output=Domain>,
+  VStore: VStoreConcept<Item=Domain, Location=Identity<Domain>, Output=Domain> + 'static,
   CStore: IntCStore<VStore>,
   Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
@@ -33,9 +32,9 @@ impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bou
   fn distribute(&mut self, space: Space<VStore, CStore, R>, var_idx: usize, val: Bound) ->
     (<Space<VStore, CStore, R> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore, R>>>)
   {
-    let x = Identity::<Domain>::new(var_idx);
-    let v = Constant::new(val);
-    let x_less_v = x_leq_y::<_,_,Bound>(x.clone(), v.clone());
+    let x = box Identity::<Domain>::new(var_idx) as Var<VStore>;
+    let v = box Constant::new(val) as Var<VStore>;
+    let x_less_v = x_leq_y::<_,_,Bound>(x.bclone(), v.bclone());
     let x_geq_v = x_greater_y(x, v);
 
     Branch::distribute(space,

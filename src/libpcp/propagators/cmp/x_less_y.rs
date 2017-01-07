@@ -21,25 +21,32 @@ use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
+use concept::*;
 
-#[derive(Clone, Copy)]
-pub struct XLessY<X, Y>
+#[derive(Debug)]
+pub struct XLessY<VStore>
 {
-  x: X,
-  y: Y
+  x: Var<VStore>,
+  y: Var<VStore>
 }
 
-impl<X, Y> PropagatorKind for XLessY<X, Y> {}
+impl<VStore> PropagatorKind for XLessY<VStore> {}
 
-impl<X, Y> XLessY<X, Y> {
-  pub fn new(x: X, y: Y) -> XLessY<X, Y> {
+impl<VStore> XLessY<VStore> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>) -> XLessY<VStore> {
     XLessY { x: x, y: y }
   }
 }
 
-impl<X, Y> DisplayStateful<Model> for XLessY<X, Y> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>
+impl<VStore> Clone for XLessY<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    XLessY::new(self.x.bclone(), self.y.bclone())
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for XLessY<VStore>
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -48,14 +55,12 @@ impl<X, Y> DisplayStateful<Model> for XLessY<X, Y> where
   }
 }
 
-impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XLessY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store>,
-  Y: StoreRead<Store>,
+impl<VStore, Dom, Bound> Subsumption<VStore> for XLessY<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound>,
   Bound: PartialOrd
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     // False:
     // x:    |--|
     // y: |--|
@@ -81,14 +86,12 @@ impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XLessY<X, Y> where
   }
 }
 
-impl<Store, Dom, Bound, X, Y> Propagator<Store> for XLessY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+impl<VStore, Dom, Bound> Propagator<VStore> for XLessY<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound> + StrictShrinkLeft + StrictShrinkRight,
   Bound: PartialOrd
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
     self.x.update(store, x.strict_shrink_right(y.upper())) &&
@@ -96,9 +99,7 @@ impl<Store, Dom, Bound, X, Y> Propagator<Store> for XLessY<X, Y> where
   }
 }
 
-impl<X, Y> PropagatorDependencies<FDEvent> for XLessY<X, Y> where
-  X: ViewDependencies<FDEvent>,
-  Y: ViewDependencies<FDEvent>
+impl<VStore> PropagatorDependencies<FDEvent> for XLessY<VStore>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let mut deps = self.x.dependencies(FDEvent::Bound);

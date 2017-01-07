@@ -26,6 +26,7 @@ use num::{Signed, Integer};
 use std::ops::*;
 use std::fmt::Debug;
 
+pub use variable::concept::*;
 
 pub trait IntBound:
   Integer + Clone + Debug
@@ -38,10 +39,10 @@ impl<R> IntBound for R where
 {}
 
 pub trait IntDomain:
-  Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range +
+  Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range + Contains +
   ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight +
   Difference<<Self as Collection>::Item, Output=Self> +
-  Intersection<Output=Self> + Overlap + Subset + Disjoint +
+  Intersection<Output=Self> + Difference<Output=Self> + Overlap + Subset + Disjoint +
   Add<<Self as Collection>::Item, Output=Self> + Sub<<Self as Collection>::Item, Output=Self> +
   Add<Output=Self> + Sub<Output=Self> + Mul<Output=Self> +
   Clone + Debug
@@ -50,41 +51,49 @@ where
 {}
 
 impl<R> IntDomain for R where
-  R: Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range,
+  R: Bounded + Cardinality + Empty + IsEmpty + Singleton + IsSingleton + Range + Contains,
   R: ShrinkLeft + ShrinkRight + StrictShrinkLeft + StrictShrinkRight,
   R: Difference<<R as Collection>::Item, Output=R>,
-  R: Intersection<Output=R> + Overlap + Subset + Disjoint,
+  R: Intersection<Output=R> + Difference<Output=R> + Overlap + Subset + Disjoint,
   R: Add<<R as Collection>::Item, Output=R> + Sub<<R as Collection>::Item, Output=R>,
   R: Add<Output=R> + Sub<Output=R> + Mul<Output=R>,
   R: Clone + Debug,
   <R as Collection>::Item: IntBound
 {}
 
-pub trait IntVariable<VStore>:
+pub trait IntVariable_<VStore>:
   ViewDependencies<FDEvent> +
   StoreMonotonicUpdate<VStore> +
   StoreRead<VStore> +
-  Clone + DisplayStateful<Model>
+  Debug + DisplayStateful<Model>
  where VStore: Collection
 {}
 
-impl<R, VStore> IntVariable<VStore> for R where
+impl<R, VStore> IntVariable_<VStore> for R where
   R: ViewDependencies<FDEvent>,
   R: StoreMonotonicUpdate<VStore>,
   R: StoreRead<VStore>,
-  R: Clone + DisplayStateful<Model>,
+  R: Debug + DisplayStateful<Model>,
   VStore: Collection
 {}
 
-pub trait IntVStore:
-  AssociativeCollection + Alloc + DisplayStateful<Model> + Cardinality<Size=usize> +
-  Freeze + Iterable + Index<usize> + MonotonicUpdate
-{}
+pub type Var<VStore> = Box<IntVariable<VStore>>;
 
-impl<R> IntVStore for R where
-  R: AssociativeCollection + Alloc + DisplayStateful<Model> + Cardinality<Size=usize>,
-  R: Freeze + Iterable + Index<usize> + MonotonicUpdate
-{}
+pub trait IntVariable<VStore>: IntVariable_<VStore>
+  where VStore: Collection
+{
+  fn bclone(&self) -> Box<IntVariable<VStore>>;
+}
+
+impl<VStore, R> IntVariable<VStore> for R where
+  R: IntVariable_<VStore>,
+  R: Clone + 'static,
+  VStore: Collection
+{
+  fn bclone(&self) -> Box<IntVariable<VStore>> {
+    Box::new(self.clone())
+  }
+}
 
 pub trait IntCStore<VStore>:
   Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)> +

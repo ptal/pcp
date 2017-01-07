@@ -15,20 +15,25 @@
 pub use variable::memory::concept::*;
 use kernel::*;
 use variable::ops::*;
+use term::identity::*;
+use gcollections::*;
 use gcollections::ops::*;
 use model::*;
+use std::fmt::Debug;
 
 pub trait EventConcept<Domain>:
-  MonotonicEvent<Domain> + Merge + Clone
+  MonotonicEvent<Domain> + Merge + Clone + Debug
 {}
 
 impl<Domain, R> EventConcept<Domain> for R where
-  R: MonotonicEvent<Domain> + Merge + Clone
+  R: MonotonicEvent<Domain> + Merge + Clone + Debug
 {}
 
-pub trait StoreConcept:
+pub trait VStoreConcept:
    ImmutableMemoryConcept
+ + AssociativeCollection<Location=Identity<<Self as Collection>::Item>>
  + Alloc
  + MonotonicUpdate
  + DisplayStateful<Model>
-{}
+{
+}

@@ -35,6 +35,16 @@ impl IndexedDeps {
     let idx = self.index_of(var, ev);
     &mut self.deps[idx]
   }
+
+  fn num_vars(&self) -> usize {
+    self.deps.len() / self.num_events
+  }
+
+  fn assert_var_idx(&self, var: usize, op: &str) {
+    assert!(var < self.num_vars(),
+      format!("Reactor IndexedDeps has been initialized for {} variables but `{}` of the variable {} was requested.",
+        self.num_vars(), op, var));
+  }
 }
 
 impl Reactor for IndexedDeps {
@@ -51,12 +61,14 @@ impl Reactor for IndexedDeps {
       .skip(var*self.num_events).take(self.num_events)
       .flat_map(|x| x.iter()).all(|&x| x != prop),
       "propagator already subscribed to this variable");
+    self.assert_var_idx(var, "subscription");
     self.num_subscriptions += 1;
     let mut props = self.deps_of_mut(var, ev);
     props.push(prop);
   }
 
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex {
+    self.assert_var_idx(var, "unsubscription");
     self.num_subscriptions -= 1;
     let mut props = self.deps_of_mut(var, ev);
     let idx = props.iter().position(|&v| v == prop);
@@ -65,6 +77,7 @@ impl Reactor for IndexedDeps {
   }
 
   fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex {
+    self.assert_var_idx(var, "react");
     let from = self.index_of(var, ev);
     let len = self.num_events - ev.to_index();
     self.deps.iter()

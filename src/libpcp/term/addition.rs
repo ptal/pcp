@@ -14,20 +14,26 @@
 
 use kernel::*;
 use model::*;
+use propagation::events::*;
 use term::ops::*;
 use gcollections::kind::*;
 use std::ops::*;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter, Result};
+use concept::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Addition<X, V>
+pub struct Addition<VStore> where
+ VStore: VStoreConcept,
+ VStore::Item: Collection
 {
-  x: X,
-  v: V
+  x: Var<VStore>,
+  v: <VStore::Item as Collection>::Item
 }
 
-impl<X, V> Addition<X, V> {
-  pub fn new(x: X, v: V) -> Addition<X, V> {
+impl<VStore, Domain, Bound> Addition<VStore> where
+  VStore: VStoreConcept<Item=Domain>,
+  Domain: Collection<Item=Bound>
+{
+  pub fn new(x: Var<VStore>, v: Bound) -> Self {
     Addition {
       x: x,
       v: v
@@ -35,9 +41,34 @@ impl<X, V> Addition<X, V> {
   }
 }
 
-impl<X, V> DisplayStateful<Model> for Addition<X, V> where
- X: DisplayStateful<Model>,
- V: Debug
+impl<VStore, Domain, Bound> Debug for Addition<VStore> where
+  VStore: VStoreConcept<Item=Domain>,
+  Domain: Collection<Item=Bound>,
+  Bound: Debug
+{
+  fn fmt(&self, fmt: &mut Formatter) -> Result {
+    fmt.debug_struct("Addition")
+      .field("x", &self.x)
+      .field("v", &self.v)
+      .finish()
+  }
+}
+
+
+impl<VStore, Domain, Bound> Clone for Addition<VStore> where
+  VStore: VStoreConcept<Item=Domain>,
+  Domain: Collection<Item=Bound>,
+  Bound: Clone
+{
+  fn clone(&self) -> Self {
+    Addition::new(self.x.bclone(), self.v.clone())
+  }
+}
+
+impl<VStore, Domain, Bound> DisplayStateful<Model> for Addition<VStore> where
+ VStore: VStoreConcept<Item=Domain>,
+ Domain: Collection<Item=Bound>,
+ Bound: Debug
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -45,32 +76,31 @@ impl<X, V> DisplayStateful<Model> for Addition<X, V> where
   }
 }
 
-impl<X, V, Domain, Store> StoreMonotonicUpdate<Store> for Addition<X, V> where
-  Store: Collection<Item=Domain>,
-  Domain: Sub<V, Output=Domain>,
-  V: Clone,
-  X: StoreMonotonicUpdate<Store>
+impl<VStore, Domain, Bound> StoreMonotonicUpdate<VStore> for Addition<VStore> where
+ VStore: VStoreConcept<Item=Domain>,
+ Domain: Collection<Item=Bound> + Sub<Bound, Output=Domain>,
+ Bound: Clone
 {
-  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
+  fn update(&mut self, store: &mut VStore, value: Domain) -> bool {
     self.x.update(store, value - self.v.clone())
   }
 }
 
-impl<X, V, Domain, Store> StoreRead<Store> for Addition<X, V> where
-  Store: Collection<Item=Domain>,
-  Domain: Add<V, Output=Domain>,
-  V: Clone,
-  X: StoreRead<Store>
+impl<VStore, Domain, Bound> StoreRead<VStore> for Addition<VStore> where
+ VStore: VStoreConcept<Item=Domain>,
+ Domain: Collection<Item=Bound> +  Add<Bound, Output=Domain>,
+ Bound: Clone
 {
-  fn read(&self, store: &Store) -> Store::Item {
+  fn read(&self, store: &VStore) -> VStore::Item {
     self.x.read(store) + self.v.clone()
   }
 }
 
-impl<X, V, Event> ViewDependencies<Event> for Addition<X, V> where
-  X: ViewDependencies<Event>
+impl<VStore> ViewDependencies<FDEvent> for Addition<VStore> where
+ VStore: VStoreConcept,
+ VStore::Item: Collection
 {
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
+  fn dependencies(&self, event: FDEvent) -> Vec<(usize, FDEvent)> {
     self.x.dependencies(event)
   }
 }

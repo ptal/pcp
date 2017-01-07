@@ -31,7 +31,7 @@ impl<C> Propagation<C> {
 }
 
 impl<VStore, CStore, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Propagation<C> where
-  VStore: IntVStore,
+  VStore: VStoreConcept,
   CStore: IntCStore<VStore>,
   C: SearchTreeVisitor<Space<VStore, CStore, R>>,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>

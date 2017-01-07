@@ -18,6 +18,7 @@ use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
 use term::*;
 use propagators::cmp::*;
+use gcollections::*;
 use concept::*;
 
 pub enum Mode {
@@ -25,15 +26,21 @@ pub enum Mode {
   Maximize
 }
 
-pub struct BranchAndBound<V, Bound, C> {
+pub struct BranchAndBound<VStore, C> where
+ VStore: VStoreConcept,
+ VStore::Item: Collection
+{
   pub mode: Mode,
-  pub var: V,
-  pub value: Option<Bound>,
+  pub var: Var<VStore>,
+  pub value: Option<<VStore::Item as Collection>::Item>,
   pub child: C
 }
 
-impl<V, Bound, C> BranchAndBound<V, Bound, C> {
-  pub fn new(mode: Mode, var: V, child: C) -> Self {
+impl<VStore, C> BranchAndBound<VStore, C> where
+  VStore: VStoreConcept,
+  VStore::Item: Collection
+{
+  pub fn new(mode: Mode, var: Var<VStore>, child: C) -> Self {
     BranchAndBound {
       mode: mode,
       var: var,
@@ -43,13 +50,12 @@ impl<V, Bound, C> BranchAndBound<V, Bound, C> {
   }
 }
 
-impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
-  BranchAndBound<V, Bound, C> where
- VStore: IntVStore<Item=Dom>,
+impl<C, Bound, Dom, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
+  BranchAndBound<VStore, C> where
+ VStore: VStoreConcept<Item=Dom> + 'static,
  CStore: IntCStore<VStore>,
  Dom: IntDomain<Item=Bound> + 'static,
  Bound: IntBound + 'static,
- V: IntVariable<VStore> + 'static,
  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
@@ -61,10 +67,10 @@ impl<C, Bound, Dom, V, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore
     -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
   {
     if let Some(bound) = self.value.clone() {
-      let bound = Constant::new(bound);
+      let bound = box Constant::new(bound) as Var<VStore>;
       match self.mode {
-        Mode::Minimize => current.cstore.alloc(box XLessY::new(self.var.clone(), bound)),
-        Mode::Maximize => current.cstore.alloc(box x_greater_y(self.var.clone(), bound)),
+        Mode::Minimize => current.cstore.alloc(box XLessY::new(self.var.bclone(), bound.bclone())),
+        Mode::Maximize => current.cstore.alloc(box x_greater_y(self.var.bclone(), bound.bclone())),
       };
     }
     let (mut immutable_state, status) = self.child.enter(current);

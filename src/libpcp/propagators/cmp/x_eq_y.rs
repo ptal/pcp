@@ -21,25 +21,32 @@ use propagation::events::*;
 use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
+use concept::*;
 
-#[derive(Clone, Copy)]
-pub struct XEqY<X, Y>
+#[derive(Debug)]
+pub struct XEqY<VStore>
 {
-  x: X,
-  y: Y
+  x: Var<VStore>,
+  y: Var<VStore>
 }
 
-impl<X, Y> PropagatorKind for XEqY<X, Y> {}
+impl<VStore> PropagatorKind for XEqY<VStore> {}
 
-impl<X, Y> XEqY<X, Y> {
-  pub fn new(x: X, y: Y) -> XEqY<X, Y> {
+impl<VStore> XEqY<VStore> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>) -> Self {
     XEqY { x: x, y: y }
   }
 }
 
-impl<X, Y> DisplayStateful<Model> for XEqY<X, Y> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>
+impl<VStore> Clone for XEqY<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    XEqY::new(self.x.bclone(), self.y.bclone())
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for XEqY<VStore>
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -48,14 +55,12 @@ impl<X, Y> DisplayStateful<Model> for XEqY<X, Y> where
   }
 }
 
-impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XEqY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store>,
-  Y: StoreRead<Store>,
+impl<VStore, Dom, Bound> Subsumption<VStore> for XEqY<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound> + Disjoint,
   Bound: PartialOrd
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     // False:
     // |--|
     //     |--|
@@ -81,13 +86,11 @@ impl<Store, Dom, Bound, X, Y> Subsumption<Store> for XEqY<X, Y> where
   }
 }
 
-impl<Store, Dom, X, Y> Propagator<Store> for XEqY<X, Y> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+impl<VStore, Dom> Propagator<VStore> for XEqY<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Intersection<Output=Dom> + Clone
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
     let new = x.intersection(&y);
@@ -96,9 +99,7 @@ impl<Store, Dom, X, Y> Propagator<Store> for XEqY<X, Y> where
   }
 }
 
-impl<X, Y> PropagatorDependencies<FDEvent> for XEqY<X, Y> where
-  X: ViewDependencies<FDEvent>,
-  Y: ViewDependencies<FDEvent>
+impl<VStore> PropagatorDependencies<FDEvent> for XEqY<VStore>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let mut deps = self.x.dependencies(FDEvent::Inner);

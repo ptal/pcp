@@ -16,11 +16,13 @@ use kernel::*;
 use model::*;
 use term::ops::*;
 use variable::ops::*;
+use propagation::events::*;
 use gcollections::kind::*;
 use std::marker::PhantomData;
 use std::ops::Index;
+use concept::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Debug)]
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>
@@ -46,28 +48,26 @@ impl<Domain> DisplayStateful<Model> for Identity<Domain>
   }
 }
 
-impl<Domain, Store> StoreMonotonicUpdate<Store> for Identity<Domain> where
-  Store: MonotonicUpdate,
-  Store: AssociativeCollection<Location=Identity<Domain>>
+impl<VStore, Domain> StoreMonotonicUpdate<VStore> for Identity<Domain> where
+ VStore: VStoreConcept<Item=Domain>
 {
-  fn update(&mut self, store: &mut Store, value: Store::Item) -> bool {
+  fn update(&mut self, store: &mut VStore, value: VStore::Item) -> bool {
     store.update(self, value)
   }
 }
 
-impl<Domain, Store> StoreRead<Store> for Identity<Domain> where
-  Store: Collection<Item=Domain>,
-  Store: Index<usize, Output=Domain>,
+impl<VStore, Domain> StoreRead<VStore> for Identity<Domain> where
+  VStore: VStoreConcept<Item=Domain>,
   Domain: Clone
 {
-  fn read(&self, store: &Store) -> Store::Item {
+  fn read(&self, store: &VStore) -> VStore::Item {
     store[self.idx].clone()
   }
 }
 
-impl<Domain, Event> ViewDependencies<Event> for Identity<Domain>
+impl<Domain> ViewDependencies<FDEvent> for Identity<Domain>
 {
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
+  fn dependencies(&self, event: FDEvent) -> Vec<(usize, FDEvent)> {
     vec![(self.idx, event)]
   }
 }

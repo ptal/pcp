@@ -15,6 +15,7 @@
 use kernel::{DisplayStateful, Trilean, Consistency};
 use propagation::concept::*;
 use model::*;
+use std::fmt::Debug;
 
 pub trait Subsumption<Store>
 {
@@ -31,21 +32,4 @@ pub trait PropagatorDependencies<Event>
 {
   /// Each event on a variable that can change the result of the `is_subsumed` method should be listed here.
   fn dependencies(&self) -> Vec<(usize, Event)>;
-}
-
-pub trait BoxedClone<VStore, Event>
-{
-  fn boxed_clone(&self) -> Box<PropagatorConcept<VStore, Event>>;
-}
-
-impl<VStore, Event, R> BoxedClone<VStore, Event> for R where
-  R: Clone + DisplayStateful<Model>,
-  R: Consistency<VStore>,
-  R: Subsumption<VStore>,
-  R: PropagatorDependencies<Event>,
-  R: 'static
-{
-  fn boxed_clone(&self) -> Box<PropagatorConcept<VStore, Event>> {
-    Box::new(self.clone())
-  }
 }

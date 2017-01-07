@@ -22,27 +22,33 @@ use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
 use num::traits::Num;
+use concept::*;
 
-#[derive(Clone, Copy)]
-pub struct XGreaterYPlusZ<X, Y, Z>
+#[derive(Debug)]
+pub struct XGreaterYPlusZ<VStore>
 {
-  pub x: X,
-  pub y: Y,
-  pub z: Z,
+  pub x: Var<VStore>,
+  pub y: Var<VStore>,
+  pub z: Var<VStore>,
 }
 
-impl<X, Y, Z> PropagatorKind for XGreaterYPlusZ<X, Y, Z> {}
+impl<VStore> PropagatorKind for XGreaterYPlusZ<VStore> {}
 
-impl<X, Y, Z> XGreaterYPlusZ<X, Y, Z> {
-  pub fn new(x: X, y: Y, z: Z) -> XGreaterYPlusZ<X, Y, Z> {
+impl<VStore> XGreaterYPlusZ<VStore> {
+  pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
     XGreaterYPlusZ { x: x, y: y, z: z }
   }
 }
 
-impl<X, Y, Z> DisplayStateful<Model> for XGreaterYPlusZ<X, Y, Z> where
-  X: DisplayStateful<Model>,
-  Y: DisplayStateful<Model>,
-  Z: DisplayStateful<Model>
+impl<VStore> Clone for XGreaterYPlusZ<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    XGreaterYPlusZ::new(self.x.bclone(), self.y.bclone(), self.z.bclone())
+  }
+}
+
+impl<VStore> DisplayStateful<Model> for XGreaterYPlusZ<VStore>
 {
   fn display(&self, model: &Model) {
     self.x.display(model);
@@ -53,15 +59,12 @@ impl<X, Y, Z> DisplayStateful<Model> for XGreaterYPlusZ<X, Y, Z> where
   }
 }
 
-impl<Store, Dom, Bound, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store>,
-  Y: StoreRead<Store>,
-  Z: StoreRead<Store>,
+impl<VStore, Dom, Bound> Subsumption<VStore> for XGreaterYPlusZ<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound>,
   Bound: PartialOrd + Num
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> Trilean {
     // False: max(X) <= min(Y) + min(Z)
     // True: min(X) > max(Y) + max(Z)
     // Unknown: Everything else.
@@ -82,15 +85,12 @@ impl<Store, Dom, Bound, X, Y, Z> Subsumption<Store> for XGreaterYPlusZ<X, Y, Z> 
   }
 }
 
-impl<Store, Dom, Bound, X, Y, Z> Propagator<Store> for XGreaterYPlusZ<X, Y, Z> where
-  Store: Collection<Item=Dom>,
-  X: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Y: StoreRead<Store> + StoreMonotonicUpdate<Store>,
-  Z: StoreRead<Store> + StoreMonotonicUpdate<Store>,
+impl<VStore, Dom, Bound> Propagator<VStore> for XGreaterYPlusZ<VStore> where
+  VStore: Collection<Item=Dom>,
   Dom: Bounded<Item=Bound> + StrictShrinkRight + StrictShrinkLeft,
   Bound: PartialOrd + Num
 {
-  fn propagate(&mut self, store: &mut Store) -> bool {
+  fn propagate(&mut self, store: &mut VStore) -> bool {
     let x = self.x.read(store);
     let y = self.y.read(store);
     let z = self.z.read(store);
@@ -100,10 +100,7 @@ impl<Store, Dom, Bound, X, Y, Z> Propagator<Store> for XGreaterYPlusZ<X, Y, Z> w
   }
 }
 
-impl<X, Y, Z> PropagatorDependencies<FDEvent> for XGreaterYPlusZ<X, Y, Z> where
-  X: ViewDependencies<FDEvent>,
-  Y: ViewDependencies<FDEvent>,
-  Z: ViewDependencies<FDEvent>
+impl<VStore> PropagatorDependencies<FDEvent> for XGreaterYPlusZ<VStore>
 {
   fn dependencies(&self) -> Vec<(usize, FDEvent)> {
     let mut deps = self.x.dependencies(FDEvent::Bound);

@@ -39,9 +39,9 @@ impl Model
     self.groups.pop().expect("Cannot close a non-opened group.");
   }
 
-  pub fn alloc_var<Domain, VStore>(&mut self,
-    vstore: &mut VStore, dom: VStore::Item) -> VStore::Location where
-   VStore: IntVStore<Item=Domain, Location=Identity<Domain>>
+  pub fn alloc_var<VStore, Domain>(&mut self,
+    vstore: &mut VStore, dom: Domain) -> VStore::Location where
+   VStore: VStoreConcept<Item=Domain>
   {
     let loc = vstore.alloc(dom);
     let name = self.make_name();

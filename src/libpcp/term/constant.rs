@@ -15,11 +15,13 @@
 use term::ops::*;
 use model::*;
 use kernel::*;
+use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::fmt::Debug;
+use concept::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Constant<V>
 {
   value: V
@@ -42,28 +44,28 @@ impl<V> DisplayStateful<Model> for Constant<V> where
   }
 }
 
-impl<V, Domain, Store> StoreMonotonicUpdate<Store> for Constant<V> where
-  Store: Collection<Item=Domain>,
-  Domain: Cardinality
+impl<V, Domain, VStore> StoreMonotonicUpdate<VStore> for Constant<V> where
+  VStore: Collection<Item=Domain>,
+  Domain: Collection<Item=V> + Cardinality + Contains
 {
-  fn update(&mut self, _store: &mut Store, value: Store::Item) -> bool {
-    !value.is_empty()
+  fn update(&mut self, _store: &mut VStore, value: VStore::Item) -> bool {
+    !value.is_empty() && value.contains(&self.value)
   }
 }
 
-impl<V, Domain, Store> StoreRead<Store> for Constant<V> where
-  Store: Collection<Item=Domain>,
+impl<V, Domain, VStore> StoreRead<VStore> for Constant<V> where
+  VStore: Collection<Item=Domain>,
   Domain: Collection<Item=V> + Singleton,
   V: Clone
 {
-  fn read(&self, _store: &Store) -> Domain {
+  fn read(&self, _store: &VStore) -> Domain {
     Domain::singleton(self.value.clone())
   }
 }
 
-impl<V, Event> ViewDependencies<Event> for Constant<V>
+impl<V> ViewDependencies<FDEvent> for Constant<V>
 {
-  fn dependencies(&self, _event: Event) -> Vec<(usize, Event)> {
+  fn dependencies(&self, _event: FDEvent) -> Vec<(usize, FDEvent)> {
     vec![]
   }
 }

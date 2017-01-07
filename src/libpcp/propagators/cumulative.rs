@@ -16,21 +16,21 @@ use propagators::*;
 use term::*;
 use std::marker::PhantomData;
 use concept::*;
+use std::fmt::Debug;
 
-pub struct Cumulative<VS, VD, VR, VC, VStore>
+pub struct Cumulative<VStore>
 {
-  starts: Vec<Box<VS>>,
-  durations: Vec<Box<VD>>,
-  resources: Vec<Box<VR>>,
-  capacity: Box<VC>,
+  starts: Vec<Var<VStore>>,
+  durations: Vec<Var<VStore>>,
+  resources: Vec<Var<VStore>>,
+  capacity: Var<VStore>,
   intermediate: Vec<Vec<usize>>, // Given intermediate[j][i], if i left-overlap j, then it contains the number of resources used by i.
-  vstore_phantom: PhantomData<VStore>
 }
 
-impl<VS, VD, VR, VC, VStore> Cumulative<VS, VD, VR, VC, VStore>
+impl<VStore> Cumulative<VStore>
 {
-  pub fn new(starts: Vec<Box<VS>>, durations: Vec<Box<VD>>,
-   resources: Vec<Box<VR>>, capacity: Box<VC>) -> Self
+  pub fn new(starts: Vec<Var<VStore>>, durations: Vec<Var<VStore>>,
+   resources: Vec<Var<VStore>>, capacity: Var<VStore>) -> Self
   {
     let tasks = starts.len();
     assert_eq!(tasks, durations.len());
@@ -40,19 +40,14 @@ impl<VS, VD, VR, VC, VStore> Cumulative<VS, VD, VR, VC, VStore>
       durations: durations,
       resources: resources,
       capacity: capacity,
-      intermediate: vec![],
-      vstore_phantom: PhantomData
+      intermediate: vec![]
     }
   }
 }
 
-impl<VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> where
-  VStore: IntVStore<Item=Dom, Location=Identity<Dom>, Output=Dom>,
-  VS: IntVariable<VStore> + 'static,
-  VD: IntVariable<VStore> + 'static,
-  VR: IntVariable<VStore> + 'static,
-  VC: IntVariable<VStore> + 'static,
-  Dom: IntDomain<Item=Bound> + 'static,
+impl<VStore, Domain, Bound> Cumulative<VStore> where
+  VStore: VStoreConcept<Item=Domain> + Debug,
+  Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
   // Decomposition described in `Why cumulative decomposition is not as bad as it sounds`, Schutt and al., 2009.
@@ -67,40 +62,33 @@ impl<VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> wher
     // forall( j in tasks ) (...)
     for j in 0..tasks {
       let mut resource_vars = vec![];
+      self.intermediate.push(vec![]);
       for i in 0..tasks {
         if i != j {
           // bool2int(s[i] <= s[j] /\ s[j] < s[i] + d[i])
           let mut conj: CStore = CStore::empty();
           // s[i] <= s[j]
-          conj.alloc(box x_leq_y::<_,_,Bound>(self.start_at(i), self.start_at(j)));
+          conj.alloc(box x_leq_y(self.start_at(i), self.start_at(j)));
           // s[j] < s[i] + d[i]
           conj.alloc(box XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i)));
-          let b2i = Bool2Int::new(conj);
+          let b2i = box Bool2Int::new(conj);
 
           // r = b2i * r[i]
           let ri = self.resource_at(i);
           let ri_ub = ri.read(vstore).upper();
-          let r = vstore.alloc(Dom::new(Bound::zero(), ri_ub));
-          cstore.alloc(box XEqYMulZ::new(r.clone(), b2i, ri));
+          let r_dom = Domain::new(Bound::zero(), ri_ub);
+          // let hole = Domain::new(Bound::one(), ri_ub.clone() - Bound::one());
+          let r = vstore.alloc(r_dom);
+          self.intermediate.last_mut().unwrap().push(r.index());
+          let r = box r as Var<VStore>;
+          cstore.alloc(box XEqYMulZ::new(r.bclone(), b2i, ri));
           resource_vars.push(r);
         }
       }
-
-      self.intermediate.push(
-        resource_vars.iter().map(|v| v.index()).collect());
       //  sum( i in tasks where i != j )(...)
-      let sum = Sum::new(resource_vars);
-
-      // resource_vars.pop().expect("Need at least two tasks.");
-      // for r in resource_vars {
-      //   let sum2_dom = sum.read(vstore) + r.read(vstore);
-      //   let sum2 = vstore.alloc(sum2_dom);
-      //   cstore.alloc(box XEqYPlusZ::<_,_,_,Bound>::new(sum2.clone(), sum, r));
-      //   sum = sum2;
-      // }
-
+      let sum = box Sum::new(resource_vars);
       // c >= r[j] + sum
-      cstore.alloc(box x_geq_y_plus_z::<_,_,_,Bound>(self.capacity_var(), self.resource_at(j), sum));
+      cstore.alloc(box x_geq_y_plus_z(self.capacity_var(), self.resource_at(j), sum));
     }
   }
 
@@ -108,17 +96,17 @@ impl<VS, VD, VR, VC, Bound, VStore, Dom> Cumulative<VS, VD, VR, VC, VStore> wher
     self.intermediate.clone()
   }
 
-  fn start_at(&self, i: usize) -> VS {
-    *self.starts[i].clone()
+  fn start_at(&self, i: usize) -> Var<VStore> {
+    self.starts[i].bclone()
   }
-  fn duration_at(&self, i: usize) -> VD {
-    *self.durations[i].clone()
+  fn duration_at(&self, i: usize) -> Var<VStore> {
+    self.durations[i].bclone()
   }
-  fn resource_at(&self, i: usize) -> VR {
-    *self.resources[i].clone()
+  fn resource_at(&self, i: usize) -> Var<VStore> {
+    self.resources[i].bclone()
   }
-  fn capacity_var(&self) -> VC {
-    *self.capacity.clone()
+  fn capacity_var(&self) -> Var<VStore> {
+    self.capacity.bclone()
   }
 }
 
@@ -132,8 +120,10 @@ mod test {
   use interval::interval::*;
   use interval::ops::Range;
   use gcollections::ops::*;
+  use model::*;
 
-  type VStoreFD = VStoreCopy<Interval<i32>>;
+  type Dom = Interval<i32>;
+  type VStoreFD = VStoreCopy<Dom>;
 
   struct CumulativeTest {
     starts: Vec<Interval<i32>>,
@@ -165,73 +155,105 @@ mod test {
       )
     }
 
-    fn instantiate(self, vstore: &mut VStoreFD, cstore: &mut CStoreFD<VStoreFD>) {
-      let mut cumulative = Cumulative::new(
-        self.starts.into_iter().map(|s| box vstore.alloc(s)).collect(),
-        self.durations.into_iter().map(|d| box vstore.alloc(d)).collect(),
-        self.resources.into_iter().map(|r| box vstore.alloc(r)).collect(),
-        box vstore.alloc(self.capacity)
-      );
+    fn instantiate(self, model: &mut Model, vstore: &mut VStoreFD,
+      cstore: &mut CStoreFD<VStoreFD>)
+    {
+      model.open_group("s");
+      let starts = self.starts.into_iter()
+        .map(|s| box model.alloc_var(vstore, s)).collect();
+      model.close_group();
+      model.open_group("d");
+      let durations = self.durations.into_iter()
+        .map(|d| box model.alloc_var(vstore, d)).collect();
+      model.close_group();
+      model.open_group("r");
+      let resources = self.resources.into_iter()
+        .map(|r| box model.alloc_var(vstore, r)).collect();
+      model.close_group();
+      let capacity = box vstore.alloc(self.capacity);
+      model.register_var(capacity.index(), String::from("c"));
+
+      let mut cumulative = Cumulative::new(starts, durations, resources, capacity);
       cumulative.join(vstore, cstore);
     }
 
     fn test(self, test_num: usize, before: Trilean, after: Trilean, propagate_success: bool) {
       println!("Test number {}", test_num);
-      let vstore = &mut VStoreFD::empty();
-      let cstore = &mut CStoreFD::empty();
-      self.instantiate(vstore, cstore);
-      assert_eq!(cstore.is_subsumed(vstore), before);
-      assert_eq!(cstore.propagate(vstore), propagate_success);
-      assert_eq!(cstore.is_subsumed(vstore), after);
+      let mut vstore = VStoreFD::empty();
+      let mut cstore = CStoreFD::empty();
+      let mut model = Model::new();
+      self.instantiate(&mut model, &mut vstore, &mut cstore);
+      cstore.display(&(model, vstore.clone()));
+      assert_eq!(cstore.is_subsumed(&vstore), before);
+      assert_eq!(cstore.propagate(&mut vstore), propagate_success);
+      assert_eq!(cstore.is_subsumed(&vstore), after);
+    }
+
+    fn test_assignment(self, test_num: usize, expected: Trilean) {
+      let propagate = match expected {
+        True => true,
+        False => false,
+        Unknown => panic!("Assignment must always be either subsumed or refuted.")
+      };
+      /// Unknown because cumulative introduces new variables not fixed.
+      self.test(test_num, Unknown, expected, propagate);
     }
   }
 
   #[test]
-  fn cumulative_assignment_test() {
-    // The task 2 and 3 overlaps and consume 4 resources altogether.
-    let test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
-    test.test(1, Unknown, False, false);
-
-    // We can delay the task 3 to fix the problem.
-    let test = CumulativeTest::new_assignment(
-      vec![0,1,5], vec![3,4,2], vec![1,2,2], 3);
-    test.test(2, Unknown, True, true);
-
-    // Another possibility is to reduce the resource of task 3.
-    let test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,1], 3);
-    test.test(3, Unknown, True, true);
-
-    // Or augment the total amount of resources available.
-    let test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,2], 4);
-    test.test(4, Unknown, True, true);
-
-    // Or reduce the duration of task 2.
-    let test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,3,2], vec![1,2,2], 3);
-    test.test(4, Unknown, True, true);
+  fn disjunctive_test() {
+    CumulativeTest::new_assignment(
+      vec![0,0], vec![0,0], vec![1,1], 1
+    )
+    .test_assignment(1, True);
   }
 
-  #[test]
-  fn cumulative_test() {
-    let mut test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
-    // Widden the start date of task 1, should fail anyway.
-    test.starts[0] = Interval::new(0,4);
-    test.test(1, Unknown, False, false);
+  // #[test]
+  // fn cumulative_assignment_test() {
+  //   // The task 2 and 3 overlaps and consume 4 resources altogether.
+  //   let test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+  //   test.test(1, Unknown, False, false);
 
-    let mut test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
-    // Widden the start date of task 2, succeed when schedule at start=0.
-    test.starts[1] = Interval::new(0,1);
-    test.test(2, Unknown, Unknown, true);
+  //   // We can delay the task 3 to fix the problem.
+  //   let test = CumulativeTest::new_assignment(
+  //     vec![0,1,5], vec![3,4,2], vec![1,2,2], 3);
+  //   test.test(2, Unknown, True, true);
 
-    let mut test = CumulativeTest::new_assignment(
-      vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
-    // Widden the start date of task 3, succeed when schedule at start=5.
-    test.starts[2] = Interval::new(4,5);
-    test.test(3, Unknown, Unknown, true);
-  }
+  //   // Another possibility is to reduce the resource of task 3.
+  //   let test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,1], 3);
+  //   test.test(3, Unknown, True, true);
+
+  //   // Or augment the total amount of resources available.
+  //   let test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,2], 4);
+  //   test.test(4, Unknown, True, true);
+
+  //   // Or reduce the duration of task 2.
+  //   let test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,3,2], vec![1,2,2], 3);
+  //   test.test(4, Unknown, True, true);
+  // }
+
+  // #[test]
+  // fn cumulative_test() {
+  //   let mut test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+  //   // Widden the start date of task 1, should fail anyway.
+  //   test.starts[0] = Interval::new(0,4);
+  //   test.test(1, Unknown, False, false);
+
+  //   let mut test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+  //   // Widden the start date of task 2, succeed when schedule at start=0.
+  //   test.starts[1] = Interval::new(0,1);
+  //   test.test(2, Unknown, Unknown, true);
+
+  //   let mut test = CumulativeTest::new_assignment(
+  //     vec![0,1,4], vec![3,4,2], vec![1,2,2], 3);
+  //   // Widden the start date of task 3, succeed when schedule at start=5.
+  //   test.starts[2] = Interval::new(4,5);
+  //   test.test(3, Unknown, Unknown, true);
+  // }
 }

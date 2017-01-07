@@ -14,26 +14,35 @@
 
 use kernel::*;
 use term::ops::*;
+use propagation::events::*;
 use model::*;
 use concept::*;
 use gcollections::kind::*;
 
-#[derive(Clone)]
-pub struct Sum<X>
+#[derive(Debug)]
+pub struct Sum<VStore>
 {
-  vars: Vec<X>
+  vars: Vec<Var<VStore>>
 }
 
-impl<X> Sum<X> {
-  pub fn new(vars: Vec<X>) -> Self {
+impl<VStore> Sum<VStore> {
+  pub fn new(vars: Vec<Var<VStore>>) -> Self {
     Sum {
       vars: vars
     }
   }
 }
 
-impl<X> DisplayStateful<Model> for Sum<X> where
- X: DisplayStateful<Model>
+impl<VStore> Clone for Sum<VStore> where
+ VStore: Collection
+{
+  fn clone(&self) -> Self {
+    Sum::new(self.vars.iter().map(|v| v.bclone()).collect())
+  }
+}
+
+
+impl<VStore> DisplayStateful<Model> for Sum<VStore>
 {
   fn display(&self, model: &Model) {
     print!("sum(");
@@ -48,36 +57,37 @@ impl<X> DisplayStateful<Model> for Sum<X> where
   }
 }
 
-impl<Domain, Bound, X, Store> StoreMonotonicUpdate<Store> for Sum<X> where
- Store: Collection<Item=Domain>,
+impl<VStore, Domain, Bound> StoreMonotonicUpdate<VStore> for Sum<VStore> where
+ VStore: VStoreConcept<Item=Domain>,
  Domain: IntDomain<Item=Bound>,
- Bound: IntBound,
- X: StoreRead<Store>
+ Bound: IntBound
 {
-  fn update(&mut self, store: &mut Store, value: Domain) -> bool {
-    let sum = self.read(store);
-    sum.overlap(&value)
+  fn update(&mut self, store: &mut VStore, value: Domain) -> bool {
+    if self.vars.len() == 1 {
+      self.vars[0].update(store, value)
+    }
+    else {
+      let sum = self.read(store);
+      sum.overlap(&value)
+    }
   }
 }
 
-impl<Domain, Bound, X, Store> StoreRead<Store> for Sum<X> where
- Store: Collection<Item=Domain>,
+impl<VStore, Domain, Bound> StoreRead<VStore> for Sum<VStore> where
+ VStore: VStoreConcept<Item=Domain>,
  Domain: IntDomain<Item=Bound>,
- Bound: IntBound,
- X: StoreRead<Store>
+ Bound: IntBound
 {
-  fn read(&self, store: &Store) -> Domain {
+  fn read(&self, store: &VStore) -> Domain {
     let mut iter = self.vars.iter();
     let sum = iter.next().expect("At least one variable in sum.");
     iter.fold(sum.read(store), |a: Domain, v| a + v.read(store))
   }
 }
 
-impl<X, Event> ViewDependencies<Event> for Sum<X> where
-  X: ViewDependencies<Event>,
-  Event: Clone
+impl<VStore> ViewDependencies<FDEvent> for Sum<VStore>
 {
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
+  fn dependencies(&self, event: FDEvent) -> Vec<(usize, FDEvent)> {
     self.vars.iter()
       .flat_map(|v| v.dependencies(event.clone()))
       .collect()

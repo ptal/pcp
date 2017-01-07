@@ -15,20 +15,33 @@
 use kernel::{DisplayStateful, Consistency};
 use propagation::ops::*;
 use model::*;
+use std::fmt::Debug;
 
-pub trait PropagatorConcept<VStore, Event> :
+pub trait PropagatorConcept_<VStore, Event> :
     Consistency<VStore>
   + Subsumption<VStore>
   + PropagatorDependencies<Event>
-  + DisplayStateful<Model>
-  + BoxedClone<VStore, Event>
+  + DisplayStateful<Model> + Debug
 {}
 
-impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
+impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R where
  R: Consistency<VStore>,
  R: Subsumption<VStore>,
  R: PropagatorDependencies<Event>,
- R: DisplayStateful<Model>,
- R: BoxedClone<VStore, Event>
+ R: DisplayStateful<Model> + Debug
 {}
 
+pub trait PropagatorConcept<VStore, Event>:
+  PropagatorConcept_<VStore, Event>
+{
+  fn bclone(&self) -> Box<PropagatorConcept<VStore, Event>>;
+}
+
+impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
+  R: PropagatorConcept_<VStore, Event>,
+  R: Clone + 'static
+{
+  fn bclone(&self) -> Box<PropagatorConcept<VStore, Event>> {
+    Box::new(self.clone())
+  }
+}

@@ -24,6 +24,7 @@ use std::iter::FromIterator;
 // operation is always a good news, it is called when a
 // propagator is entailed, so the problem is less important.
 
+#[derive(Debug)]
 pub struct RelaxedFifo {
   inside_queue: Vec<bool>,
   queue: VecDeque<usize>

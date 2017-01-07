@@ -23,19 +23,20 @@ use std::ops::{Deref, DerefMut, Index};
 use std::fmt::{Formatter, Display, Error};
 use std::rc::*;
 use std::mem;
+use std::fmt::Debug;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CopyMemory<Domain>
 {
   variables: Vec<Domain>
 }
 
 impl<Domain> MemoryConcept for CopyMemory<Domain> where
-  Domain: Clone + Display
+  Domain: Clone + Display + Debug
 {}
 
 impl<Domain> ImmutableMemoryConcept for CopyMemory<Domain> where
-  Domain: Clone + Display
+  Domain: Clone + Display + Debug
 {}
 
 impl<Domain> Collection for CopyMemory<Domain>

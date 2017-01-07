@@ -22,6 +22,9 @@ pub mod x_eq_y_mul_z;
 
 use num::{Signed, Num};
 use term::*;
+use gcollections::*;
+use concept::*;
+use std::fmt::Debug;
 pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
 pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
 pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;
@@ -30,38 +33,48 @@ pub use propagators::cmp::x_less_y::XLessY;
 pub use propagators::cmp::x_eq_y::XEqY;
 pub use propagators::cmp::x_neq_y::XNeqY;
 
-pub type XGreaterY<X, Y> = XLessY<Y, X>;
-pub type XGreaterEqY<X, Y, Bound> = XLessY<Y, Addition<X, Bound>>;
-pub type XLessEqY<X, Y, Bound> = XLessY<X, Addition<Y, Bound>>;
-pub type XGreaterEqYPlusZ<X, Y, Z, Bound> = XGreaterYPlusZ<Addition<X, Bound>, Y, Z>;
-pub type XLessEqYPlusZ<X, Y, Z, Bound> = XLessYPlusZ<Addition<X, Bound>, Y, Z>;
+pub type XGreaterY<VStore> = XLessY<VStore>;
+pub type XGreaterEqY<VStore> = XLessY<VStore>;
+pub type XLessEqY<VStore> = XLessY<VStore>;
+pub type XGreaterEqYPlusZ<VStore> = XGreaterYPlusZ<VStore>;
+pub type XLessEqYPlusZ<VStore> = XLessYPlusZ<VStore>;
 
-pub fn x_greater_y<X, Y>(x: X, y: Y) -> XGreaterY<X, Y> {
+pub fn x_greater_y<VStore>(x: Var<VStore>, y: Var<VStore>) -> XGreaterY<VStore> {
   XLessY::new(y, x)
 }
 
-pub fn x_geq_y<X, Y, Bound>(x: X, y: Y) -> XGreaterEqY<X, Y, Bound> where
-  Bound: Num
+pub fn x_geq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XGreaterEqY<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: Collection<Item=Bound> + IntDomain,
+  Bound: IntBound
 {
-  x_greater_y(Addition::new(x, Bound::one()), y)
+  x_greater_y(box Addition::new(x, Bound::one()), y)
 }
 
-pub fn x_leq_y<X, Y, Bound>(x: X, y: Y) -> XLessEqY<X, Y, Bound> where
-  Bound: Num
+pub fn x_leq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XLessEqY<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: Collection<Item=Bound> + IntDomain,
+  Bound: IntBound
 {
-  XLessY::new(x, Addition::new(y, Bound::one()))
+  XLessY::new(x, box Addition::new(y, Bound::one()))
 }
 
-pub fn x_geq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XGreaterEqYPlusZ<X, Y, Z, Bound> where
-  Bound: Num
+pub fn x_geq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
+  -> XGreaterEqYPlusZ<VStore> where
+ VStore: VStoreConcept<Item=Domain> + 'static,
+ Domain: Collection<Item=Bound> + IntDomain,
+ Bound: IntBound
 {
-  XGreaterYPlusZ::new(Addition::new(x, Bound::one()), y, z)
+  XGreaterYPlusZ::new(box Addition::new(x, Bound::one()), y, z)
 }
 
-pub fn x_leq_y_plus_z<X, Y, Z, Bound>(x: X, y: Y, z: Z) -> XLessEqYPlusZ<X, Y, Z, Bound> where
-  Bound: Num + Signed
+pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
+  -> XLessEqYPlusZ<VStore> where
+ VStore: VStoreConcept<Item=Domain> + 'static,
+ Domain: Collection<Item=Bound> + IntDomain,
+ Bound: IntBound
 {
-  XLessYPlusZ::new(Addition::new(x, -Bound::one()), y, z)
+  XLessYPlusZ::new(box Addition::new(x, -Bound::one()), y, z)
 }
 
 #[cfg(test)]

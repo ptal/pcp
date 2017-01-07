@@ -22,10 +22,10 @@ use model::*;
 use vec_map::{Drain, VecMap};
 use std::slice;
 use std::marker::PhantomData;
-use std::fmt::{Display};
+use std::fmt::{Display, Debug};
 use std::ops::Index;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Store<Memory, Event>
 {
   memory: Memory,
@@ -45,14 +45,16 @@ impl<Memory, Event> AssociativeCollection for Store<Memory, Event> where
 }
 
 impl<Memory, Event, Domain> ImmutableMemoryConcept for Store<Memory, Event> where
- Memory: MemoryConcept<Item=Domain>
+ Memory: MemoryConcept<Item=Domain>,
+ Event: Debug
 {}
 
-impl<Memory, Domain, Event> StoreConcept for Store<Memory, Event> where
+impl<Memory, Domain, Bound, Event> VStoreConcept for Store<Memory, Event> where
  Memory: MemoryConcept<Item=Domain>,
- Domain: Subset + Cardinality + Bounded + Display,
+ Domain: Subset + Cardinality + Bounded<Item=Bound> + Display,
  Event: EventConcept<Domain>
-{}
+{
+}
 
 impl<Memory, Event> Store<Memory, Event> where
  Memory: MemoryConcept

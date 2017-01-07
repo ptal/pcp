@@ -35,7 +35,7 @@ impl<C> Debugger<C> {
 }
 
 impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Debugger<C> where
-  VStore: IntVStore<Item=Domain> + Clone,
+  VStore: VStoreConcept<Item=Domain> + Clone,
   CStore: IntCStore<VStore> + DisplayStateful<(Model, VStore)>,
   C: SearchTreeVisitor<Space<VStore, CStore, R>>,
   Domain: IsSingleton,
