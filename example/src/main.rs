@@ -25,42 +25,42 @@ extern crate gcollections;
 extern crate test;
 
 mod nqueens;
-mod robot;
-mod robot2;
-mod robot3;
+// mod robot;
+// mod robot2;
+// mod robot3;
 
 use nqueens::nqueens;
 
 
 fn main() {
-  // nqueens(60);
+  nqueens(60);
   //let robot = robot::RobotScheduling::new(2, 500).solve();
   //println!("{}", robot);
 
 // !!! le solveur plante avec une erreur 'index out of bounds sur un vecteur
-  println!("Solve robot1 domaine 400");
-  let test1 = robot2::RobotScheduling::new_test1(2, 400, 10, 25, 240, 25).solve();
-  println!("{}", test1);
+//   println!("Solve robot1 domaine 400");
+//   let test1 = robot2::RobotScheduling::new_test1(2, 400, 10, 25, 240, 25).solve();
+//   println!("{}", test1);
 
-  //ok bonne réponses. Le wait est bien intercallé
-  println!("Solve robot2 domaine 400");
-  let test2 = robot2::RobotScheduling::new_test2(2, 400, 10, 25, 240, 25, 5).solve();
-  println!("{}", test2);
+//   //ok bonne réponses. Le wait est bien intercallé
+//   println!("Solve robot2 domaine 400");
+//   let test2 = robot2::RobotScheduling::new_test2(2, 400, 10, 25, 240, 25, 5).solve();
+//   println!("{}", test2);
 
-// !!! Non satisfaisable alors que robot 2 l'est avec les même données.
-  println!("Solve robot1 domaine 34");
-  let test1 = robot2::RobotScheduling::new_test1(2, 34, 1, 3, 24, 3).solve(); // dure et ne rend pas le mains
-  println!("{}", test1);
+// // !!! Non satisfaisable alors que robot 2 l'est avec les même données.
+//   println!("Solve robot1 domaine 34");
+//   let test1 = robot2::RobotScheduling::new_test1(2, 34, 1, 3, 24, 3).solve(); // dure et ne rend pas le mains
+//   println!("{}", test1);
 
-  // !!! dure et ne rend pas le mains pourtant le problème est plus simple qu'avec le robot2 après
-  println!("Solve robot1 domaine 38");
-  let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve(); 
-  println!("{}", test1);
+//   // !!! dure et ne rend pas le mains pourtant le problème est plus simple qu'avec le robot2 après
+//   println!("Solve robot1 domaine 38");
+//   let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve();
+//   println!("{}", test1);
 
-  //Ok bonne solution
-  println!("Solve robot2 domaine 38");
-  let test2 = robot2::RobotScheduling::new_test2(2, 38, 1, 3, 24, 3, 1).solve();
-  println!("{}", test2);
+//   //Ok bonne solution
+//   println!("Solve robot2 domaine 38");
+//   let test2 = robot2::RobotScheduling::new_test2(2, 38, 1, 3, 24, 3, 1).solve();
+//   println!("{}", test2);
 
 
   //erreur durant la résolution.

@@ -29,7 +29,8 @@ use std::ops::Index;
 pub struct Store<Memory, Event>
 {
   memory: Memory,
-  delta: VecMap<Event>
+  delta: VecMap<Event>,
+  has_changed: bool
 }
 
 impl<Memory, Event> Collection for Store<Memory, Event> where
@@ -62,7 +63,8 @@ impl<Memory, Event> Store<Memory, Event> where
   fn from_memory(memory: Memory) -> Self {
     Store {
       memory: memory,
-      delta: VecMap::new()
+      delta: VecMap::new(),
+      has_changed: false
     }
   }
 }
@@ -84,6 +86,7 @@ impl<Memory, Domain, Event> Store<Memory, Event> where
   // FIXME: Need a rustc fix on borrowing rule, `updated` not needed.
   fn update_delta(&mut self, key: usize, old_dom: &Domain) {
     if let Some(delta) = Event::new(&self[key], old_dom) {
+      self.has_changed = true;
       let mut updated = false;
       if let Some(old_delta) = self.delta.get_mut(key) {
         *old_delta = Merge::merge(old_delta.clone(), delta.clone());
@@ -212,7 +215,11 @@ impl<Memory, Event> DrainDelta<Event> for Store<Memory, Event>
   }
 
   fn has_changed(&self) -> bool {
-    !self.delta.is_empty()
+    self.has_changed
+  }
+
+  fn reset_changed(&mut self) {
+    self.has_changed = false;
   }
 }
 

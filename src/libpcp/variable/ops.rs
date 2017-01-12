@@ -20,16 +20,12 @@ pub trait DrainDelta<Event>
 {
   fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
   fn has_changed(&self) -> bool;
+  fn reset_changed(&mut self);
 }
 
 pub trait Iterable: Collection
 {
   fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
-}
-
-pub trait Failure
-{
-  fn is_failed(&self) -> bool;
 }
 
 pub trait MonotonicUpdate: AssociativeCollection

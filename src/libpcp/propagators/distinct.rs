@@ -24,6 +24,20 @@ use gcollections::ops::*;
 use gcollections::*;
 use concept::*;
 
+pub fn join_distinct<VStore, CStore, Domain, Bound>(
+  vstore: &mut VStore, cstore: &mut CStore, vars: Vec<Var<VStore>>) where
+ VStore: VStoreConcept<Item=Domain> + 'static,
+ Domain: IntDomain<Item=Bound> + 'static,
+ Bound: IntBound + 'static,
+ CStore: IntCStore<VStore> + 'static
+{
+  for i in 0..vars.len()-1 {
+    for j in i+1..vars.len() {
+      cstore.alloc(box XNeqY::new(vars[i].bclone(), vars[j].bclone()));
+    }
+  }
+}
+
 #[derive(Debug)]
 pub struct Distinct<VStore>
 {

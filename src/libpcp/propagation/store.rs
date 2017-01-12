@@ -142,23 +142,27 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
 
   fn propagation_loop(&mut self, store: &mut VStore) -> bool {
     let mut consistent = true;
-    while let Some(p_idx) = self.scheduler.pop() {
-      if !self.propagate_one(p_idx, store) {
-        consistent = false;
-        break;
+    while !self.scheduler.is_empty() && consistent {
+      while let Some(p_idx) = self.scheduler.pop() {
+        if !self.propagate_one(p_idx, store) {
+          consistent = false;
+          break;
+        }
+        self.react(store);
       }
+      // self.react(store); // For bulk reaction.
     }
     consistent
   }
 
   fn propagate_one(&mut self, p_idx: usize, store: &mut VStore) -> bool {
+    store.reset_changed();
     let subsumed = self.propagators[p_idx].consistency(store);
     match subsumed {
       False => return false,
       True => self.unlink_prop(p_idx),
       Unknown => self.reschedule_prop(p_idx, store)
     };
-    self.react(store);
     true
   }
 
