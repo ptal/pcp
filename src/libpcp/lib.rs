@@ -25,6 +25,7 @@ extern crate gcollections;
 extern crate num;
 extern crate alloc;
 extern crate vec_map;
+extern crate bit_set;
 
 pub mod kernel;
 pub mod propagation;

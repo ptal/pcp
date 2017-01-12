@@ -33,7 +33,7 @@ use nqueens::nqueens;
 
 
 fn main() {
-  nqueens(60);
+  nqueens(100);
   //let robot = robot::RobotScheduling::new(2, 500).solve();
   //println!("{}", robot);
 

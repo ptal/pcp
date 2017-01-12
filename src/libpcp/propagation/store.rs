@@ -25,11 +25,13 @@ use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
 use std::ops::{Index, IndexMut};
+use bit_set::BitSet;
 
 #[derive(Debug)]
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
   propagators: Vec<Box<PropagatorConcept<VStore, Event> + 'static>>,
+  active: BitSet,
   reactor: Reactor,
   scheduler: Scheduler
 }
@@ -42,6 +44,7 @@ impl<VStore, Event, R, S> Empty for Store<VStore, Event, R, S> where
   fn empty() -> Store<VStore, Event, R, S> {
     Store {
       propagators: vec![],
+      active: BitSet::new(),
       reactor: Reactor::new(0,0),
       scheduler: Scheduler::new(0)
     }
@@ -55,7 +58,7 @@ impl<VStore, Event, R, S> Collection for Store<VStore, Event, R, S>
 
 impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
 {
-  type Location = ();
+  type Location = usize;
 }
 
 impl<VStore, Event, R, S> Store<VStore, Event, R, S>
@@ -114,67 +117,66 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
  R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
-  fn prepare(&mut self, store: &VStore) {
-    self.init_reactor(store);
+  fn prepare(&mut self, vstore: &VStore) {
+    self.init_reactor(vstore);
     self.init_scheduler();
   }
 
-  fn init_reactor(&mut self, store: &VStore) {
-    self.reactor = Reactor::new(store.size(), Event::size());
-    for (p_idx, p) in self.propagators.iter().enumerate() {
-      let p_deps = p.dependencies();
+  fn init_reactor(&mut self, vstore: &VStore) {
+    self.reactor = Reactor::new(vstore.size(), Event::size());
+    for p_idx in self.active.iter() {
+      let p_deps = self[p_idx].dependencies();
       for (v, ev) in p_deps {
-        debug_assert!(v < store.size(), format!(
-          "The propagator {:?} has a dependency to the variable {} which is not in the store (of size {}).\n\
-          Hint: you should not manually create `Identity` struct, if you do make sure they contain relevant index to the variable store.",
-          p, v, store.size()));
+        debug_assert!(v < vstore.size(), format!(
+          "The propagator {:?} has a dependency to the variable {} which is not in the vstore (of size {}).\n\
+          Hint: you should not manually create `Identity` struct, if you do make sure they contain relevant index to the variable vstore.",
+          self[p_idx], v, vstore.size()));
         self.reactor.subscribe(v, ev, p_idx);
       }
     }
   }
 
   fn init_scheduler(&mut self) {
-    let num_props = self.propagators.len();
-    self.scheduler = Scheduler::new(num_props);
-    for p_idx in 0..num_props {
+    self.scheduler = Scheduler::new(self.propagators.len());
+    for p_idx in self.active.iter() {
       self.scheduler.schedule(p_idx);
     }
   }
 
-  fn propagation_loop(&mut self, store: &mut VStore) -> bool {
+  fn propagation_loop(&mut self, vstore: &mut VStore) -> bool {
     let mut consistent = true;
     while !self.scheduler.is_empty() && consistent {
       while let Some(p_idx) = self.scheduler.pop() {
-        if !self.propagate_one(p_idx, store) {
+        if !self.propagate_one(p_idx, vstore) {
           consistent = false;
           break;
         }
-        self.react(store);
+        self.react(vstore);
       }
-      // self.react(store); // For bulk reaction.
+      // self.react(vstore); // For bulk reaction.
     }
     consistent
   }
 
-  fn propagate_one(&mut self, p_idx: usize, store: &mut VStore) -> bool {
-    store.reset_changed();
-    let subsumed = self.propagators[p_idx].consistency(store);
+  fn propagate_one(&mut self, p_idx: usize, vstore: &mut VStore) -> bool {
+    vstore.reset_changed();
+    let subsumed = self[p_idx].consistency(vstore);
     match subsumed {
       False => return false,
       True => self.unlink_prop(p_idx),
-      Unknown => self.reschedule_prop(p_idx, store)
+      Unknown => self.reschedule_prop(p_idx, vstore)
     };
     true
   }
 
-  fn reschedule_prop(&mut self, p_idx: usize, store: &mut VStore) {
-    if store.has_changed() {
+  fn reschedule_prop(&mut self, p_idx: usize, vstore: &mut VStore) {
+    if vstore.has_changed() {
       self.scheduler.schedule(p_idx);
     }
   }
 
-  fn react(&mut self, store: &mut VStore) {
-    for (v, ev) in store.drain_delta() {
+  fn react(&mut self, vstore: &mut VStore) {
+    for (v, ev) in vstore.drain_delta() {
       let reactions = self.reactor.react(v, ev);
       for p in reactions.into_iter() {
         self.scheduler.schedule(p);
@@ -183,8 +185,9 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
   }
 
   fn unlink_prop(&mut self, p_idx: usize) {
+    self.active.remove(p_idx);
     self.scheduler.unschedule(p_idx);
-    let deps = self.propagators[p_idx].dependencies();
+    let deps = self[p_idx].dependencies();
     for &(var, ev) in deps.iter() {
       self.reactor.unsubscribe(var, ev, p_idx)
     }
@@ -208,16 +211,19 @@ impl<VStore, Event, R, S> IndexMut<usize> for Store<VStore, Event, R, S>
 
 impl<VStore, Event, R, S> Alloc for Store<VStore, Event, R, S>
 {
-  fn alloc(&mut self, p: Self::Item) {
+  fn alloc(&mut self, p: Self::Item) -> usize {
+    let idx = self.propagators.len();
     self.propagators.push(p);
+    self.active.insert(idx);
+    idx
   }
 }
 
 impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
     self.propagators.iter()
-    .fold(True, |x,p| x.and(p.is_subsumed(store)))
+    .fold(True, |x,p| x.and(p.is_subsumed(vstore)))
   }
 }
 
@@ -227,9 +233,9 @@ impl<VStore, Event, R, S> Propagator<VStore> for Store<VStore, Event, R, S> wher
  R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
-  fn propagate(&mut self, store: &mut VStore) -> bool {
-    self.prepare(store);
-    self.propagation_loop(store)
+  fn propagate(&mut self, vstore: &mut VStore) -> bool {
+    self.prepare(vstore);
+    self.propagation_loop(vstore)
   }
 }
 
@@ -253,8 +259,8 @@ impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> whe
  R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
-  fn consistency(&mut self, store: &mut VStore) -> Trilean {
-    let consistent = self.propagate(store);
+  fn consistency(&mut self, vstore: &mut VStore) -> Trilean {
+    let consistent = self.propagate(vstore);
     if !consistent { False }
     else if self.reactor.is_empty() { True }
     else { Unknown }
@@ -267,11 +273,12 @@ impl<VStore, Event, R, S> Clone for Store<VStore, Event, R, S> where
  S: Scheduler
 {
   fn clone(&self) -> Self {
-    let mut store = Store::empty();
-    store.propagators = self.propagators.iter()
+    let mut cstore = Store::empty();
+    cstore.propagators = self.propagators.iter()
       .map(|p| p.bclone())
       .collect();
-    store
+    cstore.active = self.active.clone();
+    cstore
   }
 }
 
@@ -300,9 +307,9 @@ impl<VStore, Event, R, S> FrozenStore<VStore, Event, R, S> where
  R: Reactor + Clone,
  S: Scheduler
 {
-  fn new(store: Store<VStore, Event, R, S>) -> Self {
+  fn new(cstore: Store<VStore, Event, R, S>) -> Self {
     FrozenStore {
-      cstore: store
+      cstore: cstore
     }
   }
 }
@@ -312,15 +319,16 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
  R: Reactor + Clone,
  S: Scheduler
 {
-  type Label = usize;
+  type Label = (usize, BitSet);
   type State = Store<VStore, Event, R, S>;
 
   fn label(&mut self) -> Self::Label {
-    self.cstore.propagators.len()
+    (self.cstore.propagators.len(), self.cstore.active.clone())
   }
 
   fn restore(mut self, label: Self::Label) -> Self::State {
-    self.cstore.propagators.truncate(label);
+    self.cstore.propagators.truncate(label.0);
+    self.cstore.active = label.1;
     self.cstore
   }
 }
