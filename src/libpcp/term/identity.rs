@@ -15,11 +15,8 @@
 use kernel::*;
 use model::*;
 use term::ops::*;
-use variable::ops::*;
 use propagation::events::*;
-use gcollections::kind::*;
 use std::marker::PhantomData;
-use std::ops::Index;
 use concept::*;
 
 #[derive(Clone, Debug)]

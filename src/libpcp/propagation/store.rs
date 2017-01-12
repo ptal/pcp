@@ -24,6 +24,7 @@ use propagation::ops::*;
 use variable::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
+use std::ops::{Index, IndexMut};
 
 #[derive(Debug)]
 pub struct Store<VStore, Event, Reactor, Scheduler>
@@ -187,6 +188,21 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     for &(var, ev) in deps.iter() {
       self.reactor.unsubscribe(var, ev, p_idx)
     }
+  }
+}
+
+impl<VStore, Event, R, S> Index<usize> for Store<VStore, Event, R, S>
+{
+  type Output = Box<PropagatorConcept<VStore, Event> + 'static>;
+  fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
+    &self.propagators[index]
+  }
+}
+
+impl<VStore, Event, R, S> IndexMut<usize> for Store<VStore, Event, R, S>
+{
+  fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Self::Output {
+    &mut self.propagators[index]
   }
 }
 

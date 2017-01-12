@@ -18,7 +18,6 @@ use model::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
-use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::ops::*;

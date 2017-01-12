@@ -18,7 +18,6 @@ use propagators::cmp::x_eq_y::*;
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
-use term::ops::*;
 use gcollections::ops::*;
 use gcollections::*;
 use concept::*;

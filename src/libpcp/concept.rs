@@ -17,7 +17,6 @@ use gcollections::ops::*;
 use kernel::*;
 use model::*;
 use term::ops::*;
-use variable::ops::*;
 use propagation::events::*;
 use propagation::concept::*;
 use propagation::ops::*;

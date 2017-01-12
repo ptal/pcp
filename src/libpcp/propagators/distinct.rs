@@ -19,13 +19,11 @@ use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
 use propagation::*;
-use term::ops::*;
-use gcollections::ops::*;
 use gcollections::*;
 use concept::*;
 
 pub fn join_distinct<VStore, CStore, Domain, Bound>(
-  vstore: &mut VStore, cstore: &mut CStore, vars: Vec<Var<VStore>>) where
+  _vstore: &mut VStore, cstore: &mut CStore, vars: Vec<Var<VStore>>) where
  VStore: VStoreConcept<Item=Domain> + 'static,
  Domain: IntDomain<Item=Bound> + 'static,
  Bound: IntBound + 'static,

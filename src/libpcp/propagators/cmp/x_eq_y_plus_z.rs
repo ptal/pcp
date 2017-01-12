@@ -19,8 +19,6 @@ use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_
 use propagation::*;
 use propagation::events::*;
 use gcollections::*;
-use num::{Signed, Num};
-use std::fmt::Debug;
 use concept::*;
 
 #[derive(Clone, Debug)]

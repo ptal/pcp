@@ -20,11 +20,9 @@ pub mod x_less_y_plus_z;
 pub mod x_eq_y_plus_z;
 pub mod x_eq_y_mul_z;
 
-use num::{Signed, Num};
 use term::*;
 use gcollections::*;
 use concept::*;
-use std::fmt::Debug;
 pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
 pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
 pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use concept::*;
-use term::identity::*;
 use std::collections::HashMap;
 
 #[derive(Clone)]

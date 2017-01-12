@@ -17,7 +17,6 @@ use model::*;
 use num::Integer;
 use term::ops::*;
 use propagation::ops::*;
-use gcollections::kind::*;
 use gcollections::ops::*;
 use interval::ops::Range;
 use concept::*;
@@ -50,7 +49,7 @@ impl<P> DisplayStateful<Model> for Bool2Int<P> where
 impl<VStore, P> StoreMonotonicUpdate<VStore> for Bool2Int<P> where
  VStore: VStoreConcept
 {
-  fn update(&mut self, store: &mut VStore, value: VStore::Item) -> bool {
+  fn update(&mut self, _store: &mut VStore, _value: VStore::Item) -> bool {
     panic!("Cannot update a bool2int view.");
   }
 }

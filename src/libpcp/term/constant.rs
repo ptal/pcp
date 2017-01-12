@@ -19,7 +19,6 @@ use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::fmt::Debug;
-use concept::*;
 
 #[derive(Clone, Debug)]
 pub struct Constant<V>

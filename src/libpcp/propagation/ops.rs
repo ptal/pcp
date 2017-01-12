@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::{DisplayStateful, Trilean, Consistency};
-use propagation::concept::*;
-use model::*;
-use std::fmt::Debug;
+use kernel::Trilean;
 
 pub trait Subsumption<Store>
 {
