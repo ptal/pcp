@@ -14,13 +14,14 @@
 
 use kernel::*;
 use model::*;
-use propagators::cmp::x_eq_y::*;
 use propagators::PropagatorKind;
+use propagators::XEqY;
 use propagation::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use concept::*;
+use std::ops::Not;
 
 #[derive(Debug)]
 pub struct XNeqY<VStore>
@@ -51,6 +52,13 @@ impl<VStore> DisplayStateful<Model> for XNeqY<VStore>
     self.x.display(model);
     print!(" != ");
     self.y.display(model);
+  }
+}
+
+impl<VStore> Not for XNeqY<VStore> {
+  type Output = XEqY<VStore>;
+  fn not(self) -> Self::Output {
+    XEqY::new(self.x, self.y)
   }
 }
 

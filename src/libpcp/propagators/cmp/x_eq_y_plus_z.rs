@@ -20,6 +20,7 @@ use propagation::*;
 use propagation::events::*;
 use gcollections::*;
 use concept::*;
+use std::ops::Not;
 
 #[derive(Clone, Debug)]
 pub struct XEqYPlusZ<VStore: Collection>
@@ -63,6 +64,15 @@ impl<VStore> Subsumption<VStore> for XEqYPlusZ<VStore> where
 {
   fn is_subsumed(&self, store: &VStore) -> Trilean {
     self.geq.is_subsumed(store).and(self.leq.is_subsumed(store))
+  }
+}
+
+impl<VStore> Not for XEqYPlusZ<VStore> where
+ VStore: Collection
+{
+  type Output = ();
+  fn not(self) -> Self::Output {
+    unimplemented!()
   }
 }
 

@@ -19,6 +19,7 @@ use std::fmt::Debug;
 
 pub trait PropagatorConcept_<VStore, Event> :
     Consistency<VStore>
+  + Propagator<VStore>
   + Subsumption<VStore>
   + PropagatorDependencies<Event>
   + DisplayStateful<Model> + Debug
@@ -26,6 +27,7 @@ pub trait PropagatorConcept_<VStore, Event> :
 
 impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R where
  R: Consistency<VStore>,
+ R: Propagator<VStore>,
  R: Subsumption<VStore>,
  R: PropagatorDependencies<Event>,
  R: DisplayStateful<Model> + Debug

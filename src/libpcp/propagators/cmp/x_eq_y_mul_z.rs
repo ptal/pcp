@@ -22,6 +22,7 @@ use gcollections::ops::*;
 use gcollections::*;
 use std::ops::*;
 use concept::*;
+use std::ops::Not;
 
 // x = y * z
 #[derive(Debug)]
@@ -56,6 +57,13 @@ impl<VStore> DisplayStateful<Model> for XEqYMulZ<VStore>
     self.y.display(model);
     print!(" * ");
     self.z.display(model);
+  }
+}
+
+impl<VStore> Not for XEqYMulZ<VStore> {
+  type Output = ();
+  fn not(self) -> Self::Output {
+    unimplemented!();
   }
 }
 

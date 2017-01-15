@@ -16,11 +16,13 @@ use kernel::*;
 use kernel::Trilean::*;
 use model::*;
 use propagators::PropagatorKind;
+use propagators::{x_geq_y, XGreaterEqY};
 use propagation::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use concept::*;
+use std::ops::Not;
 
 #[derive(Debug)]
 pub struct XLessY<VStore>
@@ -51,6 +53,17 @@ impl<VStore> DisplayStateful<Model> for XLessY<VStore>
     self.x.display(model);
     print!(" < ");
     self.y.display(model);
+  }
+}
+
+impl<VStore, Domain, Bound> Not for XLessY<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: Collection<Item=Bound> + IntDomain,
+  Bound: IntBound
+{
+  type Output = XGreaterEqY<VStore>;
+  fn not(self) -> Self::Output {
+    x_geq_y(self.x, self.y)
   }
 }
 

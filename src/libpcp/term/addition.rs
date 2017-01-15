@@ -54,7 +54,6 @@ impl<VStore, Domain, Bound> Debug for Addition<VStore> where
   }
 }
 
-
 impl<VStore, Domain, Bound> Clone for Addition<VStore> where
   VStore: VStoreConcept<Item=Domain>,
   Domain: Collection<Item=Bound>,

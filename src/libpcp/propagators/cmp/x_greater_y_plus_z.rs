@@ -15,6 +15,7 @@
 use kernel::*;
 use kernel::Trilean::*;
 use model::*;
+use propagators::{XLessEqYPlusZ, x_leq_y_plus_z};
 use propagators::PropagatorKind;
 use propagation::*;
 use propagation::events::*;
@@ -22,6 +23,7 @@ use gcollections::ops::*;
 use gcollections::*;
 use num::traits::Num;
 use concept::*;
+use std::ops::Not;
 
 #[derive(Debug)]
 pub struct XGreaterYPlusZ<VStore>
@@ -55,6 +57,17 @@ impl<VStore> DisplayStateful<Model> for XGreaterYPlusZ<VStore>
     self.y.display(model);
     print!(" + ");
     self.z.display(model);
+  }
+}
+
+impl<VStore, Domain, Bound> Not for XGreaterYPlusZ<VStore> where
+ VStore: VStoreConcept<Item=Domain> + 'static,
+ Domain: Collection<Item=Bound> + IntDomain,
+ Bound: IntBound
+{
+  type Output = XLessEqYPlusZ<VStore>;
+  fn not(self) -> Self::Output {
+    x_leq_y_plus_z(self.x, self.y, self.z)
   }
 }
 
