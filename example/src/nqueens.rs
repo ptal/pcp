@@ -47,8 +47,8 @@ pub fn nqueens(n: usize) {
     }
   }
   // 2 queens can't share the same column.
-  // join_distinct(&mut space.vstore, &mut space.cstore, queens);
-  space.cstore.alloc(box Distinct::new(queens));
+  join_distinct(&mut space.vstore, &mut space.cstore, queens);
+  // space.cstore.alloc(box Distinct::new(queens));
 
   // Search step.
   let mut search = one_solution_engine();

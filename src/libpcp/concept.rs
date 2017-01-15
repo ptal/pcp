@@ -107,3 +107,5 @@ impl<R, VStore> IntCStore<VStore> for R where
   R: Consistency<VStore>,
   R: PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
 {}
+
+pub type Formula<VStore> = Box<PropagatorConcept<VStore, FDEvent>>;

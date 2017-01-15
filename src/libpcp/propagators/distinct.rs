@@ -14,7 +14,7 @@
 
 use kernel::*;
 use model::*;
-use kernel::Trilean::*;
+use logic::*;
 use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
@@ -39,25 +39,27 @@ pub fn join_distinct<VStore, CStore, Domain, Bound>(
 #[derive(Debug)]
 pub struct Distinct<VStore>
 {
-  props: Vec<XNeqY<VStore>>,
+  conj: Conjunction<VStore>,
   vars: Vec<Var<VStore>>
 }
 
 impl<VStore> PropagatorKind for Distinct<VStore> {}
 
-impl<VStore> Distinct<VStore> where
- VStore: Collection
+impl<VStore, Domain, Bound> Distinct<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
 {
   pub fn new(vars: Vec<Var<VStore>>) -> Self {
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
-        let i_neq_j = XNeqY::new(vars[i].bclone(), vars[j].bclone());
+        let i_neq_j = box XNeqY::new(vars[i].bclone(), vars[j].bclone()) as Formula<VStore>;
         props.push(i_neq_j);
       }
     }
     Distinct {
-      props: props,
+      conj: Conjunction::new(props),
       vars: vars
     }
   }
@@ -68,7 +70,7 @@ impl<VStore> Clone for Distinct<VStore> where
 {
   fn clone(&self) -> Self {
     Distinct {
-      props: self.props.clone(),
+      conj: self.conj.clone(),
       vars: self.vars.iter().map(|v| v.bclone()).collect()
     }
   }
@@ -89,33 +91,17 @@ impl<VStore> DisplayStateful<Model> for Distinct<VStore>
   }
 }
 
-impl<VStore> Subsumption<VStore> for Distinct<VStore> where
-  XNeqY<VStore>: Subsumption<VStore>
+impl<VStore> Subsumption<VStore> for Distinct<VStore>
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
-    let mut all_entailed = true;
-    for p in &self.props {
-      match p.is_subsumed(store) {
-        False => return False,
-        Unknown => all_entailed = false,
-        _ => ()
-      }
-    }
-    if all_entailed { True }
-    else { Unknown }
+  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
+    self.conj.is_subsumed(vstore)
   }
 }
 
-impl<VStore> Propagator<VStore> for Distinct<VStore> where
-  XNeqY<VStore>: Propagator<VStore>
+impl<VStore> Propagator<VStore> for Distinct<VStore>
 {
-  fn propagate(&mut self, store: &mut VStore) -> bool {
-    for p in &mut self.props {
-      if !p.propagate(store) {
-        return false;
-      }
-    }
-    true
+  fn propagate(&mut self, vstore: &mut VStore) -> bool {
+    self.conj.propagate(vstore)
   }
 }
 
