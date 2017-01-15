@@ -28,6 +28,7 @@ extern crate vec_map;
 extern crate bit_set;
 
 pub mod kernel;
+pub mod logic;
 pub mod propagation;
 pub mod propagators;
 pub mod term;

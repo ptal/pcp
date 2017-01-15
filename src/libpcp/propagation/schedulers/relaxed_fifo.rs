@@ -14,8 +14,7 @@
 
 use propagation::Scheduler;
 use std::collections::VecDeque;
-use std::iter::repeat;
-use std::iter::FromIterator;
+use bit_set::BitSet;
 
 // It is a "relaxed FIFO" because the unschedule operation
 // might not preserve the ordering. However, this operation
@@ -26,39 +25,39 @@ use std::iter::FromIterator;
 
 #[derive(Debug)]
 pub struct RelaxedFifo {
-  inside_queue: Vec<bool>,
+  inside_queue: BitSet,
   queue: VecDeque<usize>
 }
 
 impl Scheduler for RelaxedFifo {
   fn new(capacity: usize) -> RelaxedFifo {
     RelaxedFifo {
-      inside_queue: FromIterator::from_iter(repeat(false).take(capacity)),
+      inside_queue: BitSet::with_capacity(capacity),
       queue: VecDeque::with_capacity(capacity)
     }
   }
 
   fn schedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.inside_queue.len());
-    if !self.inside_queue[idx] {
-      self.inside_queue[idx] = true;
+    assert!((idx as usize) < self.inside_queue.capacity());
+    if !self.inside_queue.contains(idx) {
+      self.inside_queue.insert(idx);
       self.queue.push_back(idx);
     }
   }
 
   fn unschedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.inside_queue.len());
-    if self.inside_queue[idx] {
+    assert!((idx as usize) < self.inside_queue.capacity());
+    if self.inside_queue.contains(idx) {
       let queue_idx = self.queue.iter().position(|&e| e == idx);
       assert!(queue_idx.is_some());
       self.queue.swap_remove_front(queue_idx.unwrap());
-      self.inside_queue[idx] = false;
+      self.inside_queue.remove(idx);
     }
   }
 
   fn pop(&mut self) -> Option<usize> {
     let res = self.queue.pop_front();
-    if res.is_some() { self.inside_queue[res.unwrap()] = false; }
+    if res.is_some() { self.inside_queue.remove(res.unwrap()); }
     res
   }
 
