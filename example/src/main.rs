@@ -25,7 +25,7 @@ extern crate gcollections;
 extern crate test;
 
 mod nqueens;
-// mod robot;
+mod robot;
 // mod robot2;
 // mod robot3;
 
@@ -34,8 +34,8 @@ use nqueens::nqueens;
 
 fn main() {
   nqueens(100);
-  //let robot = robot::RobotScheduling::new(2, 500).solve();
-  //println!("{}", robot);
+  let robot = robot::RobotScheduling::new(2, 500).solve();
+  println!("{}", robot);
 
 // !!! le solveur plante avec une erreur 'index out of bounds sur un vecteur
 //   println!("Solve robot1 domaine 400");

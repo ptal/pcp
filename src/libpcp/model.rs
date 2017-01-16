@@ -14,6 +14,7 @@
 
 use concept::*;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Clone)]
 pub struct Model {
@@ -39,13 +40,14 @@ impl Model
   }
 
   pub fn alloc_var<VStore, Domain>(&mut self,
-    vstore: &mut VStore, dom: Domain) -> VStore::Location where
-   VStore: VStoreConcept<Item=Domain>
+    vstore: &mut VStore, dom: Domain) -> Var<VStore> where
+   VStore: VStoreConcept<Item=Domain>,
+   Domain: Clone + Debug + 'static
   {
     let loc = vstore.alloc(dom);
     let name = self.make_name();
     self.register_var(loc.index(), name);
-    loc
+    box loc
   }
 
   pub fn register_var(&mut self, var: usize, name: String) {
