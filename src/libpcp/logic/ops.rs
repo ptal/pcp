@@ -12,14 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod boolean;
-pub mod boolean_neg;
-pub mod conjunction;
-pub mod disjunction;
-pub mod ops;
+use concept::*;
 
-pub use logic::boolean::*;
-pub use logic::boolean_neg::*;
-pub use logic::conjunction::*;
-pub use logic::disjunction::*;
-pub use logic::ops::*;
+pub trait NotFormula<VStore>
+{
+  fn not(&self) -> Formula<VStore>;
+}

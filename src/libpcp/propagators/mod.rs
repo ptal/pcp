@@ -23,28 +23,6 @@ pub mod distinct;
 pub use propagators::cmp::*;
 pub use propagators::distinct::*;
 
-use kernel::trilean::Trilean;
-use kernel::trilean::Trilean::*;
-use kernel::Consistency;
-use propagation::ops::*;
-
-// FIXME: Without this trait, `Consistency` impl for the Propagator store conflicts with the following one.
-pub trait PropagatorKind {}
-
-impl<VStore, R> Consistency<VStore> for R where
-  R: Subsumption<VStore>,
-  R: Propagator<VStore>,
-  R: PropagatorKind
-{
-  fn consistency(&mut self, store: &mut VStore) -> Trilean {
-    if self.propagate(store) {
-      self.is_subsumed(store)
-    } else {
-      False
-    }
-  }
-}
-
 #[cfg(test)]
 pub mod test {
   use gcollections::ops::*;

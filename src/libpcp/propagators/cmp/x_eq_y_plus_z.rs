@@ -14,13 +14,12 @@
 
 use kernel::*;
 use model::*;
-use propagators::PropagatorKind;
+use logic::*;
 use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
 use gcollections::*;
 use concept::*;
-use std::ops::Not;
 
 #[derive(Clone, Debug)]
 pub struct XEqYPlusZ<VStore: Collection>
@@ -28,8 +27,6 @@ pub struct XEqYPlusZ<VStore: Collection>
   geq: XGreaterEqYPlusZ<VStore>,
   leq: XLessEqYPlusZ<VStore>
 }
-
-impl<VStore: Collection> PropagatorKind for XEqYPlusZ<VStore> {}
 
 impl<VStore, Domain, Bound> XEqYPlusZ<VStore> where
  VStore: VStoreConcept<Item=Domain> + 'static,
@@ -67,11 +64,10 @@ impl<VStore> Subsumption<VStore> for XEqYPlusZ<VStore> where
   }
 }
 
-impl<VStore> Not for XEqYPlusZ<VStore> where
- VStore: Collection
+impl<VStore> NotFormula<VStore> for XEqYPlusZ<VStore> where
+  VStore: Collection
 {
-  type Output = ();
-  fn not(self) -> Self::Output {
+  fn not(&self) -> Formula<VStore> {
     unimplemented!()
   }
 }

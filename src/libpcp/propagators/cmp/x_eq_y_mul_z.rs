@@ -15,14 +15,13 @@
 use kernel::*;
 use kernel::Trilean::*;
 use model::*;
-use propagators::PropagatorKind;
+use logic::*;
 use propagation::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use std::ops::*;
 use concept::*;
-use std::ops::Not;
 
 // x = y * z
 #[derive(Debug)]
@@ -32,8 +31,6 @@ pub struct XEqYMulZ<VStore>
   y: Var<VStore>,
   z: Var<VStore>,
 }
-
-impl<VStore> PropagatorKind for XEqYMulZ<VStore> {}
 
 impl<VStore> XEqYMulZ<VStore> {
   pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
@@ -60,9 +57,9 @@ impl<VStore> DisplayStateful<Model> for XEqYMulZ<VStore>
   }
 }
 
-impl<VStore> Not for XEqYMulZ<VStore> {
-  type Output = ();
-  fn not(self) -> Self::Output {
+impl<VStore> NotFormula<VStore> for XEqYMulZ<VStore>
+{
+  fn not(&self) -> Formula<VStore> {
     unimplemented!();
   }
 }

@@ -15,15 +15,14 @@
 use kernel::*;
 use kernel::Trilean::*;
 use model::*;
-use propagators::PropagatorKind;
-use propagators::{XGreaterEqYPlusZ, x_geq_y_plus_z};
+use logic::*;
+use propagators::{x_geq_y_plus_z};
 use propagation::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use num::traits::Num;
 use concept::*;
-use std::ops::Not;
 
 #[derive(Debug)]
 pub struct XLessYPlusZ<VStore>
@@ -32,8 +31,6 @@ pub struct XLessYPlusZ<VStore>
   y: Var<VStore>,
   z: Var<VStore>,
 }
-
-impl<VStore> PropagatorKind for XLessYPlusZ<VStore> {}
 
 impl<VStore> XLessYPlusZ<VStore> {
   pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
@@ -60,14 +57,13 @@ impl<VStore> DisplayStateful<Model> for XLessYPlusZ<VStore>
   }
 }
 
-impl<VStore, Domain, Bound> Not for XLessYPlusZ<VStore> where
+impl<VStore, Domain, Bound> NotFormula<VStore> for XLessYPlusZ<VStore> where
  VStore: VStoreConcept<Item=Domain> + 'static,
  Domain: Collection<Item=Bound> + IntDomain,
  Bound: IntBound
 {
-  type Output = XGreaterEqYPlusZ<VStore>;
-  fn not(self) -> Self::Output {
-    x_geq_y_plus_z(self.x, self.y, self.z)
+  fn not(&self) -> Formula<VStore> {
+    box x_geq_y_plus_z(self.x.bclone(), self.y.bclone(), self.z.bclone())
   }
 }
 

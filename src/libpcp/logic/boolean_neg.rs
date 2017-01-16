@@ -16,14 +16,12 @@
 
 use kernel::*;
 use model::*;
-use logic::boolean::*;
-use propagators::PropagatorKind;
+use logic::{Boolean, NotFormula};
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
 use gcollections::kind::*;
 use gcollections::ops::*;
-use interval::ops::Range;
 use num::traits::Num;
 use std::fmt::{Debug, Formatter, Result};
 use concept::*;
@@ -32,12 +30,7 @@ pub struct BooleanNeg<VStore> {
   b: Boolean<VStore>
 }
 
-impl<VStore> PropagatorKind for BooleanNeg<VStore> {}
-
-impl<VStore, Domain, Bound> BooleanNeg<VStore> where
- VStore: VStoreConcept<Item=Domain>,
- Domain: Range + Collection<Item=Bound> + Clone + Debug + 'static,
- Bound: Num
+impl<VStore> BooleanNeg<VStore>
 {
   pub fn new(b: Boolean<VStore>) -> Self {
     BooleanNeg {
@@ -70,6 +63,16 @@ impl<VStore> DisplayStateful<Model> for BooleanNeg<VStore>
   fn display(&self, model: &Model) {
     print!("not ");
     self.b.display(model);
+  }
+}
+
+impl<VStore, Domain, Bound> NotFormula<VStore> for BooleanNeg<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
+{
+  fn not(&self) -> Formula<VStore> {
+    box self.b.clone()
   }
 }
 

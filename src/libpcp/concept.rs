@@ -19,7 +19,6 @@ use model::*;
 use term::ops::*;
 use propagation::events::*;
 use propagation::concept::*;
-use propagation::ops::*;
 use interval::ops::Range;
 use num::{Signed, Integer};
 use std::ops::*;
@@ -97,15 +96,13 @@ impl<VStore, R> IntVariable<VStore> for R where
 pub trait IntCStore<VStore>:
   Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)> +
   Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>> +
-  Consistency<VStore> +
-  PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
+  Consistency<VStore>
 {}
 
 impl<R, VStore> IntCStore<VStore> for R where
   R: Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)>,
   R: Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
-  R: Consistency<VStore>,
-  R: PropagatorConcept<VStore, FDEvent> + Propagator<VStore>
+  R: Consistency<VStore>
 {}
 
 pub type Formula<VStore> = Box<PropagatorConcept<VStore, FDEvent>>;

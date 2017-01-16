@@ -14,7 +14,7 @@
 
 use kernel::*;
 use model::*;
-use propagators::PropagatorKind;
+use logic::{NotFormula, BooleanNeg};
 use propagation::*;
 use propagation::events::*;
 use term::ops::*;
@@ -28,8 +28,6 @@ use concept::*;
 pub struct Boolean<VStore> {
   var: Var<VStore>
 }
-
-impl<VStore> PropagatorKind for Boolean<VStore> {}
 
 impl<VStore, Domain, Bound> Boolean<VStore> where
  VStore: VStoreConcept<Item=Domain>,
@@ -67,6 +65,16 @@ impl<VStore> DisplayStateful<Model> for Boolean<VStore>
 {
   fn display(&self, model: &Model) {
     self.var.display(model);
+  }
+}
+
+impl<VStore, Domain, Bound> NotFormula<VStore> for Boolean<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
+{
+  fn not(&self) -> Formula<VStore> {
+    box BooleanNeg::new(self.clone())
   }
 }
 

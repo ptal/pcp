@@ -15,7 +15,6 @@
 use kernel::*;
 use model::*;
 use logic::*;
-use propagators::PropagatorKind;
 use propagators::cmp::x_neq_y::*;
 use propagation::events::*;
 use propagation::*;
@@ -43,7 +42,13 @@ pub struct Distinct<VStore>
   vars: Vec<Var<VStore>>
 }
 
-impl<VStore> PropagatorKind for Distinct<VStore> {}
+impl<VStore> NotFormula<VStore> for Distinct<VStore> where
+ VStore: Collection + 'static
+{
+  fn not(&self) -> Formula<VStore> {
+    self.conj.not()
+  }
+}
 
 impl<VStore, Domain, Bound> Distinct<VStore> where
   VStore: VStoreConcept<Item=Domain> + 'static,

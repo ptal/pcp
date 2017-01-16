@@ -14,14 +14,13 @@
 
 use kernel::*;
 use model::*;
-use propagators::PropagatorKind;
+use logic::*;
 use propagators::XEqY;
 use propagation::*;
 use propagation::events::*;
 use gcollections::ops::*;
 use gcollections::*;
 use concept::*;
-use std::ops::Not;
 
 #[derive(Debug)]
 pub struct XNeqY<VStore>
@@ -29,8 +28,6 @@ pub struct XNeqY<VStore>
   x: Var<VStore>,
   y: Var<VStore>
 }
-
-impl<VStore> PropagatorKind for XNeqY<VStore> {}
 
 impl<VStore> XNeqY<VStore> {
   pub fn new(x: Var<VStore>, y: Var<VStore>) -> Self {
@@ -55,10 +52,13 @@ impl<VStore> DisplayStateful<Model> for XNeqY<VStore>
   }
 }
 
-impl<VStore> Not for XNeqY<VStore> {
-  type Output = XEqY<VStore>;
-  fn not(self) -> Self::Output {
-    XEqY::new(self.x, self.y)
+impl<VStore, Domain, Bound> NotFormula<VStore> for XNeqY<VStore> where
+  VStore: VStoreConcept<Item=Domain> + 'static,
+  Domain: IntDomain<Item=Bound> + 'static,
+  Bound: IntBound + 'static,
+{
+  fn not(&self) -> Formula<VStore> {
+    box XEqY::new(self.x.bclone(), self.y.bclone())
   }
 }
 

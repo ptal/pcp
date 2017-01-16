@@ -14,7 +14,7 @@
 
 use kernel::*;
 use model::*;
-use propagators::PropagatorKind;
+use logic::{NotFormula, Conjunction};
 use propagation::events::*;
 use propagation::*;
 use gcollections::kind::*;
@@ -24,8 +24,6 @@ use concept::*;
 pub struct Disjunction<VStore> {
   fs: Vec<Formula<VStore>>
 }
-
-impl<VStore> PropagatorKind for Disjunction<VStore> {}
 
 impl<VStore> Disjunction<VStore>
 {
@@ -65,6 +63,16 @@ impl<VStore> DisplayStateful<Model> for Disjunction<VStore>
       i += 1;
     }
     self.fs[i].display(model);
+  }
+}
+
+impl<VStore> NotFormula<VStore> for Disjunction<VStore> where
+ VStore: Collection + 'static
+{
+  /// Apply De Morgan's laws.
+  fn not(&self) -> Formula<VStore> {
+    let fs = self.fs.iter().map(|f| f.not()).collect();
+    box Conjunction::new(fs)
   }
 }
 

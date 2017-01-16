@@ -12,25 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::{DisplayStateful, Consistency};
+use kernel::DisplayStateful;
+use logic::ops::*;
 use propagation::ops::*;
 use model::*;
 use std::fmt::Debug;
 
 pub trait PropagatorConcept_<VStore, Event> :
-    Consistency<VStore>
-  + Propagator<VStore>
+  Propagator<VStore>
   + Subsumption<VStore>
   + PropagatorDependencies<Event>
   + DisplayStateful<Model> + Debug
+  + NotFormula<VStore>
 {}
 
 impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R where
- R: Consistency<VStore>,
  R: Propagator<VStore>,
  R: Subsumption<VStore>,
  R: PropagatorDependencies<Event>,
- R: DisplayStateful<Model> + Debug
+ R: DisplayStateful<Model> + Debug,
+ R: NotFormula<VStore>
 {}
 
 pub trait PropagatorConcept<VStore, Event>:
@@ -41,7 +42,7 @@ pub trait PropagatorConcept<VStore, Event>:
 
 impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
   R: PropagatorConcept_<VStore, Event>,
-  R: Clone + 'static
+  R: Clone + NotFormula<VStore> + 'static,
 {
   fn bclone(&self) -> Box<PropagatorConcept<VStore, Event>> {
     Box::new(self.clone())

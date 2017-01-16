@@ -160,13 +160,21 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
 
   fn propagate_one(&mut self, p_idx: usize, vstore: &mut VStore) -> bool {
     vstore.reset_changed();
-    let subsumed = self[p_idx].consistency(vstore);
+    let subsumed = self.propagator_consistency(p_idx, vstore);
     match subsumed {
       False => return false,
       True => self.unlink_prop(p_idx),
       Unknown => self.reschedule_prop(p_idx, vstore)
     };
     true
+  }
+
+  fn propagator_consistency(&mut self, p_idx: usize, vstore: &mut VStore) -> Trilean {
+    if self[p_idx].propagate(vstore) {
+      self[p_idx].is_subsumed(vstore)
+    } else {
+      False
+    }
   }
 
   fn reschedule_prop(&mut self, p_idx: usize, vstore: &mut VStore) {
@@ -227,32 +235,6 @@ impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
   }
 }
 
-impl<VStore, Event, R, S> Propagator<VStore> for Store<VStore, Event, R, S> where
- VStore: Cardinality<Size=usize> + DrainDelta<Event>,
- Event: EventIndex,
- R: Reactor + Cardinality<Size=usize>,
- S: Scheduler
-{
-  fn propagate(&mut self, vstore: &mut VStore) -> bool {
-    self.prepare(vstore);
-    self.propagation_loop(vstore)
-  }
-}
-
-impl<VStore, Event, R, S> PropagatorDependencies<Event> for Store<VStore, Event, R, S> where
-  Event: Ord
-{
-  fn dependencies(&self) -> Vec<(usize, Event)> {
-    let mut deps: Vec<_> = self.propagators.iter()
-      .map(|p| p.dependencies())
-      .flat_map(|deps| deps.into_iter())
-      .collect();
-    deps.sort();
-    deps.dedup();
-    deps
-  }
-}
-
 impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> where
  VStore: Cardinality<Size=usize> + DrainDelta<Event>,
  Event: EventIndex,
@@ -260,7 +242,8 @@ impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> whe
  S: Scheduler
 {
   fn consistency(&mut self, vstore: &mut VStore) -> Trilean {
-    let consistent = self.propagate(vstore);
+    self.prepare(vstore);
+    let consistent = self.propagation_loop(vstore);
     if !consistent { False }
     else if self.reactor.is_empty() { True }
     else { Unknown }
