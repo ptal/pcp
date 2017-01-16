@@ -23,3 +23,21 @@ pub use logic::boolean_neg::*;
 pub use logic::conjunction::*;
 pub use logic::disjunction::*;
 pub use logic::ops::*;
+
+use gcollections::*;
+use concept::*;
+
+pub fn implication<VStore>(f: Formula<VStore>, g: Formula<VStore>) -> Formula<VStore> where
+ VStore: Collection + 'static
+{
+  box Disjunction::new(vec![f, g.not()])
+}
+
+pub fn equivalence<VStore>(f: Formula<VStore>, g: Formula<VStore>) -> Formula<VStore> where
+ VStore: Collection + 'static
+{
+  box Conjunction::new(vec![
+    implication(f.bclone(), g.bclone()),
+    implication(g, f)
+  ])
+}

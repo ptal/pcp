@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use logic::*;
 use propagators::*;
 use term::*;
-use std::marker::PhantomData;
 use concept::*;
-use std::fmt::Debug;
 
 pub struct Cumulative<VStore>
 {
@@ -46,7 +45,7 @@ impl<VStore> Cumulative<VStore>
 }
 
 impl<VStore, Domain, Bound> Cumulative<VStore> where
-  VStore: VStoreConcept<Item=Domain> + Debug,
+  VStore: VStoreConcept<Item=Domain> + 'static,
   Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
@@ -65,15 +64,19 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
       self.intermediate.push(vec![]);
       for i in 0..tasks {
         if i != j {
-          // bool2int(s[i] <= s[j] /\ s[j] < s[i] + d[i])
-          let mut conj: CStore = CStore::empty();
-          // s[i] <= s[j]
-          conj.alloc(box x_leq_y(self.start_at(i), self.start_at(j)));
-          // s[j] < s[i] + d[i]
-          conj.alloc(box XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i)));
-          let b2i = box Bool2Int::new(conj);
+          // conj <-> s[i] <= s[j] /\ s[j] < s[i] + d[i]
+          let conj = box Conjunction::new(vec![
+            // s[i] <= s[j]
+            box x_leq_y(self.start_at(i), self.start_at(j)),
+            // s[j] < s[i] + d[i]
+            box XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i))]);
 
-          // r = b2i * r[i]
+          // bi <-> conj
+          let bi = Boolean::new(vstore);
+          let equiv = equivalence(box bi.clone(), conj);
+          cstore.alloc(equiv);
+
+          // r = bi * r[i]
           let ri = self.resource_at(i);
           let ri_ub = ri.read(vstore).upper();
           let r_dom = Domain::new(Bound::zero(), ri_ub);
@@ -81,7 +84,7 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
           let r = vstore.alloc(r_dom);
           self.intermediate.last_mut().unwrap().push(r.index());
           let r = box r as Var<VStore>;
-          cstore.alloc(box XEqYMulZ::new(r.bclone(), b2i, ri));
+          cstore.alloc(box XEqYMulZ::new(r.bclone(), box bi, ri));
           resource_vars.push(r);
         }
       }
