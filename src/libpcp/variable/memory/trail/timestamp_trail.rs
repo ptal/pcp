@@ -20,7 +20,7 @@ use gcollections::kind::*;
 use vec_map::VecMap;
 use std::fmt::{Formatter, Display, Error};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TimestampTrail<Domain>
 {
   trail: SingleValueTrail<Domain>,

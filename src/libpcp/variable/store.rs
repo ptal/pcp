@@ -25,7 +25,7 @@ use std::marker::PhantomData;
 use std::fmt::{Display, Debug};
 use std::ops::Index;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Store<Memory, Event>
 {
   memory: Memory,

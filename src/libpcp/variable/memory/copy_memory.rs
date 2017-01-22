@@ -25,7 +25,7 @@ use std::rc::*;
 use std::mem;
 use std::fmt::Debug;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CopyMemory<Domain>
 {
   variables: Vec<Domain>

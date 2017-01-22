@@ -14,7 +14,7 @@
 
 use std::fmt::{Formatter, Display, Error};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MemoryCell<Domain>
 {
   pub location: usize,
