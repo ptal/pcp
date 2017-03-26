@@ -77,6 +77,11 @@ pub struct RobotScheduling {
   pub status: Status<FDSpace>,
 }
 
+pub enum RobotType {
+  Simple,  //task has a fixed duration
+  Duration{vdurations: Vec<Var<VStore>>, variation: usize}, //task duration is a variable
+}
+
 static TASKS: usize = 5;
 static DTASKS: usize = 4;
 static L: usize = 0; // Loading

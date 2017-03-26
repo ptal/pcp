@@ -72,15 +72,22 @@ static W: usize = 2; // Wait
 static P: usize = 3; // Put
 static E: usize = 4; // End, go to park
 
-#[derive(Clone)]
 pub enum RobotType {
   Simple,  //task has a fixed duration
-  Duration{vdurations: Vec<Identity<Domain>>, variation: usize}, //task duration is a variable
+  Duration{vdurations: Vec<Var<VStore>>, variation: usize}, //task duration is a variable
 }
 
+impl Clone for RobotType {
+    fn clone(&self) -> Self { 
+      match self {
+        &RobotType::Simple => RobotType::Simple,  //task has a fixed duration
+        &RobotType::Duration{ref vdurations, variation} => RobotType::Duration{vdurations: vdurations.iter().map(|v| v.bclone()).collect(), variation: variation}, //task duration is a variable
+      }
+    }
+}
 pub struct Robot {
   robot_type : RobotType,
-  start: Vec<Identity<Domain>>, //start task variable
+  start: Vec<Var<VStore>>, //start task variable
   tasks: Vec<usize>, //task list of the robot
   durations: Vec<usize>, //task duration value
   cumultasks: Vec<(usize, usize)>  //define task that participe to the first cumulative constraint. (Task_index, Duration_index)
@@ -115,13 +122,13 @@ impl Robot {
     robotschel
   }
 
-  pub fn get_pipeting_duration_at_rank(&self, i: usize) -> Identity<Domain> {
+  pub fn get_pipeting_duration_at_rank(&self, i: usize) -> Var<VStore> {
     match self.robot_type {
       RobotType::Simple => {
-        Identity::new(self.durations[i])
+        box Identity::new(self.durations[i])
       },
       RobotType::Duration{ref vdurations, ..} => {
-        vdurations[i].clone()
+        vdurations[i].bclone()
       },
     }
 
@@ -144,17 +151,17 @@ impl Robot {
         for t in 1..self.tasks.len() {
           space.cstore.alloc(
             box x_greater_y(
-              self.start[t].clone(),
-              Addition::new(self.start[t - 1].clone(), self.durations[t - 1] as i32)));
+              self.start[t].bclone(),
+              box Addition::new(self.start[t - 1].bclone(), self.durations[t - 1] as i32)));
         }
       },
       RobotType::Duration{ref vdurations, ..} => {
         for t in 1..self.tasks.len() {
           space.cstore.alloc(
-            box x_geq_y_plus_z::<_,_,_,Bound>(
-              self.start[t].clone(),
-              self.start[t - 1].clone(),
-              vdurations[t - 1].clone()));
+            box x_geq_y_plus_z(
+              self.start[t].bclone(),
+              self.start[t - 1].bclone(),
+              vdurations[t - 1].bclone()));
         }
       },
     }
@@ -188,8 +195,8 @@ impl Robot {
 pub struct RobotScheduling {
   pub robots: Vec<Robot>,
   pub max_time: usize,
-  pub pipeting_start: Vec<Box<Identity<Domain>>>,
-  pub pipeting_duration: Vec<Box<IntVariable<VStore>>>,
+  pub pipeting_start: Vec<Var<VStore>>,
+  pub pipeting_duration: Vec<Var<VStore>>,
   pub pipeting_resource: Vec<Box<Constant<Bound>>>,
   pub model: Model,
   pub space: FDSpace,
@@ -198,6 +205,7 @@ pub struct RobotScheduling {
 
 impl RobotScheduling
 {
+  /// test with robot type simple. Task duration is fixed and isn't a variable
   pub fn new_test1(num_robot: usize, max_time: usize, Lduration: usize, Tduration: usize, Wduration: usize, Pduration: usize) -> Self {
     let mut robotschel = RobotScheduling {
       robots: Robot::create_robots(RobotType::Simple, num_robot, Lduration, Tduration, Wduration, Pduration),
@@ -214,6 +222,7 @@ impl RobotScheduling
     robotschel.initialize();
     robotschel
   }
+  /// test with robot type Duration. Task duration is a variable bounded.
   pub fn new_test2(num_robot: usize, max_time: usize, Lduration: usize, Tduration: usize, Wduration: usize, Pduration: usize, duration_variation: usize) -> Self {
     let mut robotschel = RobotScheduling {
       robots: Robot::create_robots(RobotType::Duration{vdurations: vec!(), variation: duration_variation}, num_robot, Lduration, Tduration, Wduration, Pduration),
@@ -257,24 +266,24 @@ impl RobotScheduling
 
       //Add cumulative info.
       for &(t,d) in robot.cumultasks.iter() {
-        self.pipeting_start.push(box robot.start[t].clone());
-        self.pipeting_duration.push(box robot.get_pipeting_duration_at_rank(d).clone());
+        self.pipeting_start.push(robot.start[t].bclone());
+        self.pipeting_duration.push(robot.get_pipeting_duration_at_rank(d).bclone());
       }
 
       self.model.inc_group();
     }
     self.model.close_group();
     // Ls = 0 for the first robot to force it to start first
-    self.space.cstore.alloc(box XEqY::new(self.robots[0].start[0].clone(), Constant::new(1)));
+    self.space.cstore.alloc(box XEqY::new(self.robots[0].start[0].bclone(), box Constant::new(1)));
 
     for i in 0..self.robots.len()*2 {
       self.pipeting_resource.push(box Constant::new(1));
     }
 
     let mut cumulative_pipeting = Cumulative::new(
-      self.pipeting_start.clone(),
-      self.pipeting_duration.clone(),
-      self.pipeting_resource.clone(),
+      self.pipeting_start.iter().map(|v| v.bclone()).collect(),
+      self.pipeting_duration.iter().map(|v| v.bclone()).collect(),
+      self.pipeting_resource.iter().map(|v| v.bclone()).collect(),
       box Constant::new(1)
     );
     cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
