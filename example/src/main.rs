@@ -37,7 +37,7 @@ fn main() {
 //  let robot = robot::RobotScheduling::new(3, 500).solve();
 //  println!("{}", robot);
 
-// !!! le solveur plante avec une erreur 'index out of bounds sur un vecteur
+// !!! Ok with 2 robot. doesn't stop with 3 robot.
    println!("Solve robot2 domaine 400");
    let test1 = robot2::RobotScheduling::new_test1(2, 400, 10, 25, 240, 25).solve();
    println!("{}", test1);
@@ -47,20 +47,20 @@ fn main() {
    let test2 = robot2::RobotScheduling::new_test2(2, 400, 10, 25, 240, 25, 5).solve();
    println!("{}", test2);
 
-// // !!! Non satisfaisable alors que robot 2 l'est avec les même données.
-   println!("Solve robot1 domaine 34");
-   let test1 = robot2::RobotScheduling::new_test1(2, 34, 1, 3, 24, 3).solve(); // dure et ne rend pas le mains
-   println!("{}", test1);
-
-//   // !!! dure et ne rend pas le mains pourtant le problème est plus simple qu'avec le robot2 après
-   println!("Solve robot1 domaine 38");
-   let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve();
+// Non satisfi
+   println!("Solve robot1 domaine 36");
+   let test1 = robot2::RobotScheduling::new_test1(2, 37, 1, 3, 24, 3).solve();  //non satisfauisable
    println!("{}", test1);
 
 //   //Ok bonne solution
    println!("Solve robot2 domaine 38");
-   let test2 = robot2::RobotScheduling::new_test2(2, 38, 1, 3, 24, 3, 1).solve();
+   let test2 = robot2::RobotScheduling::new_test2(2, 38, 1, 3, 24, 3, 1).solve(); //durée des varibales est une variables.
    println!("{}", test2);
+
+   println!("Solve robot1 domaine 38");
+   let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve(); //ne rend pas la main trop long alors que le problème 
+   //est plus simple que test précédent. Dans cette version la durée des taches est fixée
+   println!("{}", test1);
 
 
   //erreur durant la résolution.
