@@ -78,7 +78,7 @@ pub enum RobotType {
 }
 
 impl Clone for RobotType {
-    fn clone(&self) -> Self { 
+    fn clone(&self) -> Self {
       match self {
         &RobotType::Simple => RobotType::Simple,  //task has a fixed duration
         &RobotType::Duration{ref vdurations, variation} => RobotType::Duration{vdurations: vdurations.iter().map(|v| v.bclone()).collect(), variation: variation}, //task duration is a variable
@@ -365,8 +365,8 @@ mod tests {
   use super::*;
   use test::Bencher;
 
-  #[bench]
-  fn bench_schedule_2(b: &mut Bencher) {
-    b.iter(|| RobotScheduling::new(2, 500).solve());
-  }
+  // #[bench]
+  // fn bench_schedule_2(b: &mut Bencher) {
+  //   b.iter(|| RobotScheduling::new(2, 500).solve());
+  // }
 }

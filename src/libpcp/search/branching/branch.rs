@@ -45,7 +45,7 @@ impl<Space> Branch<Space> where
 
   pub fn commit(self, space_from: Space::FrozenState) -> Space {
     let mut new = space_from.restore(self.label);
-    self.alternative.call_once((&mut new,));
+    self.alternative.call_box((&mut new,));
     new
   }
 }

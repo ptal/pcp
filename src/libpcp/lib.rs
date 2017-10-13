@@ -16,7 +16,7 @@
 
 #![crate_name = "pcp"]
 
-#![feature(alloc, unboxed_closures, box_syntax, fn_traits, fnbox, never_type)]
+#![feature(alloc, unboxed_closures, box_syntax, fnbox, never_type)]
 #![feature(test)]
 
 extern crate test;

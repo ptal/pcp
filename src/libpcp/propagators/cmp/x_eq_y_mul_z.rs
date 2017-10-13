@@ -23,6 +23,8 @@ use gcollections::*;
 use std::ops::*;
 use concept::*;
 
+/// TODO see K. Apt Section 6.5.4 for a better implementation.
+
 // x = y * z
 #[derive(Debug)]
 pub struct XEqYMulZ<VStore>

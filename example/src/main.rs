@@ -58,7 +58,7 @@ fn main() {
    println!("{}", test2);
 
    println!("Solve robot1 domaine 38");
-   let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve(); //ne rend pas la main trop long alors que le problème 
+   let test1 = robot2::RobotScheduling::new_test1(2, 38, 1, 3, 24, 3).solve(); //ne rend pas la main trop long alors que le problème
    //est plus simple que test précédent. Dans cette version la durée des taches est fixée
    println!("{}", test1);
 

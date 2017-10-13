@@ -8,6 +8,6 @@ repository = "https://github.com/ptal/pcp"
 license = "Apache-2.0"
 
 [dependencies]
-intervallum = "^0.6.0"
-gcollections = "^0.3.2"
+intervallum = "^0.6.5"
+gcollections = "^0.3.5"
 pcp = { path = "../" }

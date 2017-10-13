@@ -63,14 +63,14 @@ impl Reactor for IndexedDeps {
       "propagator already subscribed to this variable");
     self.assert_var_idx(var, "subscription");
     self.num_subscriptions += 1;
-    let mut props = self.deps_of_mut(var, ev);
+    let props = self.deps_of_mut(var, ev);
     props.push(prop);
   }
 
   fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex {
     self.assert_var_idx(var, "unsubscription");
     self.num_subscriptions -= 1;
-    let mut props = self.deps_of_mut(var, ev);
+    let props = self.deps_of_mut(var, ev);
     let idx = props.iter().position(|&v| v == prop);
     assert!(idx.is_some(), "cannot unsubscribe propagator not registered.");
     props.swap_remove(idx.unwrap());

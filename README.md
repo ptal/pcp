@@ -6,7 +6,7 @@ Constraint Programming Library
 [travis-image]: https://travis-ci.org/ptal/pcp.png
 [travis]: https://travis-ci.org/ptal/pcp
 
-Compiled on the nightly channel of Rust. Use [rustup](http://www.rustup.rs) for managing compiler channels. Download the exact same version of the compiler used for PCP with `rustup override add nightly-2017-04-27`.
+Compiled on the nightly channel of Rust. Use [rustup](http://www.rustup.rs) for managing compiler channels. Download the exact same version of the compiler used for PCP with `rustup override add nightly-2017-08-30`.
 
 PCP Constraint Programming library will make you feel NP like P.
 

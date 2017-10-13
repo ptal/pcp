@@ -12,8 +12,8 @@ crate_type = ["rlib", "dylib"]
 
 [dependencies]
 
-intervallum = "^0.6.4"
-gcollections = "^0.3.3"
+intervallum = "^0.6.5"
+gcollections = "^0.3.5"
 num = "^0.1.29"
 bit-set = "^0.4.0"
 
