@@ -18,6 +18,11 @@ use search::search_tree_visitor::Status::*;
 
 pub trait SearchMonitor<Space: Freeze> {
   fn on_node(&mut self, space: &Space, status: &Status<Space>) {
+    self.dispatch_node(space, status)
+  }
+
+  fn dispatch_node(&mut self, space: &Space, status: &Status<Space>)
+  {
     match status {
       &Satisfiable => self.on_solution(space),
       &Unsatisfiable => self.on_failure(space),

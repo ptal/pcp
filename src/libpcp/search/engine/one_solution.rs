@@ -108,44 +108,44 @@ impl<C, Q, Space> SearchTreeVisitor<Space> for OneSolution<C, Q, Space> where
   }
 }
 
-// #[cfg(test)]
-// mod test {
-//   use super::*;
-//   use search::test::*;
-//   use search::propagation::*;
-//   use search::branching::binary_split::*;
-//   use search::branching::brancher::*;
-//   use search::branching::first_smallest_var::*;
-//   use search::branching::middle_val::*;
-//   use gcollections::VectorStack;
-//   use gcollections::ops::*;
-//   use test::Bencher;
+#[cfg(test)]
+mod test {
+  use super::*;
+  use search::test::*;
+  use search::propagation::*;
+  use search::branching::binary_split::*;
+  use search::branching::brancher::*;
+  use search::branching::first_smallest_var::*;
+  use search::branching::middle_val::*;
+  use gcollections::VectorStack;
+  use gcollections::ops::*;
+  use test::Bencher;
 
-//   #[test]
-//   fn example_nqueens() {
-//     test_nqueens(1, Satisfiable);
-//     test_nqueens(2, Unsatisfiable);
-//     test_nqueens(3, Unsatisfiable);
-//     for i in 4..12 {
-//       test_nqueens(i, Satisfiable);
-//     }
-//   }
+  #[test]
+  fn example_nqueens() {
+    test_nqueens(1, Satisfiable);
+    test_nqueens(2, Unsatisfiable);
+    test_nqueens(3, Unsatisfiable);
+    for i in 4..12 {
+      test_nqueens(i, Satisfiable);
+    }
+  }
 
-//   #[bench]
-//   fn bench_nqueens10(b: &mut Bencher) {
-//     b.iter(|| {
-//         test_nqueens(10, Satisfiable)
-//     });
-//   }
+  #[bench]
+  fn bench_nqueens10(b: &mut Bencher) {
+    b.iter(|| {
+        test_nqueens(10, Satisfiable)
+    });
+  }
 
-//   fn test_nqueens(n: usize, expect: Status<FDSpace>) {
-//     let mut space = FDSpace::empty();
-//     nqueens(n, &mut space);
+  fn test_nqueens(n: usize, expect: Status<FDSpace>) {
+    let mut space = FDSpace::empty();
+    nqueens(n, &mut space);
 
-//     let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
-//       OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)));
-//     search.start(&space);
-//     let (_, status) = search.enter(space);
-//     assert_eq!(status, expect);
-//   }
-// }
+    let mut search: OneSolution<_, VectorStack<_>, FDSpace> =
+      OneSolution::new(Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)));
+    search.start(&space);
+    let (_, status) = search.enter(space);
+    assert_eq!(status, expect);
+  }
+}
