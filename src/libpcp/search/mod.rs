@@ -49,33 +49,33 @@ pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
   Box::new(search)
 }
 
-#[cfg(test)]
-mod test {
-  pub use super::*;
-  use propagators::cmp::*;
-  use propagators::distinct::*;
-  use term::*;
-  use gcollections::ops::*;
-  use interval::interval_set::*;
+// #[cfg(test)]
+// mod test {
+//   pub use super::*;
+//   use propagators::cmp::*;
+//   use propagators::distinct::*;
+//   use term::*;
+//   use gcollections::ops::*;
+//   use interval::interval_set::*;
 
-  pub fn nqueens(n: usize, space: &mut FDSpace) {
-    let mut queens = vec![];
-    // 2 queens can't share the same line.
-    for _ in 0..n {
-      queens.push(space.vstore.alloc((1, n as i32).to_interval_set()));
-    }
-    for i in 0..n-1 {
-      for j in i + 1..n {
-        // 2 queens can't share the same diagonal.
-        let q1 = (i + 1) as i32;
-        let q2 = (j + 1) as i32;
-        // Xi + i != Xj + j
-        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
-        // Xi - i != Xj - j
-        space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
-      }
-    }
-    // 2 queens can't share the same column.
-    space.cstore.alloc(box Distinct::new(queens));
-  }
-}
+//   pub fn nqueens(n: usize, space: &mut FDSpace) {
+//     let mut queens = vec![];
+//     // 2 queens can't share the same line.
+//     for _ in 0..n {
+//       queens.push(space.vstore.alloc((1, n as i32).to_interval_set()));
+//     }
+//     for i in 0..n-1 {
+//       for j in i + 1..n {
+//         // 2 queens can't share the same diagonal.
+//         let q1 = (i + 1) as i32;
+//         let q2 = (j + 1) as i32;
+//         // Xi + i != Xj + j
+//         space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+//         // Xi - i != Xj - j
+//         space.cstore.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+//       }
+//     }
+//     // 2 queens can't share the same column.
+//     space.cstore.alloc(box Distinct::new(queens));
+//   }
+// }

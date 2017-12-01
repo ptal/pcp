@@ -101,39 +101,39 @@ impl<VStore> PropagatorDependencies<FDEvent> for XNeqY<VStore> where
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use kernel::Trilean::*;
-  use propagation::events::FDEvent::*;
-  use interval::interval::*;
-  use propagators::test::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use kernel::Trilean::*;
+//   use propagation::events::FDEvent::*;
+//   use interval::interval::*;
+//   use propagators::test::*;
 
-  #[test]
-  fn x_neq_y_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom5_15 = (5,15).to_interval();
-    let dom11_20 = (11,20).to_interval();
-    let one = (1,1).to_interval();
-    let zero = (0,0).to_interval();
-    let ten = (10,10).to_interval();
+//   #[test]
+//   fn x_neq_y_test() {
+//     let dom0_10 = (0,10).to_interval();
+//     let dom10_20 = (10,20).to_interval();
+//     let dom5_15 = (5,15).to_interval();
+//     let dom11_20 = (11,20).to_interval();
+//     let one = (1,1).to_interval();
+//     let zero = (0,0).to_interval();
+//     let ten = (10,10).to_interval();
 
-    x_neq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(4, dom0_10, dom11_20, True, True, vec![], true);
-    x_neq_y_test_one(5, one, dom0_10, Unknown, Unknown, vec![], true);
-    x_neq_y_test_one(6, zero, dom0_10, Unknown, True, vec![(1, Bound)], true);
-    x_neq_y_test_one(7, ten, dom0_10, Unknown, True, vec![(1, Bound)], true);
-    x_neq_y_test_one(8, one, one, False, False, vec![], false);
-    x_neq_y_test_one(9, zero, one, True, True, vec![], true);
-  }
+//     x_neq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+//     x_neq_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
+//     x_neq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
+//     x_neq_y_test_one(4, dom0_10, dom11_20, True, True, vec![], true);
+//     x_neq_y_test_one(5, one, dom0_10, Unknown, Unknown, vec![], true);
+//     x_neq_y_test_one(6, zero, dom0_10, Unknown, True, vec![(1, Bound)], true);
+//     x_neq_y_test_one(7, ten, dom0_10, Unknown, True, vec![(1, Bound)], true);
+//     x_neq_y_test_one(8, one, one, False, False, vec![], false);
+//     x_neq_y_test_one(9, zero, one, True, True, vec![], true);
+//   }
 
-  fn x_neq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    binary_propagator_test(test_num, XNeqY::new, x, y, before, after, delta_expected, propagate_success);
-  }
-}
+//   fn x_neq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     binary_propagator_test(test_num, XNeqY::new, x, y, before, after, delta_expected, propagate_success);
+//   }
+// }

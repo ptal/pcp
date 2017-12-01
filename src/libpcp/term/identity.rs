@@ -19,7 +19,7 @@ use propagation::events::*;
 use std::marker::PhantomData;
 use concept::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Copy)]
 pub struct Identity<Domain> {
   idx: usize,
   phantom: PhantomData<Domain>

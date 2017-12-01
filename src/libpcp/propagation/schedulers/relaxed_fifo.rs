@@ -26,19 +26,21 @@ use bit_set::BitSet;
 #[derive(Debug)]
 pub struct RelaxedFifo {
   inside_queue: BitSet,
-  queue: VecDeque<usize>
+  queue: VecDeque<usize>,
+  capacity: usize
 }
 
 impl Scheduler for RelaxedFifo {
   fn new(capacity: usize) -> RelaxedFifo {
     RelaxedFifo {
       inside_queue: BitSet::with_capacity(capacity),
-      queue: VecDeque::with_capacity(capacity)
+      queue: VecDeque::with_capacity(capacity),
+      capacity: capacity
     }
   }
 
   fn schedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.inside_queue.capacity());
+    assert!((idx as usize) < self.capacity);
     if !self.inside_queue.contains(idx) {
       self.inside_queue.insert(idx);
       self.queue.push_back(idx);
@@ -46,7 +48,7 @@ impl Scheduler for RelaxedFifo {
   }
 
   fn unschedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.inside_queue.capacity());
+    assert!((idx as usize) < self.capacity);
     if self.inside_queue.contains(idx) {
       let queue_idx = self.queue.iter().position(|&e| e == idx);
       assert!(queue_idx.is_some());

@@ -113,103 +113,103 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use kernel::*;
-  use kernel::Trilean::*;
-  use variable::VStoreCopy;
-  use propagation::CStoreFD;
-  use interval::interval::*;
-  use interval::ops::Range;
-  use gcollections::ops::*;
-  use model::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use kernel::*;
+//   use kernel::Trilean::*;
+//   use variable::VStoreCopy;
+//   use propagation::CStoreFD;
+//   use interval::interval::*;
+//   use interval::ops::Range;
+//   use gcollections::ops::*;
+//   use model::*;
 
-  type Dom = Interval<i32>;
-  type VStoreFD = VStoreCopy<Dom>;
+//   type Dom = Interval<i32>;
+//   type VStoreFD = VStoreCopy<Dom>;
 
-  struct CumulativeTest {
-    starts: Vec<Interval<i32>>,
-    durations: Vec<Interval<i32>>,
-    resources: Vec<Interval<i32>>,
-    capacity: Interval<i32>,
-  }
+//   struct CumulativeTest {
+//     starts: Vec<Interval<i32>>,
+//     durations: Vec<Interval<i32>>,
+//     resources: Vec<Interval<i32>>,
+//     capacity: Interval<i32>,
+//   }
 
-  impl CumulativeTest {
-    fn new(starts: Vec<Interval<i32>>, durations: Vec<Interval<i32>>,
-      resources: Vec<Interval<i32>>, capacity: Interval<i32>) -> Self
-    {
-      CumulativeTest {
-        starts: starts,
-        durations: durations,
-        resources: resources,
-        capacity: capacity
-      }
-    }
+//   impl CumulativeTest {
+//     fn new(starts: Vec<Interval<i32>>, durations: Vec<Interval<i32>>,
+//       resources: Vec<Interval<i32>>, capacity: Interval<i32>) -> Self
+//     {
+//       CumulativeTest {
+//         starts: starts,
+//         durations: durations,
+//         resources: resources,
+//         capacity: capacity
+//       }
+//     }
 
-    fn new_assignment(starts: Vec<i32>, durations: Vec<i32>,
-      resources: Vec<i32>, capacity: i32) -> Self
-    {
-      CumulativeTest::new(
-        starts.into_iter().map(|s| Interval::new(s, s)).collect(),
-        durations.into_iter().map(|d| Interval::new(d, d)).collect(),
-        resources.into_iter().map(|r| Interval::new(r, r)).collect(),
-        Interval::new(capacity, capacity)
-      )
-    }
+//     fn new_assignment(starts: Vec<i32>, durations: Vec<i32>,
+//       resources: Vec<i32>, capacity: i32) -> Self
+//     {
+//       CumulativeTest::new(
+//         starts.into_iter().map(|s| Interval::new(s, s)).collect(),
+//         durations.into_iter().map(|d| Interval::new(d, d)).collect(),
+//         resources.into_iter().map(|r| Interval::new(r, r)).collect(),
+//         Interval::new(capacity, capacity)
+//       )
+//     }
 
-    fn instantiate(self, model: &mut Model, vstore: &mut VStoreFD,
-      cstore: &mut CStoreFD<VStoreFD>)
-    {
-      model.open_group("s");
-      let starts = self.starts.into_iter()
-        .map(|s| box model.alloc_var(vstore, s)).collect();
-      model.close_group();
-      model.open_group("d");
-      let durations = self.durations.into_iter()
-        .map(|d| box model.alloc_var(vstore, d)).collect();
-      model.close_group();
-      model.open_group("r");
-      let resources = self.resources.into_iter()
-        .map(|r| box model.alloc_var(vstore, r)).collect();
-      model.close_group();
-      let capacity = box vstore.alloc(self.capacity);
-      model.register_var(capacity.index(), String::from("c"));
+//     fn instantiate(self, model: &mut Model, vstore: &mut VStoreFD,
+//       cstore: &mut CStoreFD<VStoreFD>)
+//     {
+//       model.open_group("s");
+//       let starts = self.starts.into_iter()
+//         .map(|s| box model.alloc_var(vstore, s)).collect();
+//       model.close_group();
+//       model.open_group("d");
+//       let durations = self.durations.into_iter()
+//         .map(|d| box model.alloc_var(vstore, d)).collect();
+//       model.close_group();
+//       model.open_group("r");
+//       let resources = self.resources.into_iter()
+//         .map(|r| box model.alloc_var(vstore, r)).collect();
+//       model.close_group();
+//       let capacity = box vstore.alloc(self.capacity);
+//       model.register_var(capacity.index(), String::from("c"));
 
-      let mut cumulative = Cumulative::new(starts, durations, resources, capacity);
-      cumulative.join(vstore, cstore);
-    }
+//       let mut cumulative = Cumulative::new(starts, durations, resources, capacity);
+//       cumulative.join(vstore, cstore);
+//     }
 
-    fn test(self, test_num: usize, before: Trilean, after: Trilean, propagate_success: bool) {
-      println!("Test number {}", test_num);
-      let mut vstore = VStoreFD::empty();
-      let mut cstore = CStoreFD::empty();
-      let mut model = Model::new();
-      self.instantiate(&mut model, &mut vstore, &mut cstore);
-      cstore.display(&(model, vstore.clone()));
-      assert_eq!(cstore.is_subsumed(&vstore), before);
-      assert_eq!(cstore.propagate(&mut vstore), propagate_success);
-      assert_eq!(cstore.is_subsumed(&vstore), after);
-    }
+//     fn test(self, test_num: usize, before: Trilean, after: Trilean, propagate_success: bool) {
+//       println!("Test number {}", test_num);
+//       let mut vstore = VStoreFD::empty();
+//       let mut cstore = CStoreFD::empty();
+//       let mut model = Model::new();
+//       self.instantiate(&mut model, &mut vstore, &mut cstore);
+//       cstore.display(&(model, vstore.clone()));
+//       assert_eq!(cstore.is_subsumed(&vstore), before);
+//       assert_eq!(cstore.propagate(&mut vstore), propagate_success);
+//       assert_eq!(cstore.is_subsumed(&vstore), after);
+//     }
 
-    fn test_assignment(self, test_num: usize, expected: Trilean) {
-      let propagate = match expected {
-        True => true,
-        False => false,
-        Unknown => panic!("Assignment must always be either subsumed or refuted.")
-      };
-      /// Unknown because cumulative introduces new variables not fixed.
-      self.test(test_num, Unknown, expected, propagate);
-    }
-  }
+//     fn test_assignment(self, test_num: usize, expected: Trilean) {
+//       let propagate = match expected {
+//         True => true,
+//         False => false,
+//         Unknown => panic!("Assignment must always be either subsumed or refuted.")
+//       };
+//       /// Unknown because cumulative introduces new variables not fixed.
+//       self.test(test_num, Unknown, expected, propagate);
+//     }
+//   }
 
-  #[test]
-  fn disjunctive_test() {
-    CumulativeTest::new_assignment(
-      vec![0,0], vec![0,0], vec![1,1], 1
-    )
-    .test_assignment(1, True);
-  }
+// #[test]
+// fn disjunctive_test() {
+//   CumulativeTest::new_assignment(
+//     vec![0,0], vec![0,0], vec![1,1], 1
+//   )
+//   .test_assignment(1, True);
+// }
 
   // #[test]
   // fn cumulative_assignment_test() {
@@ -259,4 +259,4 @@ mod test {
   //   test.starts[2] = Interval::new(4,5);
   //   test.test(3, Unknown, Unknown, true);
   // }
-}
+// }

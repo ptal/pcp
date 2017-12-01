@@ -316,96 +316,96 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
   }
 }
 
-#[cfg(test)]
-mod test {
-  use kernel::*;
-  use kernel::Trilean::*;
-  use variable::VStoreFD;
-  use propagation::*;
-  use propagators::cmp::*;
-  use propagators::distinct::*;
-  use term::addition::Addition;
-  use interval::interval::*;
-  use interval::ops::*;
-  use gcollections::ops::*;
+// #[cfg(test)]
+// mod test {
+//   use kernel::*;
+//   use kernel::Trilean::*;
+//   use variable::VStoreFD;
+//   use propagation::*;
+//   use propagators::cmp::*;
+//   use propagators::distinct::*;
+//   use term::addition::Addition;
+//   use interval::interval::*;
+//   use interval::ops::*;
+//   use gcollections::ops::*;
 
-  type VStore = VStoreFD;
-  type CStore = CStoreFD<VStore>;
+//   type VStore = VStoreFD;
+//   type CStore = CStoreFD<VStore>;
 
-  #[test]
-  fn basic_test() {
-    let variables: &mut VStore = &mut VStore::empty();
-    let mut constraints: CStore = CStore::empty();
+//   #[test]
+//   fn basic_test() {
+//     let variables: &mut VStore = &mut VStore::empty();
+//     let mut constraints: CStore = CStore::empty();
 
-    assert_eq!(constraints.consistency(variables), True);
+//     assert_eq!(constraints.consistency(variables), True);
 
-    let var1 = variables.alloc(Interval::new(1,4));
-    let var2 = variables.alloc(Interval::new(1,4));
-    let var3 = variables.alloc(Interval::new(1,1));
+//     let var1 = variables.alloc(Interval::new(1,4));
+//     let var2 = variables.alloc(Interval::new(1,4));
+//     let var3 = variables.alloc(Interval::new(1,1));
 
-    assert_eq!(constraints.consistency(variables), True);
+//     assert_eq!(constraints.consistency(variables), True);
 
-    constraints.alloc(box XLessY::new(var1.clone(), var2));
-    assert_eq!(constraints.consistency(variables), Unknown);
+//     constraints.alloc(box XLessY::new(var1.clone(), var2));
+//     assert_eq!(constraints.consistency(variables), Unknown);
 
-    constraints.alloc(box XEqY::new(var1, var3));
-    assert_eq!(constraints.consistency(variables), True);
-  }
+//     constraints.alloc(box XEqY::new(var1, var3));
+//     assert_eq!(constraints.consistency(variables), True);
+//   }
 
-  fn chained_lt(n: usize, expect: Trilean) {
-    // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
-    let variables: &mut VStore = &mut VStore::empty();
-    let mut constraints: CStore = CStore::empty();
-    let mut vars = vec![];
-    for _ in 0..n {
-      vars.push(variables.alloc(Interval::new(1,10)));
-    }
-    for i in 0..n-1 {
-      constraints.alloc(box XLessY::new(vars[i].clone(), vars[i+1].clone()));
-    }
-    assert_eq!(constraints.consistency(variables), expect);
-  }
+//   fn chained_lt(n: usize, expect: Trilean) {
+//     // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
+//     let variables: &mut VStore = &mut VStore::empty();
+//     let mut constraints: CStore = CStore::empty();
+//     let mut vars = vec![];
+//     for _ in 0..n {
+//       vars.push(variables.alloc(Interval::new(1,10)));
+//     }
+//     for i in 0..n-1 {
+//       constraints.alloc(box XLessY::new(vars[i].clone(), vars[i+1].clone()));
+//     }
+//     assert_eq!(constraints.consistency(variables), expect);
+//   }
 
-  #[test]
-  fn chained_lt_tests() {
-    chained_lt(1, True);
-    chained_lt(2, Unknown);
-    chained_lt(5, Unknown);
-    chained_lt(9, Unknown);
-    chained_lt(10, True);
-    chained_lt(11, False);
-  }
+//   #[test]
+//   fn chained_lt_tests() {
+//     chained_lt(1, True);
+//     chained_lt(2, Unknown);
+//     chained_lt(5, Unknown);
+//     chained_lt(9, Unknown);
+//     chained_lt(10, True);
+//     chained_lt(11, False);
+//   }
 
-  #[test]
-  fn example_nqueens() {
-    nqueens(1, True);
-    nqueens(2, Unknown);
-    nqueens(3, Unknown);
-    nqueens(4, Unknown);
-  }
+//   #[test]
+//   fn example_nqueens() {
+//     nqueens(1, True);
+//     nqueens(2, Unknown);
+//     nqueens(3, Unknown);
+//     nqueens(4, Unknown);
+//   }
 
-  fn nqueens(n: usize, expect: Trilean) {
-    let variables: &mut VStore = &mut VStore::empty();
-    let mut constraints: CStore = CStore::empty();
-    let mut queens = vec![];
-    // 2 queens can't share the same line.
-    for _ in 0..n {
-      queens.push(variables.alloc((1, n as i32).to_interval()));
-    }
-    for i in 0..n-1 {
-      for j in i + 1..n {
-        // 2 queens can't share the same diagonal.
-        let q1 = (i + 1) as i32;
-        let q2 = (j + 1) as i32;
-        // Xi + i != Xj + j
-        constraints.alloc(box   XNeqY::new(Addition::new(queens[i], q1), Addition::new(queens[j], q2)));
-        // constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
-        // Xi - i != Xj - j
-        constraints.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
-      }
-    }
-    // 2 queens can't share the same column.
-    constraints.alloc(box Distinct::new(queens));
-    assert_eq!(constraints.consistency(variables), expect);
-  }
-}
+//   fn nqueens(n: usize, expect: Trilean) {
+//     let variables: &mut VStore = &mut VStore::empty();
+//     let mut constraints: CStore = CStore::empty();
+//     let mut queens = vec![];
+//     // 2 queens can't share the same line.
+//     for _ in 0..n {
+//       queens.push(variables.alloc((1, n as i32).to_interval()));
+//     }
+//     for i in 0..n-1 {
+//       for j in i + 1..n {
+//         // 2 queens can't share the same diagonal.
+//         let q1 = (i + 1) as i32;
+//         let q2 = (j + 1) as i32;
+//         // Xi + i != Xj + j
+//         constraints.alloc(box   XNeqY::new(Addition::new(queens[i], q1), Addition::new(queens[j], q2)));
+//         // constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
+//         // Xi - i != Xj - j
+//         constraints.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+//       }
+//     }
+//     // 2 queens can't share the same column.
+//     constraints.alloc(box Distinct::new(queens));
+//     assert_eq!(constraints.consistency(variables), expect);
+//   }
+// }

@@ -118,37 +118,37 @@ impl<VStore> PropagatorDependencies<FDEvent> for XLessYPlusZ<VStore>
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use propagation::events::FDEvent::*;
-  use interval::interval::*;
-  use propagators::test::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use propagation::events::FDEvent::*;
+//   use interval::interval::*;
+//   use propagators::test::*;
 
-  #[test]
-  fn x_less_y_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom11_12 = (11,12).to_interval();
-    let dom0_6 = (0,6).to_interval();
-    let dom0_5 = (0,5).to_interval();
-    let dom0_1 = (0,1).to_interval();
-    let dom1_1 = (1,1).to_interval();
-    let dom2_2 = (2,2).to_interval();
+//   #[test]
+//   fn x_less_y_test() {
+//     let dom0_10 = (0,10).to_interval();
+//     let dom10_20 = (10,20).to_interval();
+//     let dom11_12 = (11,12).to_interval();
+//     let dom0_6 = (0,6).to_interval();
+//     let dom0_5 = (0,5).to_interval();
+//     let dom0_1 = (0,1).to_interval();
+//     let dom1_1 = (1,1).to_interval();
+//     let dom2_2 = (2,2).to_interval();
 
-    x_less_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_less_y_plus_z_test_one(2, dom11_12, dom0_6, dom0_6, Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
-    x_less_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
-    x_less_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, False, False, vec![], false);
-    x_less_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, True, True, vec![], true);
-    x_less_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![(0, Bound)], true);
-  }
+//     x_less_y_plus_z_test_one(1, dom0_10, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+//     x_less_y_plus_z_test_one(2, dom11_12, dom0_6, dom0_6, Unknown, True, vec![(0, Assignment), (1, Assignment), (2, Assignment)], true);
+//     x_less_y_plus_z_test_one(3, dom10_20, dom1_1, dom1_1, False, False, vec![], false);
+//     x_less_y_plus_z_test_one(4, dom2_2, dom1_1, dom1_1, False, False, vec![], false);
+//     x_less_y_plus_z_test_one(5, dom1_1, dom2_2, dom2_2, True, True, vec![], true);
+//     x_less_y_plus_z_test_one(6, dom0_6, dom0_5, dom0_1, Unknown, Unknown, vec![(0, Bound)], true);
+//   }
 
-  fn x_less_y_plus_z_test_one(test_num: u32,
-    x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    trinary_propagator_test(test_num, XLessYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
-  }
-}
+//   fn x_less_y_plus_z_test_one(test_num: u32,
+//     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     trinary_propagator_test(test_num, XLessYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);
+//   }
+// }

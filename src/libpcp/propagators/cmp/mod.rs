@@ -75,65 +75,65 @@ pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
   XLessYPlusZ::new(box Addition::new(x, -Bound::one()), y, z)
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use kernel::*;
-  use kernel::Trilean::*;
-  use propagation::events::*;
-  use propagation::events::FDEvent::*;
-  use interval::interval::*;
-  use propagators::test::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use kernel::*;
+//   use kernel::Trilean::*;
+//   use propagation::events::*;
+//   use propagation::events::FDEvent::*;
+//   use interval::interval::*;
+//   use propagators::test::*;
 
-  #[test]
-  fn x_greater_y_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom10_11 = (10,11).to_interval();
-    let dom5_15 = (5,15).to_interval();
-    let dom5_11 = (5,11).to_interval();
-    let dom11_20 = (11,20).to_interval();
-    let dom9_9 = (9,9).to_interval();
+//   #[test]
+//   fn x_greater_y_test() {
+//     let dom0_10 = (0,10).to_interval();
+//     let dom10_20 = (10,20).to_interval();
+//     let dom10_11 = (10,11).to_interval();
+//     let dom5_15 = (5,15).to_interval();
+//     let dom5_11 = (5,11).to_interval();
+//     let dom11_20 = (11,20).to_interval();
+//     let dom9_9 = (9,9).to_interval();
 
-    x_greater_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_greater_y_test_one(2, dom0_10, dom10_20, False, False, vec![], false);
-    x_greater_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_greater_y_test_one(4, dom5_11, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-    x_greater_y_test_one(5, dom10_11, dom10_11, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-    x_greater_y_test_one(6, dom5_15, dom0_10, Unknown, Unknown, vec![], true);
-    x_greater_y_test_one(7, dom11_20, dom0_10, True, True, vec![], true);
-    x_greater_y_test_one(8, dom9_9, dom0_10, Unknown, True, vec![(1, Bound)], true);
-  }
+//     x_greater_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+//     x_greater_y_test_one(2, dom0_10, dom10_20, False, False, vec![], false);
+//     x_greater_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+//     x_greater_y_test_one(4, dom5_11, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+//     x_greater_y_test_one(5, dom10_11, dom10_11, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+//     x_greater_y_test_one(6, dom5_15, dom0_10, Unknown, Unknown, vec![], true);
+//     x_greater_y_test_one(7, dom11_20, dom0_10, True, True, vec![], true);
+//     x_greater_y_test_one(8, dom9_9, dom0_10, Unknown, True, vec![(1, Bound)], true);
+//   }
 
-  fn x_greater_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    binary_propagator_test(test_num, x_greater_y, x, y, before, after, delta_expected, propagate_success);
-  }
+//   fn x_greater_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     binary_propagator_test(test_num, x_greater_y, x, y, before, after, delta_expected, propagate_success);
+//   }
 
-  #[test]
-  fn x_geq_y_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom10_11 = (10,11).to_interval();
-    let dom5_15 = (5,15).to_interval();
-    let dom11_20 = (11,20).to_interval();
-    let dom9_9 = (9,9).to_interval();
+//   #[test]
+//   fn x_geq_y_test() {
+//     let dom0_10 = (0,10).to_interval();
+//     let dom10_20 = (10,20).to_interval();
+//     let dom10_11 = (10,11).to_interval();
+//     let dom5_15 = (5,15).to_interval();
+//     let dom11_20 = (11,20).to_interval();
+//     let dom9_9 = (9,9).to_interval();
 
-    x_geq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-    x_geq_y_test_one(2, dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-    x_geq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-    x_geq_y_test_one(4, dom10_11, dom10_11, Unknown, Unknown, vec![], true);
-    x_geq_y_test_one(5, dom5_15, dom0_10, Unknown, Unknown, vec![], true);
-    x_geq_y_test_one(6, dom11_20, dom0_10, True, True, vec![], true);
-    x_geq_y_test_one(7, dom9_9, dom0_10, Unknown, True, vec![(1, Bound)], true);
-  }
+//     x_geq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+//     x_geq_y_test_one(2, dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+//     x_geq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+//     x_geq_y_test_one(4, dom10_11, dom10_11, Unknown, Unknown, vec![], true);
+//     x_geq_y_test_one(5, dom5_15, dom0_10, Unknown, Unknown, vec![], true);
+//     x_geq_y_test_one(6, dom11_20, dom0_10, True, True, vec![], true);
+//     x_geq_y_test_one(7, dom9_9, dom0_10, Unknown, True, vec![(1, Bound)], true);
+//   }
 
-  fn x_geq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    binary_propagator_test(test_num, x_geq_y::<_,_,i32>, x, y, before, after, delta_expected, propagate_success);
-  }
-}
+//   fn x_geq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     binary_propagator_test(test_num, x_geq_y::<_,_,i32>, x, y, before, after, delta_expected, propagate_success);
+//   }
+// }

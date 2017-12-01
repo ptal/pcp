@@ -112,39 +112,39 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqYMulZ<VStore>
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use propagation::events::FDEvent::*;
-  use interval::interval::*;
-  use propagators::test::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use propagation::events::FDEvent::*;
+//   use interval::interval::*;
+//   use propagators::test::*;
 
-  #[test]
-  fn x_eq_y_mul_z_test() {
-    let dom0_10 = (0,10).to_interval();
-    let dom10_20 = (10,20).to_interval();
-    let dom10_11 = (10,11).to_interval();
-    let dom5_15 = (5,15).to_interval();
-    let dom1_1 = (1,1).to_interval();
-    let dom1_2 = (1,2).to_interval();
+//   #[test]
+//   fn x_eq_y_mul_z_test() {
+//     let dom0_10 = (0,10).to_interval();
+//     let dom10_20 = (10,20).to_interval();
+//     let dom10_11 = (10,11).to_interval();
+//     let dom5_15 = (5,15).to_interval();
+//     let dom1_1 = (1,1).to_interval();
+//     let dom1_2 = (1,2).to_interval();
 
-    x_eq_y_mul_z_test_one(1, dom0_10, dom0_10, dom0_10,
-      Unknown, Unknown, vec![], true);
-    x_eq_y_mul_z_test_one(2, dom10_11, dom5_15, dom5_15,
-      False, False, vec![], false);
-    x_eq_y_mul_z_test_one(3, dom10_20, dom1_1, dom1_1,
-      False, False, vec![], false);
-    x_eq_y_mul_z_test_one(4, dom1_1, dom1_1, dom1_1,
-      True, True, vec![], true);
-    x_eq_y_mul_z_test_one(5, dom1_2, dom1_1, dom1_1,
-      Unknown, True, vec![(0,Assignment)], true);
-  }
+//     x_eq_y_mul_z_test_one(1, dom0_10, dom0_10, dom0_10,
+//       Unknown, Unknown, vec![], true);
+//     x_eq_y_mul_z_test_one(2, dom10_11, dom5_15, dom5_15,
+//       False, False, vec![], false);
+//     x_eq_y_mul_z_test_one(3, dom10_20, dom1_1, dom1_1,
+//       False, False, vec![], false);
+//     x_eq_y_mul_z_test_one(4, dom1_1, dom1_1, dom1_1,
+//       True, True, vec![], true);
+//     x_eq_y_mul_z_test_one(5, dom1_2, dom1_1, dom1_1,
+//       Unknown, True, vec![(0,Assignment)], true);
+//   }
 
-  fn x_eq_y_mul_z_test_one(test_num: u32,
-    x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    trinary_propagator_test(test_num, XEqYMulZ::new, x, y, z, before, after, delta_expected, propagate_success);
-  }
-}
+//   fn x_eq_y_mul_z_test_one(test_num: u32,
+//     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     trinary_propagator_test(test_num, XEqYMulZ::new, x, y, z, before, after, delta_expected, propagate_success);
+//   }
+// }

@@ -117,35 +117,35 @@ impl<VStore> PropagatorDependencies<FDEvent> for Distinct<VStore>
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
-  use propagation::events::FDEvent::*;
-  use interval::interval::*;
-  use propagators::test::*;
+// #[cfg(test)]
+// mod test {
+//   use super::*;
+//   use propagation::events::FDEvent::*;
+//   use interval::interval::*;
+//   use propagators::test::*;
 
-  #[test]
-  fn distinct_test() {
-    let zero = (0,0).to_interval();
-    let one = (1,1).to_interval();
-    let two = (2,2).to_interval();
-    let dom0_1 = (0,1).to_interval();
-    let dom0_2 = (0,2).to_interval();
-    let dom0_3 = (0,3).to_interval();
+//   #[test]
+//   fn distinct_test() {
+//     let zero = (0,0).to_interval();
+//     let one = (1,1).to_interval();
+//     let two = (2,2).to_interval();
+//     let dom0_1 = (0,1).to_interval();
+//     let dom0_2 = (0,2).to_interval();
+//     let dom0_3 = (0,3).to_interval();
 
-    distinct_test_one(1, vec![zero,one,two], True, True, vec![], true);
-    distinct_test_one(2, vec![zero,zero,two], False, False, vec![], false);
-    distinct_test_one(3, vec![zero,one,dom0_3], Unknown, True, vec![(2, Bound)], true);
-    distinct_test_one(4, vec![zero,one,dom0_2], Unknown, True, vec![(2, Assignment)], true);
-    distinct_test_one(5, vec![zero,one,dom0_1], Unknown, False, vec![], false);
-    distinct_test_one(6, vec![zero,dom0_3,dom0_3], Unknown, Unknown, vec![(1, Bound),(2, Bound)], true);
-    distinct_test_one(7, vec![dom0_3], True, True, vec![], true);
-  }
+//     distinct_test_one(1, vec![zero,one,two], True, True, vec![], true);
+//     distinct_test_one(2, vec![zero,zero,two], False, False, vec![], false);
+//     distinct_test_one(3, vec![zero,one,dom0_3], Unknown, True, vec![(2, Bound)], true);
+//     distinct_test_one(4, vec![zero,one,dom0_2], Unknown, True, vec![(2, Assignment)], true);
+//     distinct_test_one(5, vec![zero,one,dom0_1], Unknown, False, vec![], false);
+//     distinct_test_one(6, vec![zero,dom0_3,dom0_3], Unknown, Unknown, vec![(1, Bound),(2, Bound)], true);
+//     distinct_test_one(7, vec![dom0_3], True, True, vec![], true);
+//   }
 
-  fn distinct_test_one(test_num: u32, doms: Vec<Interval<i32>>,
-    before: Trilean, after: Trilean,
-    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-  {
-    nary_propagator_test(test_num, Distinct::new, doms, before, after, delta_expected, propagate_success);
-  }
-}
+//   fn distinct_test_one(test_num: u32, doms: Vec<Interval<i32>>,
+//     before: Trilean, after: Trilean,
+//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+//   {
+//     nary_propagator_test(test_num, Distinct::new, doms, before, after, delta_expected, propagate_success);
+//   }
+// }
