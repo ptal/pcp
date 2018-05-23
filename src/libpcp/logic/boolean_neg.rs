@@ -72,7 +72,7 @@ impl<VStore, Domain, Bound> NotFormula<VStore> for BooleanNeg<VStore> where
   Bound: IntBound + 'static,
 {
   fn not(&self) -> Formula<VStore> {
-    box self.b.clone()
+    Box::new(self.b.clone())
   }
 }
 

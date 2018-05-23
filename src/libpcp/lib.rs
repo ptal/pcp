@@ -12,18 +12,80 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Constraint programming is a declarative programming paradigm mainly used to solve combinatorial problems where you state which constraints a solution must respect instead of explaining how to solve it.
+//! Constraint programming is a declarative programming paradigm mainly used to solve combinatorial problems where you state what constraints a solution must fullfil instead of explaining how to solve it (see README.md).
+//! A very classic introductory problem to constraint programming is the [N-Queens puzzle](https://en.wikipedia.org/wiki/Eight_queens_puzzle): the goal is to align N queens on a chessboard of size N*N such that no queen can attack each other.
+//! In PCP, we can solve this problem as follows:
+//! ```rust
+//! extern crate pcp;
+//! extern crate gcollections;
+//! extern crate interval;
+//! use pcp::kernel::*;
+//! use pcp::propagators::*;
+//! use pcp::variable::ops::*;
+//! use pcp::term::*;
+//! use pcp::search::search_tree_visitor::Status::*;
+//! use pcp::search::*;
+//! use pcp::concept::*;
+//! use interval::ops::Range;
+//! use interval::interval_set::*;
+//! use gcollections::ops::*;
+//!
+//! pub fn nqueens(n: usize) {
+//!   let mut space = FDSpace::empty();
+//!
+//!   let mut queens = vec![];
+//!   // 2 queens can't share the same line.
+//!   for _ in 0..n {
+//!     queens.push(Box::new(space.vstore.alloc(IntervalSet::new(1, n as i32))) as Var<VStore>);
+//!   }
+//!   for i in 0..n-1 {
+//!     for j in i + 1..n {
+//!       // 2 queens can't share the same diagonal.
+//!       let q1 = (i + 1) as i32;
+//!       let q2 = (j + 1) as i32;
+//!       // Xi + i != Xj + j reformulated as: Xi != Xj + j - i
+//!       space.cstore.alloc(Box::new(XNeqY::new(
+//!         queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), q2 - q1)) as Var<VStore>)));
+//!       // Xi - i != Xj - j reformulated as: Xi != Xj - j + i
+//!       space.cstore.alloc(Box::new(XNeqY::new(
+//!         queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), -q2 + q1)) as Var<VStore>)));
+//!     }
+//!   }
+//!   // 2 queens can't share the same column.
+//!   // join_distinct(&mut space.vstore, &mut space.cstore, queens);
+//!   space.cstore.alloc(Box::new(Distinct::new(queens)));
+//!
+//!   // Search step.
+//!   let mut search = one_solution_engine();
+//!   search.start(&space);
+//!   let (frozen_space, status) = search.enter(space);
+//!   let space = frozen_space.unfreeze();
+//!
+//!   // Print result.
+//!   match status {
+//!     Satisfiable => {
+//!       print!("{}-queens problem is satisfiable. The first solution is:\n[", n);
+//!       for dom in space.vstore.iter() {
+//!         // At this stage, dom.lower() == dom.upper().
+//!         print!("{}, ", dom.lower());
+//!       }
+//!       println!("]");
+//!     }
+//!     Unsatisfiable => println!("{}-queens problem is unsatisfiable.", n),
+//!     EndOfSearch => println!("Search terminated or was interrupted."),
+//!     Unknown(_) => unreachable!(
+//!       "After the search step, the problem instance should be either satisfiable or unsatisfiable.")
+//!   }
+//! }
+//!
+//! fn main() {
+//!  nqueens(8);
+//! }
+//! ```
 
-#![crate_name = "pcp"]
-
-#![feature(alloc, unboxed_closures, box_syntax, fnbox, never_type)]
-#![feature(test)]
-
-extern crate test;
 extern crate interval;
 extern crate gcollections;
 extern crate num;
-extern crate alloc;
 extern crate vec_map;
 extern crate bit_set;
 

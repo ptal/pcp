@@ -63,7 +63,7 @@ impl<VStore, Domain, Bound> NotFormula<VStore> for XGreaterYPlusZ<VStore> where
  Bound: IntBound
 {
   fn not(&self) -> Formula<VStore> {
-    box x_leq_y_plus_z(self.x.bclone(), self.y.bclone(), self.z.bclone())
+    Box::new(x_leq_y_plus_z(self.x.bclone(), self.y.bclone(), self.z.bclone()))
   }
 }
 

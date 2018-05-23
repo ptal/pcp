@@ -37,7 +37,7 @@ impl<VStore, Domain, Bound> Boolean<VStore> where
   pub fn new(vstore: &mut VStore) -> Self {
     let v = vstore.alloc(Domain::new(Bound::zero(), Bound::one()));
     Boolean {
-      var: box v as Var<VStore>
+      var: Box::new(v) as Var<VStore>
     }
   }
 }
@@ -74,7 +74,7 @@ impl<VStore, Domain, Bound> NotFormula<VStore> for Boolean<VStore> where
   Bound: IntBound + 'static,
 {
   fn not(&self) -> Formula<VStore> {
-    box BooleanNeg::new(self.clone())
+    Box::new(BooleanNeg::new(self.clone()))
   }
 }
 

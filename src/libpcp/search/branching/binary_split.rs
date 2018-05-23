@@ -26,24 +26,26 @@ impl<VStore, CStore, R, Domain, Bound> Distributor<Space<VStore, CStore, R>, Bou
   VStore: VStoreConcept<Item=Domain, Location=Identity<Domain>, Output=Domain> + 'static,
   CStore: IntCStore<VStore>,
   Domain: IntDomain<Item=Bound> + 'static,
-  Bound: IntBound + 'static,
+  Bound: IntBound + Copy + 'static,
   R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
 {
   fn distribute(&mut self, space: Space<VStore, CStore, R>, var_idx: usize, val: Bound) ->
     (<Space<VStore, CStore, R> as Freeze>::FrozenState, Vec<Branch<Space<VStore, CStore, R>>>)
   {
-    let x = box Identity::<Domain>::new(var_idx) as Var<VStore>;
-    let v = box Constant::new(val) as Var<VStore>;
-    let x_less_v = x_leq_y::<_,_,Bound>(x.bclone(), v.bclone());
-    let x_geq_v = x_greater_y(x, v);
-
+    // See notes in Enumerate::distribute.
     Branch::distribute(space,
       vec![
         Box::new(move |space: &mut Space<VStore, CStore, R>| {
-          space.cstore.alloc(box x_less_v);
+          let x = Box::new(Identity::<Domain>::new(var_idx)) as Var<VStore>;
+          let v = Box::new(Constant::new(val)) as Var<VStore>;
+          let x_less_v = x_leq_y::<_,_,Bound>(x.bclone(), v.bclone());
+          space.cstore.alloc(Box::new(x_less_v));
         }),
         Box::new(move |space: &mut Space<VStore, CStore, R>| {
-          space.cstore.alloc(box x_geq_v);
+          let x = Box::new(Identity::<Domain>::new(var_idx)) as Var<VStore>;
+          let v = Box::new(Constant::new(val)) as Var<VStore>;
+          let x_geq_v = x_greater_y(x, v);
+          space.cstore.alloc(Box::new(x_geq_v));
         })
       ]
     )

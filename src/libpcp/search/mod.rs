@@ -64,7 +64,7 @@ mod test {
     let mut queens: Vec<Var<VStore>> = vec![];
     // 2 queens can't share the same line.
     for _ in 0..n {
-      queens.push(box space.vstore.alloc((1, n as i32).to_interval_set()));
+      queens.push(Box::new(space.vstore.alloc((1, n as i32).to_interval_set())));
     }
     for i in 0..n-1 {
       for j in i + 1..n {
@@ -72,12 +72,12 @@ mod test {
         let q1 = (i + 1) as i32;
         let q2 = (j + 1) as i32;
         // Xi + i != Xj + j
-        space.cstore.alloc(box XNeqY::new(queens[i].bclone(), box Addition::new(queens[j].bclone(), q2 - q1)));
+        space.cstore.alloc(Box::new(XNeqY::new(queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), q2 - q1)))));
         // Xi - i != Xj - j
-        space.cstore.alloc(box XNeqY::new(queens[i].bclone(), box Addition::new(queens[j].bclone(), -q2 + q1)));
+        space.cstore.alloc(Box::new(XNeqY::new(queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), -q2 + q1)))));
       }
     }
     // 2 queens can't share the same column.
-    space.cstore.alloc(box Distinct::new(queens));
+    space.cstore.alloc(Box::new(Distinct::new(queens)));
   }
 }

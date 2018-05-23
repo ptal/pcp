@@ -345,10 +345,10 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 
 //     assert_eq!(constraints.consistency(variables), True);
 
-//     constraints.alloc(box XLessY::new(var1.clone(), var2));
+//     constraints.alloc(Box::new(XLessY::new(var1.clone(), var2)));
 //     assert_eq!(constraints.consistency(variables), Unknown);
 
-//     constraints.alloc(box XEqY::new(var1, var3));
+//     constraints.alloc(Box::new(XEqY::new(var1, var3)));
 //     assert_eq!(constraints.consistency(variables), True);
 //   }
 
@@ -361,7 +361,7 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 //       vars.push(variables.alloc(Interval::new(1,10)));
 //     }
 //     for i in 0..n-1 {
-//       constraints.alloc(box XLessY::new(vars[i].clone(), vars[i+1].clone()));
+//       constraints.alloc(Box::new(XLessY::new(vars[i].clone(), vars[i+1].clone())));
 //     }
 //     assert_eq!(constraints.consistency(variables), expect);
 //   }
@@ -398,14 +398,14 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 //         let q1 = (i + 1) as i32;
 //         let q2 = (j + 1) as i32;
 //         // Xi + i != Xj + j
-//         constraints.alloc(box   XNeqY::new(Addition::new(queens[i], q1), Addition::new(queens[j], q2)));
+//         constraints.alloc(Box::new(XNeqY::new(Addition::new(queens[i], q1), Addition::new(queens[j], q2))));
 //         // constraints.alloc(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), q2 - q1)));
 //         // Xi - i != Xj - j
-//         constraints.alloc(box XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1)));
+//         constraints.alloc(Box::new(XNeqY::new(queens[i].clone(), Addition::new(queens[j].clone(), -q2 + q1))));
 //       }
 //     }
 //     // 2 queens can't share the same column.
-//     constraints.alloc(box Distinct::new(queens));
+//     constraints.alloc(Box::new(Distinct::new(queens)));
 //     assert_eq!(constraints.consistency(variables), expect);
 //   }
 // }

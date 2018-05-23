@@ -30,14 +30,14 @@ use concept::*;
 pub fn implication<VStore>(f: Formula<VStore>, g: Formula<VStore>) -> Formula<VStore> where
  VStore: Collection + 'static
 {
-  box Disjunction::new(vec![f, g.not()])
+  Box::new(Disjunction::new(vec![f, g.not()]))
 }
 
 pub fn equivalence<VStore>(f: Formula<VStore>, g: Formula<VStore>) -> Formula<VStore> where
  VStore: Collection + 'static
 {
-  box Conjunction::new(vec![
+  Box::new(Conjunction::new(vec![
     implication(f.bclone(), g.bclone()),
     implication(g, f)
-  ])
+  ]))
 }

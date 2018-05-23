@@ -61,7 +61,7 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
     // Special case where only one task needs to be scheduled.
     if tasks == 1 {
       // c >= r[j]
-      cstore.alloc(box x_geq_y(self.capacity_var(), self.resource_at(0)));
+      cstore.alloc(Box::new(x_geq_y(self.capacity_var(), self.resource_at(0))));
     }
     else {
       // forall( j in tasks ) (...)
@@ -71,15 +71,15 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
         for i in 0..tasks {
           if i != j {
             // conj <-> s[i] <= s[j] /\ s[j] < s[i] + d[i]
-            let conj = box Conjunction::new(vec![
+            let conj = Box::new(Conjunction::new(vec![
               // s[i] <= s[j]
-              box x_leq_y(self.start_at(i), self.start_at(j)),
+              Box::new(x_leq_y(self.start_at(i), self.start_at(j))),
               // s[j] < s[i] + d[i]
-              box XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i))]);
+              Box::new(XLessYPlusZ::new(self.start_at(j), self.start_at(i), self.duration_at(i)))]));
 
             // bi <-> conj
             let bi = Boolean::new(vstore);
-            let equiv = equivalence(box bi.clone(), conj);
+            let equiv = equivalence(Box::new(bi.clone()), conj);
             cstore.alloc(equiv);
 
             // r = bi * r[i]
@@ -89,15 +89,15 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
             // let hole = Domain::new(Bound::one(), ri_ub.clone() - Bound::one());
             let r = vstore.alloc(r_dom);
             self.intermediate.last_mut().unwrap().push(r.index());
-            let r = box r as Var<VStore>;
-            cstore.alloc(box XEqYMulZ::new(r.bclone(), box bi, ri));
+            let r = Box::new(r) as Var<VStore>;
+            cstore.alloc(Box::new(XEqYMulZ::new(r.bclone(), Box::new(bi), ri)));
             resource_vars.push(r);
           }
         }
         //  sum( i in tasks where i != j )(...)
-        let sum = box Sum::new(resource_vars);
+        let sum = Box::new(Sum::new(resource_vars));
         // c >= r[j] + sum
-        cstore.alloc(box x_geq_y_plus_z(self.capacity_var(), self.resource_at(j), sum));
+        cstore.alloc(Box::new(x_geq_y_plus_z(self.capacity_var(), self.resource_at(j), sum)));
       }
     }
   }
@@ -170,7 +170,7 @@ mod test {
       vstore: &mut VStoreFD, constant: bool) -> Var<VStoreFD>
     {
       if dom.is_singleton() && constant {
-        box Constant::new(dom.lower())
+        Box::new(Constant::new(dom.lower()))
       }
       else {
         model.alloc_var(vstore, dom)
@@ -192,7 +192,7 @@ mod test {
       let resources = self.resources.into_iter()
         .map(|r| Self::create_var(r,model,vstore,constant)).collect();
       model.close_group();
-      let capacity = box vstore.alloc(self.capacity);
+      let capacity = Box::new(vstore.alloc(self.capacity));
       model.register_var(capacity.index(), String::from("c"));
 
       let mut cumulative = Cumulative::new(starts, durations, resources, capacity);

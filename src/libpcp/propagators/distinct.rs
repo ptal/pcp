@@ -30,7 +30,7 @@ pub fn join_distinct<VStore, CStore, Domain, Bound>(
 {
   for i in 0..vars.len()-1 {
     for j in i+1..vars.len() {
-      cstore.alloc(box XNeqY::new(vars[i].bclone(), vars[j].bclone()));
+      cstore.alloc(Box::new(XNeqY::new(vars[i].bclone(), vars[j].bclone())));
     }
   }
 }
@@ -59,7 +59,7 @@ impl<VStore, Domain, Bound> Distinct<VStore> where
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {
-        let i_neq_j = box XNeqY::new(vars[i].bclone(), vars[j].bclone()) as Formula<VStore>;
+        let i_neq_j = Box::new(XNeqY::new(vars[i].bclone(), vars[j].bclone())) as Formula<VStore>;
         props.push(i_neq_j);
       }
     }

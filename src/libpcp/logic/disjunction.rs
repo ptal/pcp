@@ -72,7 +72,7 @@ impl<VStore> NotFormula<VStore> for Disjunction<VStore> where
   /// Apply De Morgan's laws.
   fn not(&self) -> Formula<VStore> {
     let fs = self.fs.iter().map(|f| f.not()).collect();
-    box Conjunction::new(fs)
+    Box::new(Conjunction::new(fs))
   }
 }
 

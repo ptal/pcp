@@ -47,7 +47,7 @@ impl Model
     let loc = vstore.alloc(dom);
     let name = self.make_name();
     self.register_var(loc.index(), name);
-    box loc
+    Box::new(loc)
   }
 
   pub fn register_var(&mut self, var: usize, name: String) {

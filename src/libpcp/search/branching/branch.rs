@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
-use alloc::boxed::FnBox;
+// use std::boxed::FnBox;
 
 // A branch represents an edge between two distinct nodes in the search tree.
 // Each branch store a copy of the label of the current node.
@@ -26,13 +26,13 @@ pub struct Branch<Space> where
   Space: Freeze
 {
   label: <Space::FrozenState as Snapshot>::Label,
-  alternative: Box<FnBox(&mut Space)>
+  alternative: Box<Fn(&mut Space)>
 }
 
 impl<Space> Branch<Space> where
   Space: Freeze
 {
-  pub fn distribute(space: Space, alternatives: Vec<Box<FnBox(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
+  pub fn distribute(space: Space, alternatives: Vec<Box<Fn(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
     let mut immutable_space = space.freeze();
     let branches = alternatives.into_iter().map(|alt|
       Branch {
@@ -45,7 +45,7 @@ impl<Space> Branch<Space> where
 
   pub fn commit(self, space_from: Space::FrozenState) -> Space {
     let mut new = space_from.restore(self.label);
-    self.alternative.call_box((&mut new,));
+    (self.alternative)(&mut new);
     new
   }
 }

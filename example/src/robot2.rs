@@ -125,7 +125,7 @@ impl Robot {
   pub fn get_pipeting_duration_at_rank(&self, i: usize) -> Var<VStore> {
     match self.robot_type {
       RobotType::Simple => {
-        box Identity::new(self.durations[i])
+        Box::new(Identity::new(self.durations[i]))
       },
       RobotType::Duration{ref vdurations, ..} => {
         vdurations[i].bclone()
@@ -150,18 +150,18 @@ impl Robot {
       RobotType::Simple => {
         for t in 1..self.tasks.len() {
           space.cstore.alloc(
-            box x_greater_y(
+            Box::new(x_greater_y(
               self.start[t].bclone(),
-              box Addition::new(self.start[t - 1].bclone(), self.durations[t - 1] as i32)));
+              Box::new(Addition::new(self.start[t - 1].bclone(), self.durations[t - 1] as i32)))));
         }
       },
       RobotType::Duration{ref vdurations, ..} => {
         for t in 1..self.tasks.len() {
           space.cstore.alloc(
-            box x_geq_y_plus_z(
+            Box::new(x_geq_y_plus_z(
               self.start[t].bclone(),
               self.start[t - 1].bclone(),
-              vdurations[t - 1].bclone()));
+              vdurations[t - 1].bclone())));
         }
       },
     }
@@ -274,17 +274,17 @@ impl RobotScheduling
     }
     self.model.close_group();
     // Ls = 0 for the first robot to force it to start first
-    self.space.cstore.alloc(box XEqY::new(self.robots[0].start[0].bclone(), box Constant::new(1)));
+    self.space.cstore.alloc(Box::new(XEqY::new(self.robots[0].start[0].bclone(), Box::new(Constant::new(1)))));
 
     for i in 0..self.robots.len()*2 {
-      self.pipeting_resource.push(box Constant::new(1));
+      self.pipeting_resource.push(Box::new(Constant::new(1)));
     }
 
     let mut cumulative_pipeting = Cumulative::new(
       self.pipeting_start.iter().map(|v| v.bclone()).collect(),
       self.pipeting_duration.iter().map(|v| v.bclone()).collect(),
       self.pipeting_resource.iter().map(|v| v.bclone()).collect(),
-      box Constant::new(1)
+      Box::new(Constant::new(1))
     );
     cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
 

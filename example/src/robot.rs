@@ -140,26 +140,26 @@ impl RobotScheduling
       // Ensure that every task starts after the end time of the previous task. (S' >= S + D).
       for t in 0..DTASKS {
         self.space.cstore.alloc(
-          box x_geq_y_plus_z(
+          Box::new(x_geq_y_plus_z(
             self.start[i * TASKS + t + 1].bclone(),
             self.start[i * TASKS + t].bclone(),
-            self.duration[i * DTASKS + t].bclone()));
+            self.duration[i * DTASKS + t].bclone())));
       }
       self.model.inc_group();
     }
     self.model.close_group();
     // Ls = 0 for the first robot to force it to start first
-    self.space.cstore.alloc(box XEqY::new(self.start[0].bclone(), box Constant::new(1)));
+    self.space.cstore.alloc(Box::new(XEqY::new(self.start[0].bclone(), Box::new(Constant::new(1)))));
 
     for i in 0..self.num_robot*2 {
-      self.pipeting_resource.push(box Constant::new(1));
+      self.pipeting_resource.push(Box::new(Constant::new(1)));
     }
 
     let mut cumulative_pipeting = Cumulative::new(
       self.pipeting_start.iter().map(|v| v.bclone()).collect(),
       self.pipeting_duration.iter().map(|v| v.bclone()).collect(),
       self.pipeting_resource.iter().map(|v| v.bclone()).collect(),
-      box Constant::new(1)
+      Box::new(Constant::new(1))
     );
     cumulative_pipeting.join(&mut self.space.vstore, &mut self.space.cstore);
     let inter_tasks = cumulative_pipeting.intermediate_vars();

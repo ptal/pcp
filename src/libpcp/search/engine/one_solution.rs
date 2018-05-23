@@ -119,7 +119,6 @@ mod test {
   use search::branching::middle_val::*;
   use gcollections::VectorStack;
   use gcollections::ops::*;
-  use test::Bencher;
 
   #[test]
   fn example_nqueens() {
@@ -129,13 +128,6 @@ mod test {
     for i in 4..12 {
       test_nqueens(i, Satisfiable);
     }
-  }
-
-  #[bench]
-  fn bench_nqueens10(b: &mut Bencher) {
-    b.iter(|| {
-        test_nqueens(10, Satisfiable)
-    });
   }
 
   fn test_nqueens(n: usize, expect: Status<FDSpace>) {

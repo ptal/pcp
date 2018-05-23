@@ -46,7 +46,7 @@ pub fn x_geq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XGreate
   Domain: Collection<Item=Bound> + IntDomain,
   Bound: IntBound
 {
-  x_greater_y(box Addition::new(x, Bound::one()), y)
+  x_greater_y(Box::new(Addition::new(x, Bound::one())), y)
 }
 
 pub fn x_leq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XLessEqY<VStore> where
@@ -54,7 +54,7 @@ pub fn x_leq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XLessEq
   Domain: Collection<Item=Bound> + IntDomain,
   Bound: IntBound
 {
-  XLessY::new(x, box Addition::new(y, Bound::one()))
+  XLessY::new(x, Box::new(Addition::new(y, Bound::one())))
 }
 
 pub fn x_geq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
@@ -63,7 +63,7 @@ pub fn x_geq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
  Domain: Collection<Item=Bound> + IntDomain,
  Bound: IntBound
 {
-  XGreaterYPlusZ::new(box Addition::new(x, Bound::one()), y, z)
+  XGreaterYPlusZ::new(Box::new(Addition::new(x, Bound::one())), y, z)
 }
 
 pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
@@ -72,7 +72,7 @@ pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
  Domain: Collection<Item=Bound> + IntDomain,
  Bound: IntBound
 {
-  XLessYPlusZ::new(box Addition::new(x, -Bound::one()), y, z)
+  XLessYPlusZ::new(Box::new(Addition::new(x, -Bound::one())), y, z)
 }
 
 // #[cfg(test)]

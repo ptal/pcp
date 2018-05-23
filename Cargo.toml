@@ -1,7 +1,7 @@
 [package]
 
 name = "pcp"
-version = "0.2.1"
+version = "0.3.0"
 authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 
 [lib]
@@ -12,8 +12,8 @@ crate_type = ["rlib", "dylib"]
 
 [dependencies]
 
-intervallum = "^0.6.5"
-gcollections = "^0.3.5"
+intervallum = "^1.0.0"
+gcollections = "^1.0.0"
 num = "^0.1.29"
 bit-set = "^0.4.0"
 

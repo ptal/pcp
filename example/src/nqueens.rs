@@ -31,7 +31,7 @@ pub fn nqueens(n: usize) {
   let mut queens = vec![];
   // 2 queens can't share the same line.
   for _ in 0..n {
-    queens.push(box space.vstore.alloc(IntervalSet::new(1, n as i32)) as Var<VStore>);
+    queens.push(Box::new(space.vstore.alloc(IntervalSet::new(1, n as i32))) as Var<VStore>);
   }
   for i in 0..n-1 {
     for j in i + 1..n {
@@ -39,16 +39,16 @@ pub fn nqueens(n: usize) {
       let q1 = (i + 1) as i32;
       let q2 = (j + 1) as i32;
       // Xi + i != Xj + j reformulated as: Xi != Xj + j - i
-      space.cstore.alloc(box XNeqY::new(
-        queens[i].bclone(), box Addition::new(queens[j].bclone(), q2 - q1) as Var<VStore>));
+      space.cstore.alloc(Box::new(XNeqY::new(
+        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), q2 - q1)) as Var<VStore>));
       // Xi - i != Xj - j reformulated as: Xi != Xj - j + i
-      space.cstore.alloc(box XNeqY::new(
-        queens[i].bclone(), box Addition::new(queens[j].bclone(), -q2 + q1) as Var<VStore>));
+      space.cstore.alloc(Box::new(XNeqY::new(
+        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), -q2 + q1)) as Var<VStore>));
     }
   }
   // 2 queens can't share the same column.
   join_distinct(&mut space.vstore, &mut space.cstore, queens);
-  // space.cstore.alloc(box Distinct::new(queens));
+  // space.cstore.alloc(Box::new(Distinct::new(queens)));
 
   // Search step.
   let mut search = one_solution_engine();

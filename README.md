@@ -6,15 +6,19 @@ Constraint Programming Library
 [travis-image]: https://travis-ci.org/ptal/pcp.png
 [travis]: https://travis-ci.org/ptal/pcp
 
-Compiled on the nightly channel of Rust. Use [rustup](http://www.rustup.rs) for managing compiler channels. Download the exact same version of the compiler used for PCP with `rustup override add nightly-2017-11-28`.
+PCP is a library in *stable Rust* to model constraint satisfaction problems (CSPs) in the constraint programming paradigm.
+Constraint programming is a paradigm for expressing problems in terms of mathematical relations, called constraints, over variables (e.g. `x > y`).
+Constraints are an intuitive approach to naturally describe many real-world problems which initially emerged as a subfield of artificial intelligence and operational research.
+The flagship applications in constraint programming encompass scheduling, configuration and vehicles routing problems.
+Constraints are also applied to various other domains such as in music, biology and model checking.
 
-PCP Constraint Programming library will make you feel NP like P.
-
-Or not. It is first designed to elegantly solve the *entailment problem* in a generic framework. I also explore a "store"-based design where the variables, constraints and spaces are stored in concrete structures – I feel that this design will be clearer but it is highly experimental.
+It is a programming paradigm in its own right and being able to program in Rust is not sufficient to master the art of constraint programming.
+This is why I strongly recommend the class [Basic Modeling for Discrete Optimization](https://www.coursera.org/learn/basic-modeling) for those who wants to learn this paradigm.
+Meanwhile you can already look at the [documentation](https://docs.rs/crate/pcp/1.0.0) for a running example.
 
 ### References
 
-Existing library are an invaluable source of inspiration:
+Existing libraries are an invaluable source of inspiration:
 
 * The [csar](https://github.com/soli/csar) Rust library by Sylvain Soliman helped me to get started.
 * And for a lot of reasons the following libraries are also interesting: [GeCode](http://www.gecode.org/), [Choco](http://choco.sourceforge.net/), [Minion](http://minion.sourceforge.net/),...

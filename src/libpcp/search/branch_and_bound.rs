@@ -67,10 +67,10 @@ impl<C, Bound, Dom, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R
     -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
   {
     if let Some(bound) = self.value.clone() {
-      let bound = box Constant::new(bound) as Var<VStore>;
+      let bound = Box::new(Constant::new(bound)) as Var<VStore>;
       match self.mode {
-        Mode::Minimize => current.cstore.alloc(box XLessY::new(self.var.bclone(), bound.bclone())),
-        Mode::Maximize => current.cstore.alloc(box x_greater_y(self.var.bclone(), bound.bclone())),
+        Mode::Minimize => current.cstore.alloc(Box::new(XLessY::new(self.var.bclone(), bound.bclone()))),
+        Mode::Maximize => current.cstore.alloc(Box::new(x_greater_y(self.var.bclone(), bound.bclone()))),
       };
     }
     let (mut immutable_state, status) = self.child.enter(current);
@@ -112,7 +112,7 @@ impl<C, Bound, Dom, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R
 //     let mut space = FDSpace::empty();
 //     let x = space.vstore.alloc((0,10).to_interval_set());
 //     let y = space.vstore.alloc((0,10).to_interval_set());
-//     space.cstore.alloc(box XLessY::new(x.clone(), y));
+//     space.cstore.alloc(Box::new(XLessY::new(x.clone(), y)));
 
 //     let mut search: AllSolution<OneSolution<_, VectorStack<_>, FDSpace>>
 //       = AllSolution::new(
