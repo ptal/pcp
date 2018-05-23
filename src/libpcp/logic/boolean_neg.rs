@@ -14,6 +14,7 @@
 
 /// This class implements the negation of boolean value (not arbritrary formula, for which the negation can be obtained with `f.not()`).
 
+use trilean::SKleene;
 use kernel::*;
 use model::*;
 use logic::{Boolean, NotFormula};
@@ -81,7 +82,7 @@ impl<VStore, Dom, Bound> Subsumption<VStore> for BooleanNeg<VStore> where
   Dom: Bounded<Item=Bound> + IsSingleton,
   Bound: Num
 {
-  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
+  fn is_subsumed(&self, vstore: &VStore) -> SKleene {
     !self.b.is_subsumed(vstore)
   }
 }

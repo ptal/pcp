@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
-use kernel::Trilean::*;
+use trilean::SKleene::*;
 use search::space::*;
 use search::search_tree_visitor::*;
 use concept::*;

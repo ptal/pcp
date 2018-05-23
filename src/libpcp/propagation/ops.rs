@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::Trilean;
+use trilean::SKleene;
 
 pub trait Subsumption<Store>
 {
-  fn is_subsumed(&self, store: &Store) -> Trilean;
+  fn is_subsumed(&self, store: &Store) -> SKleene;
 }
 
 pub trait Propagator<VStore>

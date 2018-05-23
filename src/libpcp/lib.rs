@@ -83,6 +83,7 @@
 //! }
 //! ```
 
+extern crate trilean;
 extern crate interval;
 extern crate gcollections;
 extern crate num;

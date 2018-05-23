@@ -79,7 +79,7 @@ pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
 // mod test {
 //   use super::*;
 //   use kernel::*;
-//   use kernel::Trilean::*;
+//   use trilean::SKleene::*;
 //   use propagation::events::*;
 //   use propagation::events::FDEvent::*;
 //   use interval::interval::*;
@@ -106,7 +106,7 @@ pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
 //   }
 
 //   fn x_greater_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     binary_propagator_test(test_num, x_greater_y, x, y, before, after, delta_expected, propagate_success);
@@ -131,7 +131,7 @@ pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: 
 //   }
 
 //   fn x_geq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     binary_propagator_test(test_num, x_geq_y::<_,_,i32>, x, y, before, after, delta_expected, propagate_success);

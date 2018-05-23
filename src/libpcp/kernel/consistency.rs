@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::trilean::Trilean;
+use trilean::SKleene;
 
 pub trait Consistency<VStore> {
-  fn consistency(&mut self, store: &mut VStore) -> Trilean;
+  fn consistency(&mut self, store: &mut VStore) -> SKleene;
 }

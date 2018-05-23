@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use kernel::*;
-// use std::boxed::FnBox;
 
 // A branch represents an edge between two distinct nodes in the search tree.
 // Each branch store a copy of the label of the current node.

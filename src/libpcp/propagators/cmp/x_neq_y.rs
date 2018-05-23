@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use trilean::SKleene;
 use kernel::*;
 use model::*;
 use logic::*;
@@ -66,7 +67,7 @@ impl<VStore> Subsumption<VStore> for XNeqY<VStore> where
  VStore: Collection,
  XEqY<VStore>: Subsumption<VStore>
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
     !XEqY::new(self.x.bclone(), self.y.bclone()).is_subsumed(store)
   }
 }
@@ -104,7 +105,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XNeqY<VStore> where
 // #[cfg(test)]
 // mod test {
 //   use super::*;
-//   use kernel::Trilean::*;
+//   use trilean::SKleene::*;
 //   use propagation::events::FDEvent::*;
 //   use interval::interval::*;
 //   use propagators::test::*;
@@ -131,7 +132,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XNeqY<VStore> where
 //   }
 
 //   fn x_neq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     binary_propagator_test(test_num, XNeqY::new, x, y, before, after, delta_expected, propagate_success);

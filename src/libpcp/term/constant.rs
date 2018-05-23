@@ -72,7 +72,8 @@ impl<V> ViewDependencies<FDEvent> for Constant<V>
 // #[cfg(test)]
 // mod test {
 //   use super::*;
-//   use kernel::trilean::Trilean::*;
+//   use trilean::SKleene;
+//   use trilean::SKleene::*;
 //   use propagation::*;
 //   use propagation::events::FDEvent;
 //   use propagation::events::FDEvent::*;
@@ -124,7 +125,7 @@ impl<V> ViewDependencies<FDEvent> for Constant<V>
 //   }
 
 //   fn unary_propagator_test_one<P, R>(id: u32, x: Interval<i32>, c: i32, make_prop: P,
-//     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool) where
+//     before: SKleene, after: SKleene, expected: Vec<(usize, FDEvent)>, update_success: bool) where
 //    P: FnOnce(FDVar, Constant<i32>) -> R,
 //    R: Propagator<VStore> + Subsumption<VStore>
 //   {

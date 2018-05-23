@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use trilean::SKleene;
 use kernel::*;
 use model::*;
 use logic::{NotFormula, BooleanNeg};
@@ -106,8 +107,8 @@ impl<VStore, Dom, Bound> Subsumption<VStore> for Boolean<VStore> where
   Dom: Bounded<Item=Bound> + IsSingleton,
   Bound: Num
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
-    use kernel::Trilean::*;
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
+    use trilean::SKleene::*;
     let x = self.var.read(store);
     if x.is_singleton() {
       if x.lower() == Bound::one() {

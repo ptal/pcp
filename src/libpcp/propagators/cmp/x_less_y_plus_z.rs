@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use kernel::*;
-use kernel::Trilean::*;
+use trilean::SKleene;
+use trilean::SKleene::*;
 use model::*;
 use logic::*;
 use propagators::{x_geq_y_plus_z};
@@ -72,7 +73,7 @@ impl<VStore, Dom, Bound> Subsumption<VStore> for XLessYPlusZ<VStore> where
   Dom: Bounded<Item=Bound>,
   Bound: PartialOrd + Num
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
     // False: min(X) >= max(Y) + max(Z)
     // True: max(X) < min(Y) + min(Z)
     // Unknown: Everything else.
@@ -146,7 +147,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XLessYPlusZ<VStore>
 
 //   fn x_less_y_plus_z_test_one(test_num: u32,
 //     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     trinary_propagator_test(test_num, XLessYPlusZ::new, x, y, z, before, after, delta_expected, propagate_success);

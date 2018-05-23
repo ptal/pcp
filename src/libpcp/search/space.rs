@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub use search::recomputation::*;
+use trilean::SKleene;
 use kernel::*;
 use gcollections::ops::*;
 use std::marker::PhantomData;
@@ -37,7 +38,7 @@ impl<VStore, CStore, Restoration> Space<VStore, CStore, Restoration>
 impl<VStore, CStore, Restoration> Space<VStore, CStore, Restoration> where
   CStore: Consistency<VStore>
 {
-  pub fn consistency(&mut self) -> Trilean {
+  pub fn consistency(&mut self) -> SKleene {
     self.cstore.consistency(&mut self.vstore)
   }
 }

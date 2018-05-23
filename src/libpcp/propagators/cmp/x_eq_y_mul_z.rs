@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use kernel::*;
-use kernel::Trilean::*;
+use trilean::SKleene;
+use trilean::SKleene::*;
 use model::*;
 use logic::*;
 use propagation::*;
@@ -70,7 +71,7 @@ impl<VStore, Dom> Subsumption<VStore> for XEqYMulZ<VStore> where
   VStore: Collection<Item=Dom>,
   Dom: Bounded + IsSingleton + Mul<Output=Dom> + Overlap
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
     // False: x and y*z do not overlap.
     // True: x and y*z are singletons and equal.
     // Unknown: x and y*z overlap but are not singletons.
@@ -142,7 +143,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqYMulZ<VStore>
 
 //   fn x_eq_y_mul_z_test_one(test_num: u32,
 //     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     trinary_propagator_test(test_num, XEqYMulZ::new, x, y, z, before, after, delta_expected, propagate_success);

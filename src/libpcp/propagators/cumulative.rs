@@ -124,7 +124,8 @@ impl<VStore, Domain, Bound> Cumulative<VStore> where
 mod test {
   use super::*;
   use kernel::*;
-  use kernel::Trilean::*;
+  use trilean::SKleene;
+  use trilean::SKleene::*;
   use variable::VStoreCopy;
   use propagation::CStoreFD;
   use interval::interval::*;
@@ -200,7 +201,7 @@ mod test {
     }
 
     // The boolean "constant" indicates if we transform the singleton domains into constant terms or not.
-    fn test(self, test_num: usize, before: Trilean, after: Trilean, constant: bool) {
+    fn test(self, test_num: usize, before: SKleene, after: SKleene, constant: bool) {
       println!("Test number {}", test_num);
       let mut vstore = VStoreFD::empty();
       let mut cstore = CStoreFD::empty();
@@ -212,7 +213,7 @@ mod test {
       assert_eq!(cstore.is_subsumed(&vstore), after);
     }
 
-    fn test_assignment(self, test_num: usize, expected: Trilean, constant: bool) {
+    fn test_assignment(self, test_num: usize, expected: SKleene, constant: bool) {
       // Unknown because cumulative introduces new variables not fixed.
       self.test(test_num, Unknown, expected, constant);
     }

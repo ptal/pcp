@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use trilean::SKleene;
 use kernel::*;
 use model::*;
 use logic::{NotFormula, Conjunction};
@@ -78,8 +79,8 @@ impl<VStore> NotFormula<VStore> for Disjunction<VStore> where
 
 impl<VStore> Subsumption<VStore> for Disjunction<VStore>
 {
-  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
-    use kernel::Trilean::*;
+  fn is_subsumed(&self, vstore: &VStore) -> SKleene {
+    use trilean::SKleene::*;
     let mut all_disentailed = true;
     for f in &self.fs {
       match f.is_subsumed(vstore) {
@@ -96,7 +97,7 @@ impl<VStore> Subsumption<VStore> for Disjunction<VStore>
 impl<VStore> Propagator<VStore> for Disjunction<VStore>
 {
   fn propagate(&mut self, vstore: &mut VStore) -> bool {
-    use kernel::Trilean::*;
+    use trilean::SKleene::*;
     let mut num_disentailed = 0;
     let mut unknown_formula = 0;
     for (i, f) in self.fs.iter().enumerate() {

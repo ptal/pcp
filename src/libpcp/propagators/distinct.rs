@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use trilean::SKleene;
 use model::*;
 use logic::*;
 use propagators::cmp::x_neq_y::*;
@@ -98,7 +99,7 @@ impl<VStore> DisplayStateful<Model> for Distinct<VStore>
 
 impl<VStore> Subsumption<VStore> for Distinct<VStore>
 {
-  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
+  fn is_subsumed(&self, vstore: &VStore) -> SKleene {
     self.conj.is_subsumed(vstore)
   }
 }
@@ -143,7 +144,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for Distinct<VStore>
 //   }
 
 //   fn distinct_test_one(test_num: u32, doms: Vec<Interval<i32>>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     nary_propagator_test(test_num, Distinct::new, doms, before, after, delta_expected, propagate_success);

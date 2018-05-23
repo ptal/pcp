@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use kernel::*;
+use trilean::SKleene;
 use model::*;
 use logic::*;
 use propagators::cmp::{XGreaterEqYPlusZ, XLessEqYPlusZ, x_geq_y_plus_z, x_leq_y_plus_z};
@@ -59,7 +60,7 @@ impl<VStore> Subsumption<VStore> for XEqYPlusZ<VStore> where
   XGreaterEqYPlusZ<VStore>: Subsumption<VStore>,
   XLessEqYPlusZ<VStore>: Subsumption<VStore>,
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
     self.geq.is_subsumed(store).and(self.leq.is_subsumed(store))
   }
 }
@@ -100,7 +101,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqYPlusZ<VStore> where
 // #[cfg(test)]
 // mod test {
 //   use super::*;
-//   use kernel::Trilean::*;
+//   use trilean::SKleene::*;
 //   use propagation::events::FDEvent::*;
 //   use interval::interval::*;
 //   use propagators::test::*;
@@ -126,7 +127,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqYPlusZ<VStore> where
 
 //   fn x_eq_y_plus_z_test_one(test_num: u32,
 //     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     trinary_propagator_test(test_num, XEqYPlusZ::<_,_,_,i32>::new, x, y, z, before, after, delta_expected, propagate_success);

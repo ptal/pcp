@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use kernel::*;
-use kernel::Trilean::*;
+use trilean::SKleene;
+use trilean::SKleene::*;
 use model::*;
 use logic::*;
 use propagators::XNeqY;
@@ -68,7 +69,7 @@ impl<VStore, Dom, Bound> Subsumption<VStore> for XEqY<VStore> where
   Dom: Bounded<Item=Bound> + Disjoint,
   Bound: PartialOrd
 {
-  fn is_subsumed(&self, store: &VStore) -> Trilean {
+  fn is_subsumed(&self, store: &VStore) -> SKleene {
     // False:
     // |--|
     //     |--|
@@ -141,7 +142,7 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqY<VStore>
 //   }
 
 //   fn x_eq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
 //   {
 //     binary_propagator_test(test_num, XEqY::new, x, y, before, after, delta_expected, propagate_success);

@@ -15,7 +15,8 @@
 //! Represents the *constraint store* which is a conjunction of constraints, it also comes with an algorithm checking the consistency of the store. It is not a complete method for solving a constraint problem because the output can be `Unknown`. A complete solver is obtained using a search algorithm on top of the consistency algorithm.
 
 use kernel::*;
-use kernel::Trilean::*;
+use trilean::SKleene;
+use trilean::SKleene::*;
 use model::*;
 use propagation::Reactor;
 use propagation::Scheduler;
@@ -169,7 +170,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     true
   }
 
-  fn propagator_consistency(&mut self, p_idx: usize, vstore: &mut VStore) -> Trilean {
+  fn propagator_consistency(&mut self, p_idx: usize, vstore: &mut VStore) -> SKleene {
     if self[p_idx].propagate(vstore) {
       self[p_idx].is_subsumed(vstore)
     } else {
@@ -229,7 +230,7 @@ impl<VStore, Event, R, S> Alloc for Store<VStore, Event, R, S>
 
 impl<VStore, Event, R, S> Subsumption<VStore> for Store<VStore, Event, R, S>
 {
-  fn is_subsumed(&self, vstore: &VStore) -> Trilean {
+  fn is_subsumed(&self, vstore: &VStore) -> SKleene {
     self.propagators.iter()
     .fold(True, |x,p| x.and(p.is_subsumed(vstore)))
   }
@@ -241,7 +242,7 @@ impl<VStore, Event, R, S> Consistency<VStore> for Store<VStore, Event, R, S> whe
  R: Reactor + Cardinality<Size=usize>,
  S: Scheduler
 {
-  fn consistency(&mut self, vstore: &mut VStore) -> Trilean {
+  fn consistency(&mut self, vstore: &mut VStore) -> SKleene {
     self.prepare(vstore);
     let consistent = self.propagation_loop(vstore);
     if !consistent { False }
@@ -319,7 +320,7 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 // #[cfg(test)]
 // mod test {
 //   use kernel::*;
-//   use kernel::Trilean::*;
+//   use trilean::SKleene::*;
 //   use variable::VStoreFD;
 //   use propagation::*;
 //   use propagators::cmp::*;
@@ -352,7 +353,7 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 //     assert_eq!(constraints.consistency(variables), True);
 //   }
 
-//   fn chained_lt(n: usize, expect: Trilean) {
+//   fn chained_lt(n: usize, expect: SKleene) {
 //     // X1 < X2 < X3 < ... < XN, all in dom [1, 10]
 //     let variables: &mut VStore = &mut VStore::empty();
 //     let mut constraints: CStore = CStore::empty();
@@ -384,7 +385,7 @@ impl<VStore, Event, R, S> Snapshot for FrozenStore<VStore, Event, R, S> where
 //     nqueens(4, Unknown);
 //   }
 
-//   fn nqueens(n: usize, expect: Trilean) {
+//   fn nqueens(n: usize, expect: SKleene) {
 //     let variables: &mut VStore = &mut VStore::empty();
 //     let mut constraints: CStore = CStore::empty();
 //     let mut queens = vec![];

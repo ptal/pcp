@@ -27,8 +27,8 @@ pub use propagators::distinct::*;
 // #[cfg(test)]
 // pub mod test
 // {
-//   use kernel::Trilean;
-//   use kernel::Trilean::*;
+//   use trilean::SKleene;
+//   use trilean::SKleene::*;
 //   use propagation::*;
 //   use gcollections::ops::*;
 //   use std::fmt::Debug;
@@ -44,7 +44,7 @@ pub use propagators::distinct::*;
 //              test_no, msg, prop, before, after)
 //   }
 
-//   fn status_inclusion(s1: Trilean, s2: Trilean) -> bool {
+//   fn status_inclusion(s1: SKleene, s2: SKleene) -> bool {
 //     match s1 {
 //       True => s2 == True,
 //       False => s2 == False,
@@ -112,7 +112,7 @@ pub use propagators::distinct::*;
 //   pub type FDVar = Identity<Interval<i32>>;
 
 //   pub fn subsumption_propagate<P>(test_num: u32, mut prop: P, store: &mut VStore,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
 //    P: Propagator<VStore> + Subsumption<VStore>
 //   {
@@ -126,7 +126,7 @@ pub use propagators::distinct::*;
 //   }
 
 //   pub fn binary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, x: Interval<i32>, y: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
 //    P: Propagator<VStore> + Subsumption<VStore>,
 //    FnProp: FnOnce(FDVar, FDVar) -> P
@@ -140,7 +140,7 @@ pub use propagators::distinct::*;
 
 //   pub fn trinary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp,
 //     x: Interval<i32>, y: Interval<i32>, z: Interval<i32>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
 //    P: Propagator<VStore> + Subsumption<VStore>,
 //    FnProp: FnOnce(FDVar, FDVar, FDVar) -> P
@@ -154,7 +154,7 @@ pub use propagators::distinct::*;
 //   }
 
 //   pub fn nary_propagator_test<P, FnProp>(test_num: u32, make_prop: FnProp, doms: Vec<Interval<i32>>,
-//     before: Trilean, after: Trilean,
+//     before: SKleene, after: SKleene,
 //     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
 //    P: Propagator<VStore> + Subsumption<VStore>,
 //    FnProp: FnOnce(Vec<FDVar>) -> P

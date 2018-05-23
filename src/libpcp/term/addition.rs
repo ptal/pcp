@@ -108,7 +108,7 @@ impl<VStore> ViewDependencies<FDEvent> for Addition<VStore> where
 // mod test {
 //   use super::*;
 //   use gcollections::ops::*;
-//   use kernel::trilean::Trilean::*;
+//   use trilean::SKleene::*;
 //   use variable::VStoreFD;
 //   use propagation::events::FDEvent;
 //   use propagation::events::FDEvent::*;
@@ -137,7 +137,7 @@ impl<VStore> ViewDependencies<FDEvent> for Addition<VStore> where
 //   }
 
 //   fn x_less_y_plus_c_test_one(id: u32, x: Domain, y: Domain, c: i32,
-//     before: Trilean, after: Trilean, expected: Vec<(usize, FDEvent)>, update_success: bool)
+//     before: SKleene, after: SKleene, expected: Vec<(usize, FDEvent)>, update_success: bool)
 //   {
 //     let mut store = VStore::empty();
 //     let x = store.alloc(x);

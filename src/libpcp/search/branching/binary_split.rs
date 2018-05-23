@@ -58,7 +58,7 @@ pub mod test {
   use search::branching::Distributor;
   use search::branching::MiddleVal;
   use term::ops::*;
-  use kernel::trilean::Trilean::*;
+  use trilean::SKleene::*;
   use search::*;
   use interval::interval_set::*;
   use interval::ops::Range;
