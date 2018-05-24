@@ -37,10 +37,7 @@
 //    * Pipeting unit use by Loading and Put operations
 //    * Mixing unit use by Take and Put operations
 
-
 #![allow(unused_variables, non_snake_case, dead_code)]
-
-extern crate test;
 
 //use env_logger;
 use pcp::kernel::*;
@@ -55,7 +52,6 @@ use interval::interval_set::*;
 use interval::ops::Range;
 use gcollections::ops::*;
 use pcp::term::*;
-use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
 use pcp::model::*;
 use pcp::concept::*;
@@ -228,6 +224,7 @@ impl Display for RobotScheduling
 }
 
 #[cfg(test)]
+#[cfg(feature = "nightly")]
 mod tests {
   use super::*;
   use test::Bencher;

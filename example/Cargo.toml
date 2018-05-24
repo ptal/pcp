@@ -11,3 +11,6 @@ license = "Apache-2.0"
 intervallum = "^1.0.0"
 gcollections = "^1.0.0"
 pcp = { path = "../" }
+
+[features]
+nightly = []

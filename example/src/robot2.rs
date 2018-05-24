@@ -40,22 +40,19 @@
 
 #![allow(unused_variables, non_snake_case, dead_code)]
 
-extern crate test;
-
 //use env_logger;
 use pcp::kernel::*;
 use pcp::propagators::*;
 use pcp::search::*;
 use pcp::search::branching::*;
 use pcp::search::engine::one_solution::*;
-use pcp::search::debugger::*;
+// use pcp::search::debugger::*;
 use pcp::search::propagation::*;
 use gcollections::VectorStack;
 use interval::interval_set::*;
 use interval::ops::Range;
 use gcollections::ops::*;
 use pcp::term::*;
-use pcp::term::ops::*;
 use pcp::propagators::cumulative::Cumulative;
 use pcp::model::*;
 use pcp::concept::*;
@@ -358,15 +355,4 @@ impl Display for RobotScheduling
     }
     Ok(())
   }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-  use test::Bencher;
-
-  // #[bench]
-  // fn bench_schedule_2(b: &mut Bencher) {
-  //   b.iter(|| RobotScheduling::new(2, 500).solve());
-  // }
 }

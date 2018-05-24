@@ -15,14 +15,16 @@
 // This example example of PCP use.
 //
 // to run all example : cargo run.
-// to test : cargo test -- --nocapture
-// to bench: cargo bench
+// to test : cargo test --features="nightly" -- --nocapture
+// to bench: cargo bench --features="nightly"
 
-#![feature(test, box_syntax)]
+#![cfg_attr(feature = "nightly", feature(test))]
+
 extern crate pcp;
 extern crate interval;
 extern crate gcollections;
-extern crate test;
+
+#[cfg(feature = "nightly")] extern crate test;
 
 mod nqueens;
 mod robot;
@@ -31,9 +33,8 @@ mod robot2;
 
 use nqueens::nqueens;
 
-
 fn main() {
-//  nqueens(100);
+   nqueens(8);
 //  let robot = robot::RobotScheduling::new(3, 500).solve();
 //  println!("{}", robot);
 
