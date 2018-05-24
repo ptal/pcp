@@ -40,10 +40,10 @@ pub fn nqueens(n: usize) {
       let q2 = (j + 1) as i32;
       // Xi + i != Xj + j reformulated as: Xi != Xj + j - i
       space.cstore.alloc(Box::new(XNeqY::new(
-        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), q2 - q1)) as Var<VStore>));
+        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), q2 - q1)) as Var<VStore>)));
       // Xi - i != Xj - j reformulated as: Xi != Xj - j + i
       space.cstore.alloc(Box::new(XNeqY::new(
-        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), -q2 + q1)) as Var<VStore>));
+        queens[i].bclone(), Box::new(Addition::new(queens[j].bclone(), -q2 + q1)) as Var<VStore>)));
     }
   }
   // 2 queens can't share the same column.
