@@ -6,7 +6,7 @@ Constraint Programming Library
 [travis-image]: https://travis-ci.org/ptal/pcp.png
 [travis]: https://travis-ci.org/ptal/pcp
 
-PCP is a library in *stable Rust* to model constraint satisfaction problems (CSPs) in the constraint programming paradigm.
+PCP is a library to model constraint satisfaction problems (CSPs) in the constraint programming paradigm.
 Constraint programming is a paradigm for expressing problems in terms of mathematical relations, called constraints, over variables (e.g. `x > y`).
 Constraints are an intuitive approach to naturally describe many real-world problems which initially emerged as a subfield of artificial intelligence and operational research.
 The flagship applications in constraint programming encompass scheduling, configuration and vehicles routing problems.
@@ -15,6 +15,8 @@ Constraints are also applied to various other domains such as in music, biology 
 It is a programming paradigm in its own right and being able to program in Rust is not sufficient to master the art of constraint programming.
 This is why I strongly recommend the class [Basic Modeling for Discrete Optimization](https://www.coursera.org/learn/basic-modeling) for those who wants to learn this paradigm.
 Meanwhile you can already look at the [documentation](https://docs.rs/crate/pcp/1.0.0) for a running example.
+
+PCP compiles on the *stable Rust* channel.
 
 ### References
 

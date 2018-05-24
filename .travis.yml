@@ -17,7 +17,7 @@ env:
     - secure: dIur06XYomBukvYR0aymt8D6YQpTGYvejZtInEmjOdnWziJJZmQ+HuTXMnXrrwFEFSC21uQfgBwhlItwcEzFu1ydx1LlxuUZh8sFjTFFrCWo3hRpyb4JGCAwoNvUZ1/d7MwHjGxjzFtMvnVPyo/wHlE2xgkWHZqmJfDgGkkpBuk=
 
 language: rust
-rust: nightly
+rust: stable
 script:
   - cargo build
   - cargo test
