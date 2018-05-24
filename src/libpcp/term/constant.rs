@@ -69,69 +69,70 @@ impl<V> ViewDependencies<FDEvent> for Constant<V>
   }
 }
 
-// #[cfg(test)]
-// mod test {
-//   use super::*;
-//   use trilean::SKleene;
-//   use trilean::SKleene::*;
-//   use propagation::*;
-//   use propagation::events::FDEvent;
-//   use propagation::events::FDEvent::*;
-//   use variable::VStoreFD;
-//   use propagators::test::*;
-//   use propagators::cmp::*;
-//   use interval::interval::*;
+#[cfg(test)]
+mod test {
+  use super::*;
+  use trilean::SKleene;
+  use trilean::SKleene::*;
+  use propagation::*;
+  use propagation::events::FDEvent;
+  use propagation::events::FDEvent::*;
+  use concept::*;
+  use variable::VStoreFD;
+  use propagators::test::*;
+  use propagators::cmp::*;
+  use interval::interval::*;
 
-//   type VStore = VStoreFD;
+  type VStore = VStoreFD;
 
-//   #[test]
-//   fn x_less_constant() {
-//     let dom0_10 = (0,10).to_interval();
-//     let dom0_4 = (0,4).to_interval();
-//     let mut store = VStore::empty();
-//     let x = store.alloc(dom0_10);
-//     let c: Constant<i32> = Constant::new(5);
+  #[test]
+  fn x_less_constant() {
+    let dom0_10 = (0,10).to_interval();
+    let dom0_4 = (0,4).to_interval();
+    let mut store = VStore::empty();
+    let x = Box::new(store.alloc(dom0_10)) as Var<VStore>;
+    let c = Box::new(Constant::new(5 as i32)) as Var<VStore>;
 
-//     let x_less_c = XLessY::new(x, c);
-//     subsumption_propagate(1, x_less_c, &mut store, Unknown, True, vec![(0, Bound)], true);
-//     assert_eq!(x.read(&store), dom0_4);
-//   }
+    let x_less_c = XLessY::new(x.bclone(), c);
+    test_propagation(1, x_less_c, &mut store, Unknown, True, vec![(0, Bound)], true);
+    assert_eq!(x.read(&store), dom0_4);
+  }
 
-//   #[test]
-//   fn unary_propagator_test() {
-//     let dom0_10 = (0,10).to_interval();
-//     let dom0_0 = (0,0).to_interval();
+  #[test]
+  fn unary_propagator_test() {
+    let dom0_10 = (0,10).to_interval();
+    let dom0_0 = (0,0).to_interval();
 
-//     unary_propagator_test_one(1, dom0_10, 0, XLessY::new, False, False, vec![], false);
-//     unary_propagator_test_one(2, dom0_10, 11, XLessY::new, True, True, vec![], true);
-//     unary_propagator_test_one(3, dom0_10, 10, XLessY::new, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(1, dom0_10, 0, XLessY::new, False, False, vec![], false);
+    unary_propagator_test_one(2, dom0_10, 11, XLessY::new, True, True, vec![], true);
+    unary_propagator_test_one(3, dom0_10, 10, XLessY::new, Unknown, True, vec![(0, Bound)], true);
 
-//     unary_propagator_test_one(4, dom0_10, -1, x_leq_y::<_,_,i32>, False, False, vec![], false);
-//     unary_propagator_test_one(5, dom0_10, 10, x_leq_y::<_,_,i32>, True, True, vec![], true);
-//     unary_propagator_test_one(6, dom0_10, 9, x_leq_y::<_,_,i32>, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(4, dom0_10, -1, x_leq_y, False, False, vec![], false);
+    unary_propagator_test_one(5, dom0_10, 10, x_leq_y, True, True, vec![], true);
+    unary_propagator_test_one(6, dom0_10, 9, x_leq_y, Unknown, True, vec![(0, Bound)], true);
 
-//     unary_propagator_test_one(7, dom0_10, 10, x_greater_y, False, False, vec![], false);
-//     unary_propagator_test_one(8, dom0_10, -1, x_greater_y, True, True, vec![], true);
-//     unary_propagator_test_one(9, dom0_10, 0, x_greater_y, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(7, dom0_10, 10, x_greater_y, False, False, vec![], false);
+    unary_propagator_test_one(8, dom0_10, -1, x_greater_y, True, True, vec![], true);
+    unary_propagator_test_one(9, dom0_10, 0, x_greater_y, Unknown, True, vec![(0, Bound)], true);
 
-//     unary_propagator_test_one(10, dom0_10, 11, x_geq_y::<_,_,i32>, False, False, vec![], false);
-//     unary_propagator_test_one(11, dom0_10, 0, x_geq_y::<_,_,i32>, True, True, vec![], true);
-//     unary_propagator_test_one(12, dom0_10, 1, x_geq_y::<_,_,i32>, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(10, dom0_10, 11, x_geq_y, False, False, vec![], false);
+    unary_propagator_test_one(11, dom0_10, 0, x_geq_y, True, True, vec![], true);
+    unary_propagator_test_one(12, dom0_10, 1, x_geq_y, Unknown, True, vec![(0, Bound)], true);
 
-//     unary_propagator_test_one(13, dom0_0, 0, XNeqY::new, False, False, vec![], false);
-//     unary_propagator_test_one(14, dom0_10, 5, XNeqY::new, Unknown, Unknown, vec![], true);
-//     unary_propagator_test_one(15, dom0_10, 0, XNeqY::new, Unknown, True, vec![(0, Bound)], true);
-//     unary_propagator_test_one(16, dom0_10, 10, XNeqY::new, Unknown, True, vec![(0, Bound)], true);
-//   }
+    unary_propagator_test_one(13, dom0_0, 0, XNeqY::new, False, False, vec![], false);
+    unary_propagator_test_one(14, dom0_10, 5, XNeqY::new, Unknown, Unknown, vec![], true);
+    unary_propagator_test_one(15, dom0_10, 0, XNeqY::new, Unknown, True, vec![(0, Bound)], true);
+    unary_propagator_test_one(16, dom0_10, 10, XNeqY::new, Unknown, True, vec![(0, Bound)], true);
+  }
 
-//   fn unary_propagator_test_one<P, R>(id: u32, x: Interval<i32>, c: i32, make_prop: P,
-//     before: SKleene, after: SKleene, expected: Vec<(usize, FDEvent)>, update_success: bool) where
-//    P: FnOnce(FDVar, Constant<i32>) -> R,
-//    R: Propagator<VStore> + Subsumption<VStore>
-//   {
-//     let mut store = VStore::empty();
-//     let x = store.alloc(x);
-//     let propagator = make_prop(x, Constant::new(c));
-//     subsumption_propagate(id, propagator, &mut store, before, after, expected, update_success);
-//   }
-// }
+  fn unary_propagator_test_one<P, R>(id: u32, x: Interval<i32>, c: i32, make_prop: P,
+    before: SKleene, after: SKleene, expected: Vec<(usize, FDEvent)>, propagate_success: bool) where
+   P: FnOnce(FDVar, FDVar) -> R,
+   R: PropagatorConcept<VStoreFD, FDEvent>
+  {
+    let mut store = VStore::empty();
+    let x = Box::new(store.alloc(x)) as Var<VStore>;
+    let propagator = make_prop(x, Box::new(Constant::new(c)) as Var<VStore>);
+    test_propagation(id, propagator, &mut store, before, after, expected, propagate_success);
+  }
+}

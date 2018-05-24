@@ -117,36 +117,36 @@ impl<VStore> PropagatorDependencies<FDEvent> for XLessY<VStore>
   }
 }
 
-// #[cfg(test)]
-// mod test {
-//   use super::*;
-//   use propagation::events::FDEvent::*;
-//   use interval::interval::*;
-//   use propagators::test::*;
+#[cfg(test)]
+mod test {
+  use super::*;
+  use propagation::events::FDEvent::*;
+  use interval::interval::*;
+  use propagators::test::*;
 
-//   #[test]
-//   fn x_less_y_test() {
-//     let dom0_10 = (0,10).to_interval();
-//     let dom10_20 = (10,20).to_interval();
-//     let dom10_11 = (10,11).to_interval();
-//     let dom5_15 = (5,15).to_interval();
-//     let dom11_20 = (11,20).to_interval();
-//     let dom1_1 = (1,1).to_interval();
+  #[test]
+  fn x_less_y_test() {
+    let dom0_10 = (0,10).to_interval();
+    let dom10_20 = (10,20).to_interval();
+    let dom10_11 = (10,11).to_interval();
+    let dom5_15 = (5,15).to_interval();
+    let dom11_20 = (11,20).to_interval();
+    let dom1_1 = (1,1).to_interval();
 
-//     x_less_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-//     x_less_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
-//     x_less_y_test_one(3, dom10_11, dom10_11, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-//     x_less_y_test_one(4, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
-//     x_less_y_test_one(5, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-//     x_less_y_test_one(6, dom0_10, dom11_20, True, True, vec![], true);
-//     x_less_y_test_one(7, dom11_20, dom0_10, False, False, vec![], false);
-//     x_less_y_test_one(8, dom1_1, dom0_10, Unknown, True, vec![(1, Bound)], true);
-//   }
+    x_less_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_test_one(2, dom0_10, dom10_20, Unknown, Unknown, vec![], true);
+    x_less_y_test_one(3, dom10_11, dom10_11, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+    x_less_y_test_one(4, dom5_15, dom10_20, Unknown, Unknown, vec![], true);
+    x_less_y_test_one(5, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_less_y_test_one(6, dom0_10, dom11_20, True, True, vec![], true);
+    x_less_y_test_one(7, dom11_20, dom0_10, False, False, vec![], false);
+    x_less_y_test_one(8, dom1_1, dom0_10, Unknown, True, vec![(1, Bound)], true);
+  }
 
-//   fn x_less_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: SKleene, after: SKleene,
-//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-//   {
-//     binary_propagator_test(test_num, XLessY::new, x, y, before, after, delta_expected, propagate_success);
-//   }
-// }
+  fn x_less_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
+    before: SKleene, after: SKleene,
+    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+  {
+    binary_propagator_test(test_num, XLessY::new, x, y, before, after, delta_expected, propagate_success);
+  }
+}

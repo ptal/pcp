@@ -117,34 +117,34 @@ impl<VStore> PropagatorDependencies<FDEvent> for XEqY<VStore>
   }
 }
 
-// #[cfg(test)]
-// mod test {
-//   use super::*;
-//   use propagation::events::FDEvent::*;
-//   use interval::interval::*;
-//   use propagators::test::*;
+#[cfg(test)]
+mod test {
+  use super::*;
+  use propagation::events::FDEvent::*;
+  use interval::interval::*;
+  use propagators::test::*;
 
-//   #[test]
-//   fn x_eq_y_test() {
-//     let dom0_10 = (0,10).to_interval();
-//     let dom10_20 = (10,20).to_interval();
-//     let dom5_15 = (5,15).to_interval();
-//     let dom11_20 = (11,20).to_interval();
-//     let dom1_1 = (1,1).to_interval();
+  #[test]
+  fn x_eq_y_test() {
+    let dom0_10 = (0,10).to_interval();
+    let dom10_20 = (10,20).to_interval();
+    let dom5_15 = (5,15).to_interval();
+    let dom11_20 = (11,20).to_interval();
+    let dom1_1 = (1,1).to_interval();
 
-//     x_eq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
-//     x_eq_y_test_one(2, dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
-//     x_eq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-//     x_eq_y_test_one(4, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
-//     x_eq_y_test_one(5, dom0_10, dom11_20, False, False, vec![], false);
-//     x_eq_y_test_one(6, dom11_20, dom0_10, False, False, vec![], false);
-//     x_eq_y_test_one(7, dom1_1, dom0_10, Unknown, True, vec![(1, Assignment)], true);
-//   }
+    x_eq_y_test_one(1, dom0_10, dom0_10, Unknown, Unknown, vec![], true);
+    x_eq_y_test_one(2, dom0_10, dom10_20, Unknown, True, vec![(0, Assignment), (1, Assignment)], true);
+    x_eq_y_test_one(3, dom5_15, dom10_20, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(4, dom5_15, dom0_10, Unknown, Unknown, vec![(0, Bound), (1, Bound)], true);
+    x_eq_y_test_one(5, dom0_10, dom11_20, False, False, vec![], false);
+    x_eq_y_test_one(6, dom11_20, dom0_10, False, False, vec![], false);
+    x_eq_y_test_one(7, dom1_1, dom0_10, Unknown, True, vec![(1, Assignment)], true);
+  }
 
-//   fn x_eq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
-//     before: SKleene, after: SKleene,
-//     delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
-//   {
-//     binary_propagator_test(test_num, XEqY::new, x, y, before, after, delta_expected, propagate_success);
-//   }
-// }
+  fn x_eq_y_test_one(test_num: u32, x: Interval<i32>, y: Interval<i32>,
+    before: SKleene, after: SKleene,
+    delta_expected: Vec<(usize, FDEvent)>, propagate_success: bool)
+  {
+    binary_propagator_test(test_num, XEqY::new, x, y, before, after, delta_expected, propagate_success);
+  }
+}
