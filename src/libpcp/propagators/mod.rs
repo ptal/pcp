@@ -19,9 +19,11 @@
 pub mod cmp;
 pub mod distinct;
 pub mod cumulative;
+pub mod all_equal;
 
 pub use propagators::cmp::*;
 pub use propagators::distinct::*;
+pub use propagators::all_equal::*;
 
 #[cfg(test)]
 pub mod test

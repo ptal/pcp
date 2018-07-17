@@ -74,4 +74,16 @@ impl Model
     self.inc_group();
     name
   }
+
+  pub fn display_global<VStore>(&self, name: &str, args: &Vec<Var<VStore>>) {
+    print!("{}(", name);
+    let mut i = 0;
+    while i < args.len() - 1 {
+      args[i].display(self);
+      print!(", ");
+      i += 1;
+    }
+    args[i].display(self);
+    print!(") (decomposed)");
+  }
 }
