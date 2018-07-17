@@ -30,7 +30,6 @@ pub trait ViewDependencies<Event>
   fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
 }
 
-
 impl<Store, R> StoreMonotonicUpdate<Store> for Box<R> where
   R: StoreMonotonicUpdate<Store>,
   Store: Collection

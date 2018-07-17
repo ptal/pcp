@@ -62,6 +62,15 @@ impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
   type Location = usize;
 }
 
+impl<VStore, Event, R, S>  Cardinality for Store<VStore, Event, R, S>
+{
+  type Size = usize;
+
+  fn size(&self) -> usize {
+    self.propagators.len()
+  }
+}
+
 impl<VStore, Event, R, S> Store<VStore, Event, R, S>
 {
   fn display_constraints(&self, model: &Model, indexes: Vec<usize>, header: &str) {

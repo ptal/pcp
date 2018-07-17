@@ -27,16 +27,12 @@ pub use propagators::distinct::*;
 pub mod test
 {
   use trilean::SKleene;
-  use trilean::SKleene::*;
   use propagation::*;
   use gcollections::ops::*;
-  use std::fmt::Debug;
   use concept::*;
-  use kernel::*;
   use variable::VStoreFD;
   use propagation::events::*;
   use interval::interval::*;
-  use term::identity::*;
   use variable::store::test::consume_delta;
 
   // fn error_msg<T: Debug, VStore>(test_num: u32, msg: &str,
