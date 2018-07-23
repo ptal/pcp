@@ -22,6 +22,7 @@ use propagation::*;
 use gcollections::*;
 use concept::*;
 
+/// Precondition: `vars.len() > 1`.
 pub fn join_distinct<VStore, CStore, Domain, Bound>(
   _vstore: &mut VStore, cstore: &mut CStore, vars: Vec<Var<VStore>>) where
  VStore: VStoreConcept<Item=Domain> + 'static,
@@ -29,6 +30,8 @@ pub fn join_distinct<VStore, CStore, Domain, Bound>(
  Bound: IntBound + 'static,
  CStore: IntCStore<VStore> + 'static
 {
+  assert!(vars.len() > 0,
+    "Variable array in `Distinct` must be non-empty.");
   for i in 0..vars.len()-1 {
     for j in i+1..vars.len() {
       cstore.alloc(Box::new(XNeqY::new(vars[i].bclone(), vars[j].bclone())));
@@ -56,7 +59,10 @@ impl<VStore, Domain, Bound> Distinct<VStore> where
   Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
+  /// Precondition: `vars.len() > 1`.
   pub fn new(vars: Vec<Var<VStore>>) -> Self {
+    assert!(vars.len() > 0,
+      "Variable array in `Distinct` must be non-empty.");
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       for j in i+1..vars.len() {

@@ -42,7 +42,10 @@ impl<VStore, Domain, Bound> AllEqual<VStore> where
   Domain: IntDomain<Item=Bound> + 'static,
   Bound: IntBound + 'static,
 {
+  /// Precondition: `vars.len() > 1`.
   pub fn new(vars: Vec<Var<VStore>>) -> Self {
+    assert!(vars.len() > 0,
+      "Variable array in `AllEqual` must be non-empty.");
     let mut props = vec![];
     for i in 0..vars.len()-1 {
       let i_eq_j = Box::new(XEqY::new(vars[i].bclone(), vars[i+1].bclone())) as Formula<VStore>;
