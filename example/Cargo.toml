@@ -10,7 +10,7 @@ license = "Apache-2.0"
 [dependencies]
 intervallum = "^1.0.0"
 gcollections = "^1.0.0"
-pcp = { path = "../" }
+libpcp = { path = "../" }
 
 [features]
 nightly = []

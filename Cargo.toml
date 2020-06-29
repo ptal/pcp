@@ -1,7 +1,7 @@
 [package]
 
 name = "libpcp"
-version = "0.6.3"
+version = "0.6.4"
 authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 
 description = "A constraint solver supporting arithmetic constraints over integers."
@@ -14,7 +14,7 @@ license = "Apache-2.0"
 
 [lib]
 
-name = "libpcp"
+name = "pcp"
 path = "src/libpcp/lib.rs"
 crate_type = ["rlib", "dylib"]
 
