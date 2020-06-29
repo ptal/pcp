@@ -37,14 +37,14 @@ impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R where
 pub trait PropagatorConcept<VStore, Event>:
   PropagatorConcept_<VStore, Event>
 {
-  fn bclone(&self) -> Box<PropagatorConcept<VStore, Event>>;
+  fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>>;
 }
 
 impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
   R: PropagatorConcept_<VStore, Event>,
   R: Clone + NotFormula<VStore> + 'static,
 {
-  fn bclone(&self) -> Box<PropagatorConcept<VStore, Event>> {
+  fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>> {
     Box::new(self.clone())
   }
 }

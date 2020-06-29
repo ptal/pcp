@@ -99,7 +99,7 @@ impl Debug for IndexedDeps
 {
   fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     for prop in self.deps.iter().flat_map(|props| props.iter()) {
-      try!(formatter.write_fmt(format_args!("{} ", prop)));
+      formatter.write_fmt(format_args!("{} ", prop))?;
     }
     Ok(())
   }

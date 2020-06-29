@@ -14,7 +14,7 @@ Constraints are also applied to various other domains such as in music, biology 
 
 It is a programming paradigm in its own right and being able to program in Rust is not sufficient to master the art of constraint programming.
 This is why I strongly recommend the class [Basic Modeling for Discrete Optimization](https://www.coursera.org/learn/basic-modeling) for those who wants to learn this paradigm.
-Meanwhile you can already look at the [documentation](https://docs.rs/crate/pcp/1.0.0) for a running example.
+Meanwhile you can already look at the [documentation](https://docs.rs/crate/pcp) for a running example.
 
 PCP compiles on the *stable Rust* channel.
 

@@ -25,13 +25,13 @@ pub struct Branch<Space> where
   Space: Freeze
 {
   label: <Space::FrozenState as Snapshot>::Label,
-  alternative: Box<Fn(&mut Space)>
+  alternative: Box<dyn Fn(&mut Space)>
 }
 
 impl<Space> Branch<Space> where
   Space: Freeze
 {
-  pub fn distribute(space: Space, alternatives: Vec<Box<Fn(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
+  pub fn distribute(space: Space, alternatives: Vec<Box<dyn Fn(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
     let mut immutable_space = space.freeze();
     let branches = alternatives.into_iter().map(|alt|
       Branch {

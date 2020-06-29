@@ -44,11 +44,20 @@ impl Model
    VStore: VStoreConcept<Item=Domain>,
    Domain: Clone + Debug + 'static
   {
-    let loc = vstore.alloc(dom);
     let name = self.make_name();
+    self.alloc_var_with_name(vstore, dom, name)
+  }
+
+  pub fn alloc_var_with_name<VStore, Domain>(&mut self,
+    vstore: &mut VStore, dom: Domain, name: String) -> Var<VStore> where
+   VStore: VStoreConcept<Item=Domain>,
+   Domain: Clone + Debug + 'static
+  {
+    let loc = vstore.alloc(dom);
     self.register_var(loc.index(), name);
     Box::new(loc)
   }
+
 
   pub fn register_var(&mut self, var: usize, name: String) {
     self.var_names.insert(var, name);

@@ -134,9 +134,9 @@ impl Robot {
   pub fn add_robot_duration_variables(&mut self, space: &mut FDSpace, model: &mut Model) {
     if let RobotType::Duration{ref mut vdurations, variation} = self.robot_type {
       self.durations.iter()
-      .map(|duration|
+      .for_each(|duration|
           vdurations.push(model.alloc_var(&mut space.vstore, IntervalSet::new(*duration as i32, (*duration + variation) as i32)))
-      ).collect::<Vec<()>>();
+      )
     }
   }
 

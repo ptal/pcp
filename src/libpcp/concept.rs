@@ -75,12 +75,12 @@ impl<R, VStore> IntVariable_<VStore> for R where
   VStore: Collection
 {}
 
-pub type Var<VStore> = Box<IntVariable<VStore>>;
+pub type Var<VStore> = Box<dyn IntVariable<VStore>>;
 
 pub trait IntVariable<VStore>: IntVariable_<VStore>
   where VStore: Collection
 {
-  fn bclone(&self) -> Box<IntVariable<VStore>>;
+  fn bclone(&self) -> Box<dyn IntVariable<VStore>>;
 }
 
 impl<VStore, R> IntVariable<VStore> for R where
@@ -88,21 +88,21 @@ impl<VStore, R> IntVariable<VStore> for R where
   R: Clone + 'static,
   VStore: Collection
 {
-  fn bclone(&self) -> Box<IntVariable<VStore>> {
+  fn bclone(&self) -> Box<dyn IntVariable<VStore>> {
     Box::new(self.clone())
   }
 }
 
 pub trait IntCStore<VStore>:
   Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)> +
-  Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>> +
+  Collection<Item=Box<dyn PropagatorConcept<VStore, FDEvent>>> +
   Consistency<VStore>
 {}
 
 impl<R, VStore> IntCStore<VStore> for R where
   R: Alloc + Empty + Clone + Freeze + DisplayStateful<Model> + DisplayStateful<(Model, VStore)>,
-  R: Collection<Item=Box<PropagatorConcept<VStore, FDEvent>>>,
+  R: Collection<Item=Box<dyn PropagatorConcept<VStore, FDEvent>>>,
   R: Consistency<VStore>
 {}
 
-pub type Formula<VStore> = Box<PropagatorConcept<VStore, FDEvent>>;
+pub type Formula<VStore> = Box<dyn PropagatorConcept<VStore, FDEvent>>;

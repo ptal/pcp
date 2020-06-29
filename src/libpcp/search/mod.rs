@@ -42,7 +42,7 @@ pub type VStore = VStoreSet;
 type CStore = CStoreFD<VStore>;
 pub type FDSpace = Space<VStore, CStore, NoRecomputation<VStore, CStore>>;
 
-pub fn one_solution_engine() -> Box<SearchTreeVisitor<FDSpace>> {
+pub fn one_solution_engine() -> Box<dyn SearchTreeVisitor<FDSpace>> {
   let search =
     OneSolution::<_, VectorStack<_>, FDSpace>::new(
     Propagation::new(

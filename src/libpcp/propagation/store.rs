@@ -31,7 +31,7 @@ use bit_set::BitSet;
 #[derive(Debug)]
 pub struct Store<VStore, Event, Reactor, Scheduler>
 {
-  propagators: Vec<Box<PropagatorConcept<VStore, Event> + 'static>>,
+  propagators: Vec<Box<dyn PropagatorConcept<VStore, Event> + 'static>>,
   active: BitSet,
   reactor: Reactor,
   scheduler: Scheduler
@@ -54,7 +54,7 @@ impl<VStore, Event, R, S> Empty for Store<VStore, Event, R, S> where
 
 impl<VStore, Event, R, S> Collection for Store<VStore, Event, R, S>
 {
-  type Item = Box<PropagatorConcept<VStore, Event>>;
+  type Item = Box<dyn PropagatorConcept<VStore, Event>>;
 }
 
 impl<VStore, Event, R, S> AssociativeCollection for Store<VStore, Event, R, S>
@@ -214,7 +214,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
 
 impl<VStore, Event, R, S> Index<usize> for Store<VStore, Event, R, S>
 {
-  type Output = Box<PropagatorConcept<VStore, Event> + 'static>;
+  type Output = Box<dyn PropagatorConcept<VStore, Event> + 'static>;
   fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
     &self.propagators[index]
   }
