@@ -1,12 +1,12 @@
 [package]
 
 name = "libpcp"
-version = "0.6.2"
+version = "0.6.3"
 authors = [ "Pierre Talbot <ptalbot@hyc.io>" ]
 
 description = "A constraint solver supporting arithmetic constraints over integers."
 repository = "https://github.com/ptal/pcp"
-documentation = "https://docs.rs/crate/pcp"
+documentation = "https://docs.rs/crate/libpcp"
 readme = "README.md"
 keywords = ["constraint", "satisfiability", "solving", "CSP"]
 categories = ["mathematics", "science"]
