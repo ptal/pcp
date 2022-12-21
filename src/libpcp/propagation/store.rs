@@ -137,10 +137,10 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> where
     for p_idx in self.active.iter() {
       let p_deps = self[p_idx].dependencies();
       for (v, ev) in p_deps {
-        debug_assert!(v < vstore.size(), format!(
+        debug_assert!(v < vstore.size(),
           "The propagator {:?} has a dependency to the variable {} which is not in the vstore (of size {}).\n\
           Hint: you should not manually create `Identity` struct, if you do make sure they contain relevant index to the variable vstore.",
-          self[p_idx], v, vstore.size()));
+          self[p_idx], v, vstore.size());
         self.reactor.subscribe(v, ev, p_idx);
       }
     }

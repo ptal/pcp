@@ -42,8 +42,8 @@ impl IndexedDeps {
 
   fn assert_var_idx(&self, var: usize, op: &str) {
     assert!(var < self.num_vars(),
-      format!("Reactor IndexedDeps has been initialized for {} variables but `{}` of the variable {} was requested.",
-        self.num_vars(), op, var));
+      "Reactor IndexedDeps has been initialized for {} variables but `{}` of the variable {} was requested.",
+        self.num_vars(), op, var);
   }
 }
 
