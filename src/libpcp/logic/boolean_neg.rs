@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// This class implements the negation of boolean value (not arbritrary formula, for which the negation can be obtained with `f.not()`).
+/// This class implements the negation of boolean value (not arbitrary formula, for which the negation can be obtained with `f.not()`).
 
 use trilean::SKleene;
 use kernel::*;

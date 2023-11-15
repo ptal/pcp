@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Constraint programming is a declarative programming paradigm mainly used to solve combinatorial problems where you state what constraints a solution must fullfil instead of explaining how to solve it (see README.md).
+//! Constraint programming is a declarative programming paradigm mainly used to solve combinatorial problems where you state what constraints a solution must fulfill instead of explaining how to solve it (see README.md).
 //! A very classic introductory problem to constraint programming is the [N-Queens puzzle](https://en.wikipedia.org/wiki/Eight_queens_puzzle): the goal is to align N queens on a chessboard of size N*N such that no queen can attack each other.
 //! In PCP, we can solve this problem as follows:
 //! ```rust
