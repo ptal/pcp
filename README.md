@@ -1,10 +1,7 @@
 Constraint Programming Library
 ==============================
 
-[![ptal on Travis CI][travis-image]][travis]
-
-[travis-image]: https://travis-ci.org/ptal/pcp.png
-[travis]: https://travis-ci.org/ptal/pcp
+[![CI](https://github.com/ptal/pcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ptal/pcp/actions/workflows/ci.yml)
 
 PCP is a library to model constraint satisfaction problems (CSPs) in the constraint programming paradigm.
 Constraint programming is a paradigm for expressing problems in terms of mathematical relations, called constraints, over variables (e.g. `x > y`).
