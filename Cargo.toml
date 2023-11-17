@@ -27,4 +27,4 @@ num = "^0.4.0"
 bit-set = "^0.5.3"
 
 [dependencies.vec_map]
-version = "0.6.0"
+version = "0.8"
