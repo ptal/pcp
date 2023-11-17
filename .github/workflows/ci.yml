@@ -8,6 +8,21 @@ on:
   merge_group:
 
 jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    name: cargo fmt
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
   test-stable:
     runs-on: ubuntu-latest
     name: cargo test
