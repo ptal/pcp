@@ -12,42 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use trilean::SKleene::*;
-use search::space::*;
-use search::search_tree_visitor::*;
 use concept::*;
+use kernel::*;
+use search::search_tree_visitor::*;
+use search::space::*;
+use trilean::SKleene::*;
 
 pub struct Propagation<C> {
-  child: C
+    child: C,
 }
 
 impl<C> Propagation<C> {
-  pub fn new(child: C) -> Propagation<C> {
-    Propagation {
-      child: child
+    pub fn new(child: C) -> Propagation<C> {
+        Propagation { child: child }
     }
-  }
 }
 
-impl<VStore, CStore, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Propagation<C> where
-  VStore: VStoreConcept,
-  CStore: IntCStore<VStore>,
-  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
-  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
+impl<VStore, CStore, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Propagation<C>
+where
+    VStore: VStoreConcept,
+    CStore: IntCStore<VStore>,
+    C: SearchTreeVisitor<Space<VStore, CStore, R>>,
+    R: FreezeSpace<VStore, CStore> + Snapshot<State = Space<VStore, CStore, R>>,
 {
-  fn start(&mut self, root: &Space<VStore, CStore, R>) {
-    self.child.start(root);
-  }
-
-  fn enter(&mut self, mut current: Space<VStore, CStore, R>)
-    -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
-  {
-    let status = current.consistency();
-    match status {
-      True => (current.freeze(), Status::Satisfiable),
-      False => (current.freeze(), Status::Unsatisfiable),
-      Unknown => self.child.enter(current)
+    fn start(&mut self, root: &Space<VStore, CStore, R>) {
+        self.child.start(root);
     }
-  }
+
+    fn enter(
+        &mut self,
+        mut current: Space<VStore, CStore, R>,
+    ) -> (
+        <Space<VStore, CStore, R> as Freeze>::FrozenState,
+        Status<Space<VStore, CStore, R>>,
+    ) {
+        let status = current.consistency();
+        match status {
+            True => (current.freeze(), Status::Satisfiable),
+            False => (current.freeze(), Status::Unsatisfiable),
+            Unknown => self.child.enter(current),
+        }
+    }
 }

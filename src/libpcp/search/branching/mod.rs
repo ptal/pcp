@@ -12,40 +12,50 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod binary_split;
 pub mod branch;
 pub mod brancher;
+pub mod enumerate;
 pub mod first_smallest_var;
 pub mod input_order;
 pub mod middle_val;
 pub mod min_val;
-pub mod binary_split;
-pub mod enumerate;
 
 pub use search::branching::binary_split::*;
-pub use search::branching::enumerate::*;
 pub use search::branching::brancher::*;
+pub use search::branching::enumerate::*;
 pub use search::branching::first_smallest_var::*;
 pub use search::branching::input_order::*;
 pub use search::branching::middle_val::*;
 pub use search::branching::min_val::*;
 
-use search::branching::branch::*;
 use gcollections::*;
+use search::branching::branch::*;
 
 use kernel::*;
 
 pub trait VarSelection<Space> {
-  // Precondition: `space` must have variables not assigned.
-  // Returns the index of the variable selected in `space`.
-  fn select(&mut self, space: &Space) -> usize;
+    // Precondition: `space` must have variables not assigned.
+    // Returns the index of the variable selected in `space`.
+    fn select(&mut self, space: &Space) -> usize;
 }
 
-pub trait ValSelection<Domain> where Domain: Collection
+pub trait ValSelection<Domain>
+where
+    Domain: Collection,
 {
-  fn select(&mut self, dom: Domain) -> Domain::Item;
+    fn select(&mut self, dom: Domain) -> Domain::Item;
 }
 
-pub trait Distributor<Space, Bound> where Space: Freeze {
-  // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
-  fn distribute(&mut self, space: Space, var_idx: usize, val: Bound) -> (Space::FrozenState, Vec<Branch<Space>>);
+pub trait Distributor<Space, Bound>
+where
+    Space: Freeze,
+{
+    // Postcondition: The union of the solutions of the child spaces must be equal to the solutions of the root space.
+    fn distribute(
+        &mut self,
+        space: Space,
+        var_idx: usize,
+        val: Bound,
+    ) -> (Space::FrozenState, Vec<Branch<Space>>);
 }

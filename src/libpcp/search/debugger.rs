@@ -12,54 +12,64 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use gcollections::ops::*;
-use search::space::*;
-use search::search_tree_visitor::*;
-use std::io::{self};
 use concept::*;
+use gcollections::ops::*;
+use kernel::*;
 use model::*;
+use search::search_tree_visitor::*;
+use search::space::*;
+use std::io::{self};
 
 pub struct Debugger<C> {
-  model: Model,
-  child: C
+    model: Model,
+    child: C,
 }
 
 impl<C> Debugger<C> {
-  pub fn new(model: Model, child: C) -> Debugger<C> {
-    Debugger {
-      model: model,
-      child: child
+    pub fn new(model: Model, child: C) -> Debugger<C> {
+        Debugger {
+            model: model,
+            child: child,
+        }
     }
-  }
 }
 
-impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Debugger<C> where
-  VStore: VStoreConcept<Item=Domain> + Clone,
-  CStore: IntCStore<VStore> + DisplayStateful<(Model, VStore)>,
-  C: SearchTreeVisitor<Space<VStore, CStore, R>>,
-  Domain: IsSingleton,
-  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
+impl<VStore, CStore, Domain, R, C> SearchTreeVisitor<Space<VStore, CStore, R>> for Debugger<C>
+where
+    VStore: VStoreConcept<Item = Domain> + Clone,
+    CStore: IntCStore<VStore> + DisplayStateful<(Model, VStore)>,
+    C: SearchTreeVisitor<Space<VStore, CStore, R>>,
+    Domain: IsSingleton,
+    R: FreezeSpace<VStore, CStore> + Snapshot<State = Space<VStore, CStore, R>>,
 {
-  fn start(&mut self, root: &Space<VStore, CStore, R>) {
-    self.child.start(root);
-  }
+    fn start(&mut self, root: &Space<VStore, CStore, R>) {
+        self.child.start(root);
+    }
 
-  fn enter(&mut self, current: Space<VStore, CStore, R>)
-    -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
-  {
-    let (frozen, status) = self.child.enter(current);
-    let current = frozen.unfreeze();
-    println!("Variable store:");
-    println!("  Number of variables: {}", current.vstore.size());
-    println!("  Number of variables assigned: {}", current.vstore.iter().filter(|v| v.is_singleton()).count());
-    current.vstore.display(&self.model);
-    println!("Constraint store:");
-    current.cstore.display(&(self.model.clone(), current.vstore.clone()));
-    println!("Status {:?}", status);
-    println!("Press enter to continue...");
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    (current.freeze(), status)
-  }
+    fn enter(
+        &mut self,
+        current: Space<VStore, CStore, R>,
+    ) -> (
+        <Space<VStore, CStore, R> as Freeze>::FrozenState,
+        Status<Space<VStore, CStore, R>>,
+    ) {
+        let (frozen, status) = self.child.enter(current);
+        let current = frozen.unfreeze();
+        println!("Variable store:");
+        println!("  Number of variables: {}", current.vstore.size());
+        println!(
+            "  Number of variables assigned: {}",
+            current.vstore.iter().filter(|v| v.is_singleton()).count()
+        );
+        current.vstore.display(&self.model);
+        println!("Constraint store:");
+        current
+            .cstore
+            .display(&(self.model.clone(), current.vstore.clone()));
+        println!("Status {:?}", status);
+        println!("Press enter to continue...");
+        let mut buffer = String::new();
+        io::stdin().read_line(&mut buffer).unwrap();
+        (current.freeze(), status)
+    }
 }

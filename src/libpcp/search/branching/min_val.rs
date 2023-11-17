@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::branching::*;
 use concept::*;
+use search::branching::*;
 
 pub struct MinVal;
 
-impl<Domain, Bound> ValSelection<Domain> for MinVal where
-  Domain: IntDomain<Item=Bound>,
-  Bound: IntBound,
+impl<Domain, Bound> ValSelection<Domain> for MinVal
+where
+    Domain: IntDomain<Item = Bound>,
+    Bound: IntBound,
 {
-  fn select(&mut self, dom: Domain) -> Bound {
-    dom.lower()
-  }
+    fn select(&mut self, dom: Domain) -> Bound {
+        dom.lower()
+    }
 }

@@ -12,84 +12,81 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use term::ops::*;
-use propagation::events::*;
-use model::*;
 use concept::*;
 use gcollections::kind::*;
+use kernel::*;
+use model::*;
+use propagation::events::*;
+use term::ops::*;
 
 #[derive(Debug)]
-pub struct Sum<VStore>
-{
-  vars: Vec<Var<VStore>>
+pub struct Sum<VStore> {
+    vars: Vec<Var<VStore>>,
 }
 
 impl<VStore> Sum<VStore> {
-  pub fn new(vars: Vec<Var<VStore>>) -> Self {
-    Sum {
-      vars: vars
+    pub fn new(vars: Vec<Var<VStore>>) -> Self {
+        Sum { vars: vars }
     }
-  }
 }
 
-impl<VStore> Clone for Sum<VStore> where
- VStore: Collection
+impl<VStore> Clone for Sum<VStore>
+where
+    VStore: Collection,
 {
-  fn clone(&self) -> Self {
-    Sum::new(self.vars.iter().map(|v| v.bclone()).collect())
-  }
-}
-
-
-impl<VStore> DisplayStateful<Model> for Sum<VStore>
-{
-  fn display(&self, model: &Model) {
-    print!("sum(");
-    self.vars[0].display(model);
-    let mut i = 1;
-    while i < self.vars.len() {
-      print!(" + ");
-      self.vars[i].display(model);
-      i += 1;
+    fn clone(&self) -> Self {
+        Sum::new(self.vars.iter().map(|v| v.bclone()).collect())
     }
-    print!(")");
-  }
 }
 
-impl<VStore, Domain, Bound> StoreMonotonicUpdate<VStore> for Sum<VStore> where
- VStore: VStoreConcept<Item=Domain>,
- Domain: IntDomain<Item=Bound>,
- Bound: IntBound
-{
-  fn update(&mut self, store: &mut VStore, value: Domain) -> bool {
-    if self.vars.len() == 1 {
-      self.vars[0].update(store, value)
+impl<VStore> DisplayStateful<Model> for Sum<VStore> {
+    fn display(&self, model: &Model) {
+        print!("sum(");
+        self.vars[0].display(model);
+        let mut i = 1;
+        while i < self.vars.len() {
+            print!(" + ");
+            self.vars[i].display(model);
+            i += 1;
+        }
+        print!(")");
     }
-    else {
-      let sum = self.read(store);
-      sum.overlap(&value)
+}
+
+impl<VStore, Domain, Bound> StoreMonotonicUpdate<VStore> for Sum<VStore>
+where
+    VStore: VStoreConcept<Item = Domain>,
+    Domain: IntDomain<Item = Bound>,
+    Bound: IntBound,
+{
+    fn update(&mut self, store: &mut VStore, value: Domain) -> bool {
+        if self.vars.len() == 1 {
+            self.vars[0].update(store, value)
+        } else {
+            let sum = self.read(store);
+            sum.overlap(&value)
+        }
     }
-  }
 }
 
-impl<VStore, Domain, Bound> StoreRead<VStore> for Sum<VStore> where
- VStore: VStoreConcept<Item=Domain>,
- Domain: IntDomain<Item=Bound>,
- Bound: IntBound
+impl<VStore, Domain, Bound> StoreRead<VStore> for Sum<VStore>
+where
+    VStore: VStoreConcept<Item = Domain>,
+    Domain: IntDomain<Item = Bound>,
+    Bound: IntBound,
 {
-  fn read(&self, store: &VStore) -> Domain {
-    let mut iter = self.vars.iter();
-    let sum = iter.next().expect("At least one variable in sum.");
-    iter.fold(sum.read(store), |a: Domain, v| a + v.read(store))
-  }
+    fn read(&self, store: &VStore) -> Domain {
+        let mut iter = self.vars.iter();
+        let sum = iter.next().expect("At least one variable in sum.");
+        iter.fold(sum.read(store), |a: Domain, v| a + v.read(store))
+    }
 }
 
-impl<VStore> ViewDependencies<FDEvent> for Sum<VStore>
-{
-  fn dependencies(&self, event: FDEvent) -> Vec<(usize, FDEvent)> {
-    self.vars.iter()
-      .flat_map(|v| v.dependencies(event.clone()))
-      .collect()
-  }
+impl<VStore> ViewDependencies<FDEvent> for Sum<VStore> {
+    fn dependencies(&self, event: FDEvent) -> Vec<(usize, FDEvent)> {
+        self.vars
+            .iter()
+            .flat_map(|v| v.dependencies(event.clone()))
+            .collect()
+    }
 }

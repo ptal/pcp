@@ -16,44 +16,47 @@ use kernel::*;
 use search::recomputation::ops::*;
 use search::space::Space;
 
-pub struct NoRecomputation<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
+pub struct NoRecomputation<VStore, CStore>
+where
+    VStore: Freeze,
+    CStore: Freeze,
 {
-  frozen_vstore: VStore::FrozenState,
-  frozen_cstore: CStore::FrozenState
+    frozen_vstore: VStore::FrozenState,
+    frozen_cstore: CStore::FrozenState,
 }
 
-impl<VStore, CStore> FreezeSpace<VStore, CStore> for NoRecomputation<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
+impl<VStore, CStore> FreezeSpace<VStore, CStore> for NoRecomputation<VStore, CStore>
+where
+    VStore: Freeze,
+    CStore: Freeze,
 {
-  fn freeze_space(vstore: VStore, cstore: CStore) -> Self {
-    NoRecomputation {
-      frozen_vstore: vstore.freeze(),
-      frozen_cstore: cstore.freeze()
+    fn freeze_space(vstore: VStore, cstore: CStore) -> Self {
+        NoRecomputation {
+            frozen_vstore: vstore.freeze(),
+            frozen_cstore: cstore.freeze(),
+        }
     }
-  }
 }
 
-impl<VStore, CStore> Snapshot for NoRecomputation<VStore, CStore> where
- VStore: Freeze,
- CStore: Freeze
+impl<VStore, CStore> Snapshot for NoRecomputation<VStore, CStore>
+where
+    VStore: Freeze,
+    CStore: Freeze,
 {
-  type Label = (
-    <VStore::FrozenState as Snapshot>::Label,
-    <CStore::FrozenState as Snapshot>::Label);
-  type State = Space<VStore, CStore, Self>;
+    type Label = (
+        <VStore::FrozenState as Snapshot>::Label,
+        <CStore::FrozenState as Snapshot>::Label,
+    );
+    type State = Space<VStore, CStore, Self>;
 
-  fn label(&mut self) -> Self::Label {
-    (self.frozen_vstore.label(), self.frozen_cstore.label())
-  }
+    fn label(&mut self) -> Self::Label {
+        (self.frozen_vstore.label(), self.frozen_cstore.label())
+    }
 
-  fn restore(self, label: Self::Label) -> Self::State {
-    Space::new(
-      self.frozen_vstore.restore(label.0),
-      self.frozen_cstore.restore(label.1)
-    )
-  }
+    fn restore(self, label: Self::Label) -> Self::State {
+        Space::new(
+            self.frozen_vstore.restore(label.0),
+            self.frozen_cstore.restore(label.1),
+        )
+    }
 }
-

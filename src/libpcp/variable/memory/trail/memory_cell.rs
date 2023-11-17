@@ -12,31 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt::{Formatter, Display, Error};
+use std::fmt::{Display, Error, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MemoryCell<Domain>
-{
-  pub location: usize,
-  pub value: Domain
+pub struct MemoryCell<Domain> {
+    pub location: usize,
+    pub value: Domain,
 }
 
-impl<Domain> MemoryCell<Domain>
-{
-  pub fn new(location: usize, value: Domain) -> MemoryCell<Domain> {
-    MemoryCell {
-      location: location,
-      value: value
+impl<Domain> MemoryCell<Domain> {
+    pub fn new(location: usize, value: Domain) -> MemoryCell<Domain> {
+        MemoryCell {
+            location: location,
+            value: value,
+        }
     }
-  }
 }
 
-impl<Domain> Display for MemoryCell<Domain> where
- Domain: Display
+impl<Domain> Display for MemoryCell<Domain>
+where
+    Domain: Display,
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    formatter.write_str(format!(
-      "{}: {}", self.location, self.value
-    ).as_str())
-  }
+    fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+        formatter.write_str(format!("{}: {}", self.location, self.value).as_str())
+    }
 }

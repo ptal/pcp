@@ -14,51 +14,59 @@
 
 use search::search_tree_visitor::*;
 
+use concept::*;
 use kernel::*;
 use search::branching::*;
 use search::space::*;
-use term::*;
 use term::ops::*;
-use concept::*;
+use term::*;
 
-pub struct Brancher<Var,Val,D>
-{
-  var_selector: Var,
-  val_selector: Val,
-  distributor: D
+pub struct Brancher<Var, Val, D> {
+    var_selector: Var,
+    val_selector: Val,
+    distributor: D,
 }
 
-impl<Var,Val,D> Brancher<Var,Val,D>
-{
-  pub fn new(var_selector: Var, val_selector: Val, distributor: D) -> Self {
-    Brancher {
-      var_selector: var_selector,
-      val_selector: val_selector,
-      distributor: distributor
+impl<Var, Val, D> Brancher<Var, Val, D> {
+    pub fn new(var_selector: Var, val_selector: Val, distributor: D) -> Self {
+        Brancher {
+            var_selector: var_selector,
+            val_selector: val_selector,
+            distributor: distributor,
+        }
     }
-  }
 }
 
-impl<Var, Val, D, VStore, CStore, R, Domain, Bound> SearchTreeVisitor<Space<VStore, CStore, R>> for Brancher<Var,Val,D> where
-  VStore: VStoreConcept<Item=Domain, Location=Identity<Domain>, Output=Domain>,
-  CStore: IntCStore<VStore>,
-  R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>,
-  Var: VarSelection<Space<VStore, CStore, R>>,
-  Val: ValSelection<Domain>,
-  Domain: IntDomain<Item=Bound>,
-  Bound: IntBound,
-  D: Distributor<Space<VStore, CStore, R>, Bound>
+impl<Var, Val, D, VStore, CStore, R, Domain, Bound> SearchTreeVisitor<Space<VStore, CStore, R>>
+    for Brancher<Var, Val, D>
+where
+    VStore: VStoreConcept<Item = Domain, Location = Identity<Domain>, Output = Domain>,
+    CStore: IntCStore<VStore>,
+    R: FreezeSpace<VStore, CStore> + Snapshot<State = Space<VStore, CStore, R>>,
+    Var: VarSelection<Space<VStore, CStore, R>>,
+    Val: ValSelection<Domain>,
+    Domain: IntDomain<Item = Bound>,
+    Bound: IntBound,
+    D: Distributor<Space<VStore, CStore, R>, Bound>,
 {
-  fn enter(&mut self, current: Space<VStore, CStore, R>) -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>) {
-    let var_idx = self.var_selector.select(&current);
+    fn enter(
+        &mut self,
+        current: Space<VStore, CStore, R>,
+    ) -> (
+        <Space<VStore, CStore, R> as Freeze>::FrozenState,
+        Status<Space<VStore, CStore, R>>,
+    ) {
+        let var_idx = self.var_selector.select(&current);
 
-    let x = Identity::<Domain>::new(var_idx);
-    let dom = x.read(&current.vstore);
-    assert!(!dom.is_singleton() && !dom.is_empty(),
-      "Can not distribute over assigned or failed variables.");
-    let val = self.val_selector.select(dom);
+        let x = Identity::<Domain>::new(var_idx);
+        let dom = x.read(&current.vstore);
+        assert!(
+            !dom.is_singleton() && !dom.is_empty(),
+            "Can not distribute over assigned or failed variables."
+        );
+        let val = self.val_selector.select(dom);
 
-    let (immutable_space, branches) = self.distributor.distribute(current, var_idx, val);
-    (immutable_space, Status::Unknown(branches))
-  }
+        let (immutable_space, branches) = self.distributor.distribute(current, var_idx, val);
+        (immutable_space, Status::Unknown(branches))
+    }
 }

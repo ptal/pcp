@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ops::{Deref};
+use std::ops::Deref;
 
 pub trait DisplayStateful<State> {
-  fn display(&self, state: &State);
+    fn display(&self, state: &State);
 }
 
-impl<State, R> DisplayStateful<State> for Box<R> where
-  R: DisplayStateful<State>
+impl<State, R> DisplayStateful<State> for Box<R>
+where
+    R: DisplayStateful<State>,
 {
-  fn display(&self, state: &State) {
-    self.deref().display(state);
-  }
+    fn display(&self, state: &State) {
+        self.deref().display(state);
+    }
 }

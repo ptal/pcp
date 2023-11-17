@@ -12,21 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub trait Freeze : Sized
-{
-  type FrozenState : Snapshot<State=Self>;
-  fn freeze(self) -> Self::FrozenState;
+pub trait Freeze: Sized {
+    type FrozenState: Snapshot<State = Self>;
+    fn freeze(self) -> Self::FrozenState;
 }
 
-pub trait Snapshot : Sized
-{
-  type Label;
-  type State : Freeze<FrozenState=Self>;
+pub trait Snapshot: Sized {
+    type Label;
+    type State: Freeze<FrozenState = Self>;
 
-  fn label(&mut self) -> Self::Label;
-  fn restore(self, label: Self::Label) -> Self::State;
-  fn unfreeze(mut self) -> Self::State {
-    let label = self.label();
-    self.restore(label)
-  }
+    fn label(&mut self) -> Self::Label;
+    fn restore(self, label: Self::Label) -> Self::State;
+    fn unfreeze(mut self) -> Self::State {
+        let label = self.label();
+        self.restore(label)
+    }
 }

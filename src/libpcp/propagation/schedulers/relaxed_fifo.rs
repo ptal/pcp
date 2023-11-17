@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bit_set::BitSet;
 use propagation::Scheduler;
 use std::collections::VecDeque;
-use bit_set::BitSet;
 
 // It is a "relaxed FIFO" because the unschedule operation
 // might not preserve the ordering. However, this operation
@@ -25,107 +25,109 @@ use bit_set::BitSet;
 
 #[derive(Debug)]
 pub struct RelaxedFifo {
-  inside_queue: BitSet,
-  queue: VecDeque<usize>,
-  capacity: usize
+    inside_queue: BitSet,
+    queue: VecDeque<usize>,
+    capacity: usize,
 }
 
 impl Scheduler for RelaxedFifo {
-  fn new(capacity: usize) -> RelaxedFifo {
-    RelaxedFifo {
-      inside_queue: BitSet::with_capacity(capacity),
-      queue: VecDeque::with_capacity(capacity),
-      capacity: capacity
+    fn new(capacity: usize) -> RelaxedFifo {
+        RelaxedFifo {
+            inside_queue: BitSet::with_capacity(capacity),
+            queue: VecDeque::with_capacity(capacity),
+            capacity: capacity,
+        }
     }
-  }
 
-  fn schedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.capacity);
-    if !self.inside_queue.contains(idx) {
-      self.inside_queue.insert(idx);
-      self.queue.push_back(idx);
+    fn schedule(&mut self, idx: usize) {
+        assert!((idx as usize) < self.capacity);
+        if !self.inside_queue.contains(idx) {
+            self.inside_queue.insert(idx);
+            self.queue.push_back(idx);
+        }
     }
-  }
 
-  fn unschedule(&mut self, idx: usize) {
-    assert!((idx as usize) < self.capacity);
-    if self.inside_queue.contains(idx) {
-      let queue_idx = self.queue.iter().position(|&e| e == idx);
-      assert!(queue_idx.is_some());
-      self.queue.swap_remove_front(queue_idx.unwrap());
-      self.inside_queue.remove(idx);
+    fn unschedule(&mut self, idx: usize) {
+        assert!((idx as usize) < self.capacity);
+        if self.inside_queue.contains(idx) {
+            let queue_idx = self.queue.iter().position(|&e| e == idx);
+            assert!(queue_idx.is_some());
+            self.queue.swap_remove_front(queue_idx.unwrap());
+            self.inside_queue.remove(idx);
+        }
     }
-  }
 
-  fn pop(&mut self) -> Option<usize> {
-    let res = self.queue.pop_front();
-    if res.is_some() { self.inside_queue.remove(res.unwrap()); }
-    res
-  }
+    fn pop(&mut self) -> Option<usize> {
+        let res = self.queue.pop_front();
+        if res.is_some() {
+            self.inside_queue.remove(res.unwrap());
+        }
+        res
+    }
 
-  fn is_empty(&self) -> bool {
-    self.queue.is_empty()
-  }
+    fn is_empty(&self) -> bool {
+        self.queue.is_empty()
+    }
 }
 
 #[cfg(test)]
 mod test {
-  use super::*;
-  use propagation::Scheduler;
+    use super::*;
+    use propagation::Scheduler;
 
-  #[test]
-  fn schedule_test() {
-    let mut scheduler: RelaxedFifo = Scheduler::new(3);
-    schedule_21(&mut scheduler);
-    assert_eq!(scheduler.pop(), Some(2));
-    pop_1(&mut scheduler);
+    #[test]
+    fn schedule_test() {
+        let mut scheduler: RelaxedFifo = Scheduler::new(3);
+        schedule_21(&mut scheduler);
+        assert_eq!(scheduler.pop(), Some(2));
+        pop_1(&mut scheduler);
 
-    scheduler.schedule(1);
-    scheduler.schedule(1);
-    pop_1(&mut scheduler);
-  }
+        scheduler.schedule(1);
+        scheduler.schedule(1);
+        pop_1(&mut scheduler);
+    }
 
-  #[test]
-  fn unschedule_test() {
-    let mut scheduler: RelaxedFifo = Scheduler::new(3);
-    schedule_21(&mut scheduler);
-    scheduler.unschedule(1);
-    assert_eq!(scheduler.pop(), Some(2));
-    assert_eq!(scheduler.pop(), None);
+    #[test]
+    fn unschedule_test() {
+        let mut scheduler: RelaxedFifo = Scheduler::new(3);
+        schedule_21(&mut scheduler);
+        scheduler.unschedule(1);
+        assert_eq!(scheduler.pop(), Some(2));
+        assert_eq!(scheduler.pop(), None);
 
-    schedule_21(&mut scheduler);
-    scheduler.unschedule(2);
-    pop_1(&mut scheduler);
+        schedule_21(&mut scheduler);
+        scheduler.unschedule(2);
+        pop_1(&mut scheduler);
 
-    schedule_21(&mut scheduler);
-    scheduler.unschedule(2);
-    scheduler.unschedule(2);
-    pop_1(&mut scheduler);
-  }
+        schedule_21(&mut scheduler);
+        scheduler.unschedule(2);
+        scheduler.unschedule(2);
+        pop_1(&mut scheduler);
+    }
 
-  fn schedule_21(scheduler: &mut RelaxedFifo) {
-    scheduler.schedule(2);
-    scheduler.schedule(1);
-  }
+    fn schedule_21(scheduler: &mut RelaxedFifo) {
+        scheduler.schedule(2);
+        scheduler.schedule(1);
+    }
 
-  fn pop_1(scheduler: &mut RelaxedFifo) {
-    assert_eq!(scheduler.is_empty(), false);
-    assert_eq!(scheduler.pop(), Some(1));
-    assert_eq!(scheduler.pop(), None);
-    assert_eq!(scheduler.is_empty(), true);
-  }
+    fn pop_1(scheduler: &mut RelaxedFifo) {
+        assert_eq!(scheduler.is_empty(), false);
+        assert_eq!(scheduler.pop(), Some(1));
+        assert_eq!(scheduler.pop(), None);
+        assert_eq!(scheduler.is_empty(), true);
+    }
 
-  #[test]
-  #[should_panic]
-  fn schedule_outofbound() {
-    let mut scheduler: RelaxedFifo = Scheduler::new(3);
-    scheduler.schedule(3);
-  }
+    #[test]
+    #[should_panic]
+    fn schedule_outofbound() {
+        let mut scheduler: RelaxedFifo = Scheduler::new(3);
+        scheduler.schedule(3);
+    }
 
-  #[test]
-  #[should_panic]
-  fn unschedule_outofbound() {
-    let mut scheduler: RelaxedFifo = Scheduler::new(3);
-    scheduler.unschedule(3);
-  }
+    #[test]
+    #[should_panic]
+    fn unschedule_outofbound() {
+        let mut scheduler: RelaxedFifo = Scheduler::new(3);
+        scheduler.unschedule(3);
+    }
 }

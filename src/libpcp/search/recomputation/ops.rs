@@ -13,5 +13,5 @@
 // limitations under the License.
 
 pub trait FreezeSpace<VStore, CStore> {
-  fn freeze_space(vstore: VStore, cstore: CStore) -> Self;
+    fn freeze_space(vstore: VStore, cstore: CStore) -> Self;
 }

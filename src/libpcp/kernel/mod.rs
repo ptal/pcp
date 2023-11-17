@@ -15,13 +15,13 @@
 //! The kernel is a set of reusable traits shared among the different modules. It does not provide specific implementations.
 
 pub mod consistency;
-pub mod merge;
-pub mod event;
-pub mod restoration;
 pub mod display_stateful;
+pub mod event;
+pub mod merge;
+pub mod restoration;
 
 pub use kernel::consistency::*;
-pub use kernel::merge::*;
-pub use kernel::event::*;
-pub use kernel::restoration::*;
 pub use kernel::display_stateful::*;
+pub use kernel::event::*;
+pub use kernel::merge::*;
+pub use kernel::restoration::*;

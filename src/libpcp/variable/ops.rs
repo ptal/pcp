@@ -13,22 +13,19 @@
 // limitations under the License.
 
 use gcollections::kind::*;
-use vec_map::Drain;
 use std::slice;
+use vec_map::Drain;
 
-pub trait DrainDelta<Event>
-{
-  fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
-  fn has_changed(&self) -> bool;
-  fn reset_changed(&mut self);
+pub trait DrainDelta<Event> {
+    fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
+    fn has_changed(&self) -> bool;
+    fn reset_changed(&mut self);
 }
 
-pub trait Iterable: Collection
-{
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
+pub trait Iterable: Collection {
+    fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
 }
 
-pub trait MonotonicUpdate: AssociativeCollection
-{
-  fn update(&mut self, loc: &Self::Location, value: Self::Item) -> bool;
+pub trait MonotonicUpdate: AssociativeCollection {
+    fn update(&mut self, loc: &Self::Location, value: Self::Item) -> bool;
 }

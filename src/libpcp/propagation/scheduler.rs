@@ -13,9 +13,9 @@
 // limitations under the License.
 
 pub trait Scheduler {
-  fn new(capacity: usize) -> Self;
-  fn schedule(&mut self, idx: usize);
-  fn unschedule(&mut self, idx: usize);
-  fn pop(&mut self) -> Option<usize>;
-  fn is_empty(&self) -> bool;
+    fn new(capacity: usize) -> Self;
+    fn schedule(&mut self, idx: usize);
+    fn unschedule(&mut self, idx: usize);
+    fn pop(&mut self) -> Option<usize>;
+    fn is_empty(&self) -> bool;
 }

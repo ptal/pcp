@@ -15,5 +15,5 @@
 use trilean::SKleene;
 
 pub trait Consistency<VStore> {
-  fn consistency(&mut self, store: &mut VStore) -> SKleene;
+    fn consistency(&mut self, store: &mut VStore) -> SKleene;
 }

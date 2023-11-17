@@ -12,117 +12,128 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use search::space::*;
-use search::search_tree_visitor::*;
-use search::search_tree_visitor::Status::*;
-use term::*;
-use propagators::cmp::*;
-use gcollections::*;
 use concept::*;
+use gcollections::*;
+use kernel::*;
+use propagators::cmp::*;
+use search::search_tree_visitor::Status::*;
+use search::search_tree_visitor::*;
+use search::space::*;
+use term::*;
 
 pub enum Mode {
-  Minimize,
-  Maximize
+    Minimize,
+    Maximize,
 }
 
-pub struct BranchAndBound<VStore, C> where
- VStore: VStoreConcept,
- VStore::Item: Collection
+pub struct BranchAndBound<VStore, C>
+where
+    VStore: VStoreConcept,
+    VStore::Item: Collection,
 {
-  pub mode: Mode,
-  pub var: Var<VStore>,
-  pub value: Option<<VStore::Item as Collection>::Item>,
-  pub child: C
+    pub mode: Mode,
+    pub var: Var<VStore>,
+    pub value: Option<<VStore::Item as Collection>::Item>,
+    pub child: C,
 }
 
-impl<VStore, C> BranchAndBound<VStore, C> where
-  VStore: VStoreConcept,
-  VStore::Item: Collection
+impl<VStore, C> BranchAndBound<VStore, C>
+where
+    VStore: VStoreConcept,
+    VStore::Item: Collection,
 {
-  pub fn new(mode: Mode, var: Var<VStore>, child: C) -> Self {
-    BranchAndBound {
-      mode: mode,
-      var: var,
-      value: None,
-      child: child,
+    pub fn new(mode: Mode, var: Var<VStore>, child: C) -> Self {
+        BranchAndBound {
+            mode: mode,
+            var: var,
+            value: None,
+            child: child,
+        }
     }
-  }
 }
 
-impl<C, Bound, Dom, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>> for
-  BranchAndBound<VStore, C> where
- VStore: VStoreConcept<Item=Dom> + 'static,
- CStore: IntCStore<VStore>,
- Dom: IntDomain<Item=Bound> + 'static,
- Bound: IntBound + 'static,
- C: SearchTreeVisitor<Space<VStore, CStore, R>>,
- R: FreezeSpace<VStore, CStore> + Snapshot<State=Space<VStore, CStore, R>>
+impl<C, Bound, Dom, VStore, CStore, R> SearchTreeVisitor<Space<VStore, CStore, R>>
+    for BranchAndBound<VStore, C>
+where
+    VStore: VStoreConcept<Item = Dom> + 'static,
+    CStore: IntCStore<VStore>,
+    Dom: IntDomain<Item = Bound> + 'static,
+    Bound: IntBound + 'static,
+    C: SearchTreeVisitor<Space<VStore, CStore, R>>,
+    R: FreezeSpace<VStore, CStore> + Snapshot<State = Space<VStore, CStore, R>>,
 {
-  fn start(&mut self, root: &Space<VStore, CStore, R>) {
-    self.child.start(root);
-  }
+    fn start(&mut self, root: &Space<VStore, CStore, R>) {
+        self.child.start(root);
+    }
 
-  fn enter(&mut self, mut current: Space<VStore, CStore, R>)
-    -> (<Space<VStore, CStore, R> as Freeze>::FrozenState, Status<Space<VStore, CStore, R>>)
-  {
-    if let Some(bound) = self.value.clone() {
-      let bound = Box::new(Constant::new(bound)) as Var<VStore>;
-      match self.mode {
-        Mode::Minimize => current.cstore.alloc(Box::new(XLessY::new(self.var.bclone(), bound.bclone()))),
-        Mode::Maximize => current.cstore.alloc(Box::new(x_greater_y(self.var.bclone(), bound.bclone()))),
-      };
+    fn enter(
+        &mut self,
+        mut current: Space<VStore, CStore, R>,
+    ) -> (
+        <Space<VStore, CStore, R> as Freeze>::FrozenState,
+        Status<Space<VStore, CStore, R>>,
+    ) {
+        if let Some(bound) = self.value.clone() {
+            let bound = Box::new(Constant::new(bound)) as Var<VStore>;
+            match self.mode {
+                Mode::Minimize => current
+                    .cstore
+                    .alloc(Box::new(XLessY::new(self.var.bclone(), bound.bclone()))),
+                Mode::Maximize => current
+                    .cstore
+                    .alloc(Box::new(x_greater_y(self.var.bclone(), bound.bclone()))),
+            };
+        }
+        let (mut immutable_state, status) = self.child.enter(current);
+        if status == Satisfiable {
+            let space = immutable_state.unfreeze();
+            self.value = Some(self.var.read(&space.vstore).lower());
+            immutable_state = space.freeze();
+        }
+        (immutable_state, status)
     }
-    let (mut immutable_state, status) = self.child.enter(current);
-    if status == Satisfiable {
-      let space = immutable_state.unfreeze();
-      self.value = Some(self.var.read(&space.vstore).lower());
-      immutable_state = space.freeze();
-    }
-    (immutable_state, status)
-  }
 }
 
 #[cfg(test)]
 mod test {
-  use super::*;
-  use search::test::*;
-  use search::engine::all_solution::*;
-  use search::engine::one_solution::*;
-  use search::propagation::*;
-  use search::branching::binary_split::*;
-  use search::branching::brancher::*;
-  use search::branching::first_smallest_var::*;
-  use search::branching::middle_val::*;
-  use interval::interval_set::*;
-  use gcollections::VectorStack;
-  use gcollections::ops::*;
+    use super::*;
+    use gcollections::ops::*;
+    use gcollections::VectorStack;
+    use interval::interval_set::*;
+    use search::branching::binary_split::*;
+    use search::branching::brancher::*;
+    use search::branching::first_smallest_var::*;
+    use search::branching::middle_val::*;
+    use search::engine::all_solution::*;
+    use search::engine::one_solution::*;
+    use search::propagation::*;
+    use search::test::*;
 
-  #[test]
-  fn simple_maximize_test() {
-    simple_optimization_test(Mode::Maximize, 9);
-  }
+    #[test]
+    fn simple_maximize_test() {
+        simple_optimization_test(Mode::Maximize, 9);
+    }
 
-  #[test]
-  fn simple_minimize_test() {
-    simple_optimization_test(Mode::Minimize, 0);
-  }
+    #[test]
+    fn simple_minimize_test() {
+        simple_optimization_test(Mode::Minimize, 0);
+    }
 
-  fn simple_optimization_test(mode: Mode, expect: i32) {
-    let mut space = FDSpace::empty();
-    let x = Box::new(space.vstore.alloc((0,10).to_interval_set())) as Var<VStore>;
-    let y = Box::new(space.vstore.alloc((0,10).to_interval_set())) as Var<VStore>;
-    space.cstore.alloc(Box::new(XLessY::new(x.bclone(), y)));
+    fn simple_optimization_test(mode: Mode, expect: i32) {
+        let mut space = FDSpace::empty();
+        let x = Box::new(space.vstore.alloc((0, 10).to_interval_set())) as Var<VStore>;
+        let y = Box::new(space.vstore.alloc((0, 10).to_interval_set())) as Var<VStore>;
+        space.cstore.alloc(Box::new(XLessY::new(x.bclone(), y)));
 
-    let mut search: AllSolution<OneSolution<_, VectorStack<_>, FDSpace>>
-      = AllSolution::new(
-          OneSolution::new(
-            BranchAndBound::new(mode, x.bclone(),
-              Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)))));
-    search.start(&space);
-    let (_, status) = search.enter(space);
-    assert_eq!(status, EndOfSearch);
-    assert_eq!(search.child.child.value, Some(expect));
-  }
+        let mut search: AllSolution<OneSolution<_, VectorStack<_>, FDSpace>> =
+            AllSolution::new(OneSolution::new(BranchAndBound::new(
+                mode,
+                x.bclone(),
+                Propagation::new(Brancher::new(FirstSmallestVar, MiddleVal, BinarySplit)),
+            )));
+        search.start(&space);
+        let (_, status) = search.enter(space);
+        assert_eq!(status, EndOfSearch);
+        assert_eq!(search.child.child.value, Some(expect));
+    }
 }
-

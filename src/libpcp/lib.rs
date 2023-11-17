@@ -83,19 +83,19 @@
 //! }
 //! ```
 
-extern crate trilean;
-extern crate interval;
-extern crate gcollections;
-extern crate num;
-extern crate vec_map;
 extern crate bit_set;
+extern crate gcollections;
+extern crate interval;
+extern crate num;
+extern crate trilean;
+extern crate vec_map;
 
+pub mod concept;
 pub mod kernel;
 pub mod logic;
+pub mod model;
 pub mod propagation;
 pub mod propagators;
+pub mod search;
 pub mod term;
 pub mod variable;
-pub mod search;
-pub mod concept;
-pub mod model;

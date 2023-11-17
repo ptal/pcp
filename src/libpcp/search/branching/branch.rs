@@ -21,30 +21,36 @@ use kernel::*;
 // We don't store the propagators but instead a closure that
 // add the propagator(s) to the new space, when available.
 
-pub struct Branch<Space> where
-  Space: Freeze
+pub struct Branch<Space>
+where
+    Space: Freeze,
 {
-  label: <Space::FrozenState as Snapshot>::Label,
-  alternative: Box<dyn Fn(&mut Space)>
+    label: <Space::FrozenState as Snapshot>::Label,
+    alternative: Box<dyn Fn(&mut Space)>,
 }
 
-impl<Space> Branch<Space> where
-  Space: Freeze
+impl<Space> Branch<Space>
+where
+    Space: Freeze,
 {
-  pub fn distribute(space: Space, alternatives: Vec<Box<dyn Fn(&mut Space)>>) -> (Space::FrozenState, Vec<Branch<Space>>) {
-    let mut immutable_space = space.freeze();
-    let branches = alternatives.into_iter().map(|alt|
-      Branch {
-        label: immutable_space.label(),
-        alternative: alt
-      }
-    ).collect();
-    (immutable_space, branches)
-  }
+    pub fn distribute(
+        space: Space,
+        alternatives: Vec<Box<dyn Fn(&mut Space)>>,
+    ) -> (Space::FrozenState, Vec<Branch<Space>>) {
+        let mut immutable_space = space.freeze();
+        let branches = alternatives
+            .into_iter()
+            .map(|alt| Branch {
+                label: immutable_space.label(),
+                alternative: alt,
+            })
+            .collect();
+        (immutable_space, branches)
+    }
 
-  pub fn commit(self, space_from: Space::FrozenState) -> Space {
-    let mut new = space_from.restore(self.label);
-    (self.alternative)(&mut new);
-    new
-  }
+    pub fn commit(self, space_from: Space::FrozenState) -> Space {
+        let mut new = space_from.restore(self.label);
+        (self.alternative)(&mut new);
+        new
+    }
 }

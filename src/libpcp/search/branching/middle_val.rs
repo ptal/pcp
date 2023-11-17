@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::branching::*;
 use concept::*;
+use search::branching::*;
 
 pub struct MiddleVal;
 
-impl<Domain, Bound> ValSelection<Domain> for MiddleVal where
-  Domain: IntDomain<Item=Bound>,
-  Bound: IntBound,
+impl<Domain, Bound> ValSelection<Domain> for MiddleVal
+where
+    Domain: IntDomain<Item = Bound>,
+    Bound: IntBound,
 {
-  fn select(&mut self, dom: Domain) -> Bound {
-    (dom.lower() + dom.upper()) / (Bound::one() + Bound::one())
-  }
+    fn select(&mut self, dom: Domain) -> Bound {
+        (dom.lower() + dom.upper()) / (Bound::one() + Bound::one())
+    }
 }

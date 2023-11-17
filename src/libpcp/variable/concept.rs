@@ -12,28 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use variable::memory::concept::*;
-use kernel::*;
-use variable::ops::*;
-use term::identity::*;
-use gcollections::*;
 use gcollections::ops::*;
+use gcollections::*;
+use kernel::*;
 use model::*;
 use std::fmt::Debug;
+use term::identity::*;
+pub use variable::memory::concept::*;
+use variable::ops::*;
 
-pub trait EventConcept<Domain>:
-  MonotonicEvent<Domain> + Merge + Clone + Debug
-{}
+pub trait EventConcept<Domain>: MonotonicEvent<Domain> + Merge + Clone + Debug {}
 
-impl<Domain, R> EventConcept<Domain> for R where
-  R: MonotonicEvent<Domain> + Merge + Clone + Debug
-{}
+impl<Domain, R> EventConcept<Domain> for R where R: MonotonicEvent<Domain> + Merge + Clone + Debug {}
 
 pub trait VStoreConcept:
-   ImmutableMemoryConcept
- + AssociativeCollection<Location=Identity<<Self as Collection>::Item>>
- + Alloc
- + MonotonicUpdate
- + DisplayStateful<Model>
+    ImmutableMemoryConcept
+    + AssociativeCollection<Location = Identity<<Self as Collection>::Item>>
+    + Alloc
+    + MonotonicUpdate
+    + DisplayStateful<Model>
 {
 }

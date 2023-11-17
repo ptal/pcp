@@ -12,28 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use kernel::*;
-use variable::ops::*;
 use gcollections::kind::*;
-use gcollections::ops::*;
 use gcollections::ops::sequence::ordering::*;
-use std::ops::Index;
+use gcollections::ops::*;
+use kernel::*;
 use std::fmt::Debug;
+use std::ops::Index;
+use variable::ops::*;
 
 pub trait ImmutableMemoryConcept:
-   Collection
- + AssociativeCollection
- + Cardinality<Size=usize>
- + Iterable
- + Empty
- + Index<usize, Output=<Self as Collection>::Item>
- + Freeze
- + Debug
-{}
+    Collection
+    + AssociativeCollection
+    + Cardinality<Size = usize>
+    + Iterable
+    + Empty
+    + Index<usize, Output = <Self as Collection>::Item>
+    + Freeze
+    + Debug
+{
+}
 
 pub trait MemoryConcept:
-   ImmutableMemoryConcept
- + AssociativeCollection<Location=usize>
- + Push<Back>
- + Replace
-{}
+    ImmutableMemoryConcept + AssociativeCollection<Location = usize> + Push<Back> + Replace
+{
+}
