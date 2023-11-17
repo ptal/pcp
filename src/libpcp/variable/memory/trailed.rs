@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-// TODO: Redo unecessary? By recomputation?
+// TODO: Redo unnecessary? By recomputation?
 //  Investigate why it became slow again...
 //  Turn TrailingStore into a store and not a memory.
 //  Add different store for NonFailure/StrictMonotonicity/... : First implement Derive(...) and see the inheritance system.
