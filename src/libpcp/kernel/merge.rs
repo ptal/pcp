@@ -13,5 +13,5 @@
 // limitations under the License.
 
 pub trait Merge {
-  fn merge(x: Self, y: Self) -> Self;
+    fn merge(x: Self, y: Self) -> Self;
 }

@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod x_less_y;
 pub mod x_eq_y;
-pub mod x_neq_y;
-pub mod x_greater_y_plus_z;
-pub mod x_less_y_plus_z;
-pub mod x_eq_y_plus_z;
 pub mod x_eq_y_mul_z;
+pub mod x_eq_y_plus_z;
+pub mod x_greater_y_plus_z;
+pub mod x_less_y;
+pub mod x_less_y_plus_z;
+pub mod x_neq_y;
 
-use term::*;
-use gcollections::*;
 use concept::*;
-pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
-pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
-pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;
-pub use propagators::cmp::x_eq_y_mul_z::XEqYMulZ;
-pub use propagators::cmp::x_less_y::XLessY;
+use gcollections::*;
 pub use propagators::cmp::x_eq_y::XEqY;
+pub use propagators::cmp::x_eq_y_mul_z::XEqYMulZ;
+pub use propagators::cmp::x_eq_y_plus_z::XEqYPlusZ;
+pub use propagators::cmp::x_greater_y_plus_z::XGreaterYPlusZ;
+pub use propagators::cmp::x_less_y::XLessY;
+pub use propagators::cmp::x_less_y_plus_z::XLessYPlusZ;
 pub use propagators::cmp::x_neq_y::XNeqY;
+use term::*;
 
 pub type XGreaterY<VStore> = XLessY<VStore>;
 pub type XGreaterEqY<VStore> = XLessY<VStore>;
@@ -38,41 +38,51 @@ pub type XGreaterEqYPlusZ<VStore> = XGreaterYPlusZ<VStore>;
 pub type XLessEqYPlusZ<VStore> = XLessYPlusZ<VStore>;
 
 pub fn x_greater_y<VStore>(x: Var<VStore>, y: Var<VStore>) -> XGreaterY<VStore> {
-  XLessY::new(y, x)
+    XLessY::new(y, x)
 }
 
-pub fn x_geq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XGreaterEqY<VStore> where
-  VStore: VStoreConcept<Item=Domain> + 'static,
-  Domain: Collection<Item=Bound> + IntDomain,
-  Bound: IntBound
+pub fn x_geq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XGreaterEqY<VStore>
+where
+    VStore: VStoreConcept<Item = Domain> + 'static,
+    Domain: Collection<Item = Bound> + IntDomain,
+    Bound: IntBound,
 {
-  x_greater_y(Box::new(Addition::new(x, Bound::one())), y)
+    x_greater_y(Box::new(Addition::new(x, Bound::one())), y)
 }
 
-pub fn x_leq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XLessEqY<VStore> where
-  VStore: VStoreConcept<Item=Domain> + 'static,
-  Domain: Collection<Item=Bound> + IntDomain,
-  Bound: IntBound
+pub fn x_leq_y<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>) -> XLessEqY<VStore>
+where
+    VStore: VStoreConcept<Item = Domain> + 'static,
+    Domain: Collection<Item = Bound> + IntDomain,
+    Bound: IntBound,
 {
-  XLessY::new(x, Box::new(Addition::new(y, Bound::one())))
+    XLessY::new(x, Box::new(Addition::new(y, Bound::one())))
 }
 
-pub fn x_geq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
-  -> XGreaterEqYPlusZ<VStore> where
- VStore: VStoreConcept<Item=Domain> + 'static,
- Domain: Collection<Item=Bound> + IntDomain,
- Bound: IntBound
+pub fn x_geq_y_plus_z<VStore, Domain, Bound>(
+    x: Var<VStore>,
+    y: Var<VStore>,
+    z: Var<VStore>,
+) -> XGreaterEqYPlusZ<VStore>
+where
+    VStore: VStoreConcept<Item = Domain> + 'static,
+    Domain: Collection<Item = Bound> + IntDomain,
+    Bound: IntBound,
 {
-  XGreaterYPlusZ::new(Box::new(Addition::new(x, Bound::one())), y, z)
+    XGreaterYPlusZ::new(Box::new(Addition::new(x, Bound::one())), y, z)
 }
 
-pub fn x_leq_y_plus_z<VStore, Domain, Bound>(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>)
-  -> XLessEqYPlusZ<VStore> where
- VStore: VStoreConcept<Item=Domain> + 'static,
- Domain: Collection<Item=Bound> + IntDomain,
- Bound: IntBound
+pub fn x_leq_y_plus_z<VStore, Domain, Bound>(
+    x: Var<VStore>,
+    y: Var<VStore>,
+    z: Var<VStore>,
+) -> XLessEqYPlusZ<VStore>
+where
+    VStore: VStoreConcept<Item = Domain> + 'static,
+    Domain: Collection<Item = Bound> + IntDomain,
+    Bound: IntBound,
 {
-  XLessYPlusZ::new(Box::new(Addition::new(x, -Bound::one())), y, z)
+    XLessYPlusZ::new(Box::new(Addition::new(x, -Bound::one())), y, z)
 }
 
 // #[cfg(test)]

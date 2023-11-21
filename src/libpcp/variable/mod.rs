@@ -18,19 +18,19 @@
 //!
 //! A subset of arithmetics is provided with *views* on variables. It allows to manipulate an expression such as `x + 5` as if it was a single variable and to avoid implementing specific instances of propagation algorithms such as `x + c < y` which is just `x < y` with `x` being a view. The view acts as a proxy between operations on variable and the store. It implies that operations must be called on the views instead of applying them directly to the store.
 
-pub mod memory;
 pub mod concept;
+pub mod memory;
 pub mod ops;
 pub mod store;
 
 pub use variable::ops::Iterable;
 
-use variable::store::*;
-use variable::memory::TimestampTrailMemory;
-use variable::memory::CopyMemory;
-use propagation::events::FDEvent;
 use interval::interval::*;
 use interval::interval_set::*;
+use propagation::events::FDEvent;
+use variable::memory::CopyMemory;
+use variable::memory::TimestampTrailMemory;
+use variable::store::*;
 
 pub type VStoreTrail<Domain> = Store<TimestampTrailMemory<Domain>, FDEvent>;
 pub type VStoreCopy<Domain> = Store<CopyMemory<Domain>, FDEvent>;

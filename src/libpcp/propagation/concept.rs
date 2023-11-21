@@ -14,37 +14,40 @@
 
 use kernel::DisplayStateful;
 use logic::ops::*;
-use propagation::ops::*;
 use model::*;
+use propagation::ops::*;
 use std::fmt::Debug;
 
-pub trait PropagatorConcept_<VStore, Event> :
-  Propagator<VStore>
-  + Subsumption<VStore>
-  + PropagatorDependencies<Event>
-  + DisplayStateful<Model> + Debug
-  + NotFormula<VStore>
-{}
-
-impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R where
- R: Propagator<VStore>,
- R: Subsumption<VStore>,
- R: PropagatorDependencies<Event>,
- R: DisplayStateful<Model> + Debug,
- R: NotFormula<VStore>
-{}
-
-pub trait PropagatorConcept<VStore, Event>:
-  PropagatorConcept_<VStore, Event>
+pub trait PropagatorConcept_<VStore, Event>:
+    Propagator<VStore>
+    + Subsumption<VStore>
+    + PropagatorDependencies<Event>
+    + DisplayStateful<Model>
+    + Debug
+    + NotFormula<VStore>
 {
-  fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>>;
 }
 
-impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R where
-  R: PropagatorConcept_<VStore, Event>,
-  R: Clone + NotFormula<VStore> + 'static,
+impl<VStore, Event, R> PropagatorConcept_<VStore, Event> for R
+where
+    R: Propagator<VStore>,
+    R: Subsumption<VStore>,
+    R: PropagatorDependencies<Event>,
+    R: DisplayStateful<Model> + Debug,
+    R: NotFormula<VStore>,
 {
-  fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>> {
-    Box::new(self.clone())
-  }
+}
+
+pub trait PropagatorConcept<VStore, Event>: PropagatorConcept_<VStore, Event> {
+    fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>>;
+}
+
+impl<VStore, Event, R> PropagatorConcept<VStore, Event> for R
+where
+    R: PropagatorConcept_<VStore, Event>,
+    R: Clone + NotFormula<VStore> + 'static,
+{
+    fn bclone(&self) -> Box<dyn PropagatorConcept<VStore, Event>> {
+        Box::new(self.clone())
+    }
 }

@@ -14,72 +14,69 @@
 
 use variable::memory::trail::SingleValueTrail;
 
-use variable::memory::ops::*;
-use gcollections::ops::*;
 use gcollections::kind::*;
+use gcollections::ops::*;
+use std::fmt::{Display, Error, Formatter};
+use variable::memory::ops::*;
 use vec_map::VecMap;
-use std::fmt::{Formatter, Display, Error};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TimestampTrail<Domain>
-{
-  trail: SingleValueTrail<Domain>,
-  /// Contains the change on the domain of the current instant.
-  timestamp: VecMap<Domain>
+pub struct TimestampTrail<Domain> {
+    trail: SingleValueTrail<Domain>,
+    /// Contains the change on the domain of the current instant.
+    timestamp: VecMap<Domain>,
 }
 
-impl<Domain> Collection for TimestampTrail<Domain>
-{
-  type Item = Domain;
+impl<Domain> Collection for TimestampTrail<Domain> {
+    type Item = Domain;
 }
 
-impl<Domain> AssociativeCollection for TimestampTrail<Domain>
-{
-  type Location = usize;
+impl<Domain> AssociativeCollection for TimestampTrail<Domain> {
+    type Location = usize;
 }
 
-impl<Domain> TrailVariable for TimestampTrail<Domain>
-{
-  /// We do not trail the intermediate value, just the first change.
-  fn trail_variable(&mut self, loc: usize, value: Domain) {
-    self.timestamp.entry(loc).or_insert(value);
-  }
-}
-
-impl<Domain> TrailRestoration for TimestampTrail<Domain> where
- Domain: Clone
-{
-  type Mark = usize;
-
-  fn commit(&mut self) {
-    for (loc, value) in self.timestamp.drain() {
-      self.trail.trail_variable(loc, value.clone());
+impl<Domain> TrailVariable for TimestampTrail<Domain> {
+    /// We do not trail the intermediate value, just the first change.
+    fn trail_variable(&mut self, loc: usize, value: Domain) {
+        self.timestamp.entry(loc).or_insert(value);
     }
-  }
-
-  fn mark(&mut self) -> Self::Mark {
-    self.trail.mark()
-  }
-
-  fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Domain>) {
-    self.trail.undo(mark, memory);
-  }
 }
 
-impl<Domain> Display for TimestampTrail<Domain> where
- Domain: Display
+impl<Domain> TrailRestoration for TimestampTrail<Domain>
+where
+    Domain: Clone,
 {
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    self.trail.fmt(formatter)
-  }
-}
+    type Mark = usize;
 
-impl<Domain> Empty for TimestampTrail<Domain>
-{
-  fn empty() -> TimestampTrail<Domain> {
-    TimestampTrail {
-      trail: SingleValueTrail::empty(),
-      timestamp: VecMap::new()
+    fn commit(&mut self) {
+        for (loc, value) in self.timestamp.drain() {
+            self.trail.trail_variable(loc, value.clone());
+        }
     }
-  }
+
+    fn mark(&mut self) -> Self::Mark {
+        self.trail.mark()
+    }
+
+    fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Domain>) {
+        self.trail.undo(mark, memory);
+    }
+}
+
+impl<Domain> Display for TimestampTrail<Domain>
+where
+    Domain: Display,
+{
+    fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+        self.trail.fmt(formatter)
+    }
+}
+
+impl<Domain> Empty for TimestampTrail<Domain> {
+    fn empty() -> TimestampTrail<Domain> {
+        TimestampTrail {
+            trail: SingleValueTrail::empty(),
+            timestamp: VecMap::new(),
+        }
+    }
 }

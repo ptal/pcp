@@ -15,43 +15,43 @@
 use gcollections::kind::*;
 use std::ops::{Deref, DerefMut};
 
-pub trait StoreMonotonicUpdate<Store: Collection>
-{
-  fn update(&mut self, store: &mut Store, value: Store::Item) -> bool;
+pub trait StoreMonotonicUpdate<Store: Collection> {
+    fn update(&mut self, store: &mut Store, value: Store::Item) -> bool;
 }
 
-pub trait StoreRead<Store: Collection>
-{
-  fn read(&self, store: &Store) -> Store::Item;
+pub trait StoreRead<Store: Collection> {
+    fn read(&self, store: &Store) -> Store::Item;
 }
 
-pub trait ViewDependencies<Event>
-{
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
+pub trait ViewDependencies<Event> {
+    fn dependencies(&self, event: Event) -> Vec<(usize, Event)>;
 }
 
-impl<Store, R> StoreMonotonicUpdate<Store> for Box<R> where
-  R: StoreMonotonicUpdate<Store>,
-  Store: Collection
+impl<Store, R> StoreMonotonicUpdate<Store> for Box<R>
+where
+    R: StoreMonotonicUpdate<Store>,
+    Store: Collection,
 {
-  fn update(&mut self, store: &mut Store, value: Store::Item) -> bool {
-    self.deref_mut().update(store, value)
-  }
+    fn update(&mut self, store: &mut Store, value: Store::Item) -> bool {
+        self.deref_mut().update(store, value)
+    }
 }
 
-impl<Store, R> StoreRead<Store> for Box<R> where
-  R: StoreRead<Store>,
-  Store: Collection
+impl<Store, R> StoreRead<Store> for Box<R>
+where
+    R: StoreRead<Store>,
+    Store: Collection,
 {
-  fn read(&self, store: &Store) -> Store::Item {
-    self.deref().read(store)
-  }
+    fn read(&self, store: &Store) -> Store::Item {
+        self.deref().read(store)
+    }
 }
 
-impl<Event, R> ViewDependencies<Event> for Box<R> where
-  R: ViewDependencies<Event>
+impl<Event, R> ViewDependencies<Event> for Box<R>
+where
+    R: ViewDependencies<Event>,
 {
-  fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
-    self.deref().dependencies(event)
-  }
+    fn dependencies(&self, event: Event) -> Vec<(usize, Event)> {
+        self.deref().dependencies(event)
+    }
 }

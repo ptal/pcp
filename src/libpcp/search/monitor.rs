@@ -13,61 +13,59 @@
 // limitations under the License.
 
 use kernel::*;
-use search::search_tree_visitor::*;
 use search::search_tree_visitor::Status::*;
+use search::search_tree_visitor::*;
 
 pub trait SearchMonitor<Space: Freeze> {
-  fn on_node(&mut self, space: &Space, status: &Status<Space>) {
-    self.dispatch_node(space, status)
-  }
-
-  fn dispatch_node(&mut self, space: &Space, status: &Status<Space>)
-  {
-    match status {
-      &Satisfiable => self.on_solution(space),
-      &Unsatisfiable => self.on_failure(space),
-      &EndOfSearch => self.on_end_of_search(space),
-      &Unknown(ref b) if b.is_empty() => self.on_prune(space),
-      &Unknown(_) => self.on_unknown(space)
+    fn on_node(&mut self, space: &Space, status: &Status<Space>) {
+        self.dispatch_node(space, status)
     }
-  }
 
-  fn on_solution(&mut self, _space: &Space) {}
-  fn on_failure(&mut self, _space: &Space) {}
-  fn on_end_of_search(&mut self, _space: &Space) {}
-  fn on_prune(&mut self, _space: &Space) {}
-  fn on_unknown(&mut self, _space: &Space) {}
+    fn dispatch_node(&mut self, space: &Space, status: &Status<Space>) {
+        match status {
+            &Satisfiable => self.on_solution(space),
+            &Unsatisfiable => self.on_failure(space),
+            &EndOfSearch => self.on_end_of_search(space),
+            &Unknown(ref b) if b.is_empty() => self.on_prune(space),
+            &Unknown(_) => self.on_unknown(space),
+        }
+    }
+
+    fn on_solution(&mut self, _space: &Space) {}
+    fn on_failure(&mut self, _space: &Space) {}
+    fn on_end_of_search(&mut self, _space: &Space) {}
+    fn on_prune(&mut self, _space: &Space) {}
+    fn on_unknown(&mut self, _space: &Space) {}
 }
 
-pub struct Monitor<'a, M: 'a, C>
-{
-  monitor: &'a mut M,
-  child: C,
+pub struct Monitor<'a, M: 'a, C> {
+    monitor: &'a mut M,
+    child: C,
 }
 
 impl<'a, M, C> Monitor<'a, M, C> {
-  pub fn new(monitor: &'a mut M, child: C) -> Monitor<'a, M, C> {
-    Monitor {
-      monitor: monitor,
-      child: child,
+    pub fn new(monitor: &'a mut M, child: C) -> Monitor<'a, M, C> {
+        Monitor {
+            monitor: monitor,
+            child: child,
+        }
     }
-  }
 }
 
-impl<'a, M, C, Space> SearchTreeVisitor<Space> for Monitor<'a, M, C> where
-  Space: Freeze,
-  C: SearchTreeVisitor<Space>,
-  M: SearchMonitor<Space>
+impl<'a, M, C, Space> SearchTreeVisitor<Space> for Monitor<'a, M, C>
+where
+    Space: Freeze,
+    C: SearchTreeVisitor<Space>,
+    M: SearchMonitor<Space>,
 {
-  fn start(&mut self, root: &Space) {
-    self.child.start(root);
-  }
+    fn start(&mut self, root: &Space) {
+        self.child.start(root);
+    }
 
-  fn enter(&mut self, current: Space) -> (Space::FrozenState, Status<Space>)
-  {
-    let (immutable_state, status) = self.child.enter(current);
-    let space = immutable_state.unfreeze();
-    self.monitor.on_node(&space, &status);
-    (space.freeze(), status)
-  }
+    fn enter(&mut self, current: Space) -> (Space::FrozenState, Status<Space>) {
+        let (immutable_state, status) = self.child.enter(current);
+        let space = immutable_state.unfreeze();
+        self.monitor.on_node(&space, &status);
+        (space.freeze(), status)
+    }
 }

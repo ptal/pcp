@@ -14,15 +14,13 @@
 
 use gcollections::kind::*;
 
-pub trait TrailVariable : AssociativeCollection
-{
-  fn trail_variable(&mut self, loc: Self::Location, value: Self::Item);
+pub trait TrailVariable: AssociativeCollection {
+    fn trail_variable(&mut self, loc: Self::Location, value: Self::Item);
 }
 
-pub trait TrailRestoration : Collection
-{
-  type Mark;
-  fn commit(&mut self) {}
-  fn mark(&mut self) -> Self::Mark;
-  fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Self::Item>);
+pub trait TrailRestoration: Collection {
+    type Mark;
+    fn commit(&mut self) {}
+    fn mark(&mut self) -> Self::Mark;
+    fn undo(&mut self, mark: Self::Mark, memory: &mut Vec<Self::Item>);
 }

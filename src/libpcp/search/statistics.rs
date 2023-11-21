@@ -17,37 +17,37 @@ use search::monitor::*;
 use search::search_tree_visitor::Status;
 
 pub struct Statistics {
-  pub num_solution: usize,
-  pub num_failed_node: usize,
-  pub num_prune: usize,
-  pub num_nodes: usize
+    pub num_solution: usize,
+    pub num_failed_node: usize,
+    pub num_prune: usize,
+    pub num_nodes: usize,
 }
 
 impl Statistics {
-  pub fn new() -> Self {
-    Statistics {
-      num_solution: 0,
-      num_failed_node: 0,
-      num_prune: 0,
-      num_nodes: 0
+    pub fn new() -> Self {
+        Statistics {
+            num_solution: 0,
+            num_failed_node: 0,
+            num_prune: 0,
+            num_nodes: 0,
+        }
     }
-  }
 }
 
-impl<Space:Freeze> SearchMonitor<Space> for Statistics {
-  fn on_node(&mut self, space: &Space, status: &Status<Space>) {
-    println!("\n\nLLLL\n\n");
-    self.num_nodes += 1;
-    self.dispatch_node(space, status)
-  }
+impl<Space: Freeze> SearchMonitor<Space> for Statistics {
+    fn on_node(&mut self, space: &Space, status: &Status<Space>) {
+        println!("\n\nLLLL\n\n");
+        self.num_nodes += 1;
+        self.dispatch_node(space, status)
+    }
 
-  fn on_solution(&mut self, _space: &Space) {
-    self.num_solution += 1;
-  }
-  fn on_failure(&mut self, _space: &Space) {
-    self.num_failed_node += 1;
-  }
-  fn on_prune(&mut self, _space: &Space) {
-    self.num_prune += 1;
-  }
+    fn on_solution(&mut self, _space: &Space) {
+        self.num_solution += 1;
+    }
+    fn on_failure(&mut self, _space: &Space) {
+        self.num_failed_node += 1;
+    }
+    fn on_prune(&mut self, _space: &Space) {
+        self.num_prune += 1;
+    }
 }

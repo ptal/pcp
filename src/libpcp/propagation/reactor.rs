@@ -15,8 +15,14 @@
 use kernel::event::*;
 
 pub trait Reactor {
-  fn new(num_vars: usize, num_events: usize) -> Self;
-  fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
-  fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize) where E: EventIndex;
-  fn react<E>(&self, var: usize, ev: E) -> Vec<usize> where E: EventIndex;
+    fn new(num_vars: usize, num_events: usize) -> Self;
+    fn subscribe<E>(&mut self, var: usize, ev: E, prop: usize)
+    where
+        E: EventIndex;
+    fn unsubscribe<E>(&mut self, var: usize, ev: E, prop: usize)
+    where
+        E: EventIndex;
+    fn react<E>(&self, var: usize, ev: E) -> Vec<usize>
+    where
+        E: EventIndex;
 }

@@ -12,45 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use search::space::*;
-use search::branching::*;
-use variable::ops::Iterable;
 use gcollections::ops::*;
 use num::traits::Unsigned;
 use num::Integer;
+use search::branching::*;
+use search::space::*;
+use variable::ops::Iterable;
 
 pub struct InputOrder;
 
-impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for InputOrder where
-  VStore: Iterable<Item=Domain>,
-  Domain: Cardinality<Size=Size>,
-  Size: Ord + Unsigned + Integer
+impl<VStore, CStore, R, Domain, Size> VarSelection<Space<VStore, CStore, R>> for InputOrder
+where
+    VStore: Iterable<Item = Domain>,
+    Domain: Cardinality<Size = Size>,
+    Size: Ord + Unsigned + Integer,
 {
-  fn select(&mut self, space: &Space<VStore, CStore, R>) -> usize {
-    space.vstore.iter().enumerate()
-      .filter(|&(_, v)| v.size() > Size::one())
-      .next()
-      .expect("Cannot select a variable in a space where all variables are assigned.")
-      .0
-  }
+    fn select(&mut self, space: &Space<VStore, CStore, R>) -> usize {
+        space
+            .vstore
+            .iter()
+            .enumerate()
+            .filter(|&(_, v)| v.size() > Size::one())
+            .next()
+            .expect("Cannot select a variable in a space where all variables are assigned.")
+            .0
+    }
 }
 
 #[cfg(test)]
 mod test {
-  use super::*;
-  use search::branching::first_smallest_var::test::test_selector;
+    use super::*;
+    use search::branching::first_smallest_var::test::test_selector;
 
-  #[test]
-  fn smallest_var_selection() {
-    test_selector(InputOrder, vec![(1,10),(2,4),(1,1)], 0);
-    test_selector(InputOrder, vec![(1,10),(2,4),(2,4)], 0);
-    test_selector(InputOrder,
-      vec![(1,1),(1,1),(1,10),(1,1),(2,4),(1,1),(1,1)], 2);
-  }
+    #[test]
+    fn smallest_var_selection() {
+        test_selector(InputOrder, vec![(1, 10), (2, 4), (1, 1)], 0);
+        test_selector(InputOrder, vec![(1, 10), (2, 4), (2, 4)], 0);
+        test_selector(
+            InputOrder,
+            vec![(1, 1), (1, 1), (1, 10), (1, 1), (2, 4), (1, 1), (1, 1)],
+            2,
+        );
+    }
 
-  #[should_panic]
-  #[test]
-  fn smallest_var_selection_all_assigned() {
-    test_selector(InputOrder, vec![(0, 0),(2,2),(1,1)], 0);
-  }
+    #[should_panic]
+    #[test]
+    fn smallest_var_selection_all_assigned() {
+        test_selector(InputOrder, vec![(0, 0), (2, 2), (1, 1)], 0);
+    }
 }

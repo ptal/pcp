@@ -14,7 +14,6 @@
 
 use concept::*;
 
-pub trait NotFormula<VStore>
-{
-  fn not(&self) -> Formula<VStore>;
+pub trait NotFormula<VStore> {
+    fn not(&self) -> Formula<VStore>;
 }

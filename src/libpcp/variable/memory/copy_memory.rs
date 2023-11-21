@@ -12,161 +12,143 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use gcollections::kind::*;
+use gcollections::ops::sequence::ordering::*;
+use gcollections::ops::*;
 use kernel::*;
+use std::fmt::Debug;
+use std::fmt::{Display, Error, Formatter};
+use std::mem;
+use std::ops::{Deref, DerefMut, Index};
+use std::rc::*;
+use std::slice;
 use variable::concept::*;
 use variable::ops::*;
-use gcollections::kind::*;
-use gcollections::ops::*;
-use gcollections::ops::sequence::ordering::*;
-use std::slice;
-use std::ops::{Deref, DerefMut, Index};
-use std::fmt::{Formatter, Display, Error};
-use std::rc::*;
-use std::mem;
-use std::fmt::Debug;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CopyMemory<Domain>
-{
-  variables: Vec<Domain>
+pub struct CopyMemory<Domain> {
+    variables: Vec<Domain>,
 }
 
-impl<Domain> MemoryConcept for CopyMemory<Domain> where
-  Domain: Clone + Display + Debug
-{}
+impl<Domain> MemoryConcept for CopyMemory<Domain> where Domain: Clone + Display + Debug {}
 
-impl<Domain> ImmutableMemoryConcept for CopyMemory<Domain> where
-  Domain: Clone + Display + Debug
-{}
+impl<Domain> ImmutableMemoryConcept for CopyMemory<Domain> where Domain: Clone + Display + Debug {}
 
-impl<Domain> Collection for CopyMemory<Domain>
-{
-  type Item = Domain;
+impl<Domain> Collection for CopyMemory<Domain> {
+    type Item = Domain;
 }
 
-impl<Domain> AssociativeCollection for CopyMemory<Domain>
-{
-  type Location = usize;
+impl<Domain> AssociativeCollection for CopyMemory<Domain> {
+    type Location = usize;
 }
 
-impl<Domain> Replace for CopyMemory<Domain>
-{
-  fn replace(&mut self, key: usize, dom: Domain) -> Domain {
-    mem::replace(&mut self.variables[key], dom)
-  }
-}
-
-impl<Domain> Index<usize> for CopyMemory<Domain>
-{
-  type Output = Domain;
-  fn index<'a>(&'a self, index: usize) -> &'a Domain {
-    &self.variables[index]
-  }
-}
-
-impl<Domain> CopyMemory<Domain>
-{
-  fn restore(variables: Vec<Domain>) -> CopyMemory<Domain> {
-    CopyMemory {
-      variables: variables
+impl<Domain> Replace for CopyMemory<Domain> {
+    fn replace(&mut self, key: usize, dom: Domain) -> Domain {
+        mem::replace(&mut self.variables[key], dom)
     }
-  }
 }
 
-impl<Domain> Deref for CopyMemory<Domain>
-{
-  type Target = Vec<Domain>;
-  fn deref(&self) -> &Self::Target {
-    &self.variables
-  }
-}
-
-impl<Domain> DerefMut for CopyMemory<Domain>
-{
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.variables
-  }
-}
-
-impl<Domain> Empty for CopyMemory<Domain>
-{
-  fn empty() -> CopyMemory<Domain> {
-    CopyMemory {
-      variables: vec![]
+impl<Domain> Index<usize> for CopyMemory<Domain> {
+    type Output = Domain;
+    fn index<'a>(&'a self, index: usize) -> &'a Domain {
+        &self.variables[index]
     }
-  }
 }
 
-impl<Domain> Cardinality for CopyMemory<Domain>
-{
-  type Size = usize;
-
-  fn size(&self) -> usize {
-    self.variables.len()
-  }
-}
-
-impl<Domain> Iterable for CopyMemory<Domain>
-{
-  fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
-    self.variables.iter()
-  }
-}
-
-impl<Domain> Push<Back> for CopyMemory<Domain>
-{
-  fn push(&mut self, value: Domain) {
-    self.variables.push(value);
-  }
-}
-
-impl<Domain> Display for CopyMemory<Domain> where
- Domain: Display
-{
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    for v in &self.variables {
-      formatter.write_fmt(format_args!("{} ", v))?;
+impl<Domain> CopyMemory<Domain> {
+    fn restore(variables: Vec<Domain>) -> CopyMemory<Domain> {
+        CopyMemory {
+            variables: variables,
+        }
     }
-    Ok(())
-  }
 }
 
-impl<Domain> Freeze for CopyMemory<Domain> where
- Domain: Clone
-{
-  type FrozenState = FrozenCopyMemory<Domain>;
-  fn freeze(self) -> Self::FrozenState
-  {
-    FrozenCopyMemory::new(self)
-  }
-}
-
-pub struct FrozenCopyMemory<Domain>
-{
-  variables: Rc<Vec<Domain>>
-}
-
-impl<Domain> FrozenCopyMemory<Domain>
-{
-  fn new(store: CopyMemory<Domain>) -> FrozenCopyMemory<Domain> {
-    FrozenCopyMemory {
-      variables: Rc::new(store.variables)
+impl<Domain> Deref for CopyMemory<Domain> {
+    type Target = Vec<Domain>;
+    fn deref(&self) -> &Self::Target {
+        &self.variables
     }
-  }
 }
 
-impl<Domain> Snapshot for FrozenCopyMemory<Domain> where
- Domain: Clone
+impl<Domain> DerefMut for CopyMemory<Domain> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.variables
+    }
+}
+
+impl<Domain> Empty for CopyMemory<Domain> {
+    fn empty() -> CopyMemory<Domain> {
+        CopyMemory { variables: vec![] }
+    }
+}
+
+impl<Domain> Cardinality for CopyMemory<Domain> {
+    type Size = usize;
+
+    fn size(&self) -> usize {
+        self.variables.len()
+    }
+}
+
+impl<Domain> Iterable for CopyMemory<Domain> {
+    fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
+        self.variables.iter()
+    }
+}
+
+impl<Domain> Push<Back> for CopyMemory<Domain> {
+    fn push(&mut self, value: Domain) {
+        self.variables.push(value);
+    }
+}
+
+impl<Domain> Display for CopyMemory<Domain>
+where
+    Domain: Display,
 {
-  type Label = Rc<Vec<Domain>>;
-  type State = CopyMemory<Domain>;
+    fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+        for v in &self.variables {
+            formatter.write_fmt(format_args!("{} ", v))?;
+        }
+        Ok(())
+    }
+}
 
-  fn label(&mut self) -> Self::Label {
-    self.variables.clone()
-  }
+impl<Domain> Freeze for CopyMemory<Domain>
+where
+    Domain: Clone,
+{
+    type FrozenState = FrozenCopyMemory<Domain>;
+    fn freeze(self) -> Self::FrozenState {
+        FrozenCopyMemory::new(self)
+    }
+}
 
-  fn restore(self, label: Self::Label) -> Self::State {
-    let variables = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
-    CopyMemory::restore(variables)
-  }
+pub struct FrozenCopyMemory<Domain> {
+    variables: Rc<Vec<Domain>>,
+}
+
+impl<Domain> FrozenCopyMemory<Domain> {
+    fn new(store: CopyMemory<Domain>) -> FrozenCopyMemory<Domain> {
+        FrozenCopyMemory {
+            variables: Rc::new(store.variables),
+        }
+    }
+}
+
+impl<Domain> Snapshot for FrozenCopyMemory<Domain>
+where
+    Domain: Clone,
+{
+    type Label = Rc<Vec<Domain>>;
+    type State = CopyMemory<Domain>;
+
+    fn label(&mut self) -> Self::Label {
+        self.variables.clone()
+    }
+
+    fn restore(self, label: Self::Label) -> Self::State {
+        let variables = Rc::try_unwrap(label).unwrap_or_else(|l| l.deref().clone());
+        CopyMemory::restore(variables)
+    }
 }

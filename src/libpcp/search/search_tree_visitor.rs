@@ -13,61 +13,66 @@
 // limitations under the License.
 
 use kernel::*;
-use search::search_tree_visitor::Status::*;
 use search::branching::branch::*;
+use search::search_tree_visitor::Status::*;
 use std::cmp::PartialEq;
-use std::fmt::{Debug, Formatter, Error};
+use std::fmt::{Debug, Error, Formatter};
 
-pub enum Status<Space> where
-  Space: Freeze
+pub enum Status<Space>
+where
+    Space: Freeze,
 {
-  Satisfiable,
-  Unsatisfiable,
-  Unknown(Vec<Branch<Space>>),
-  EndOfSearch
+    Satisfiable,
+    Unsatisfiable,
+    Unknown(Vec<Branch<Space>>),
+    EndOfSearch,
 }
 
-impl<Space> Status<Space> where
- Space: Freeze
+impl<Space> Status<Space>
+where
+    Space: Freeze,
 {
-  pub fn pruned() -> Status<Space> {
-    Unknown(vec![])
-  }
-}
-
-impl<Space> Debug for Status<Space> where
-  Space: Freeze
-{
-  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
-    let name = match self {
-      &Satisfiable => "Satisfiable",
-      &Unsatisfiable => "Unsatisfiable",
-      &Unknown(ref branches) if branches.is_empty() => "Pruned",
-      &Unknown(_) => "Unknown",
-      &EndOfSearch => "End of search"
-    };
-    formatter.write_str(name)
-  }
-}
-
-impl<Space> PartialEq for Status<Space> where
-  Space: Freeze
-{
-  fn eq(&self, other: &Status<Space>) -> bool {
-    match (self, other) {
-      (&Satisfiable, &Satisfiable) => true,
-      (&Unsatisfiable, &Unsatisfiable) => true,
-      (&Unknown(ref b1), &Unknown(ref b2)) if b1.is_empty() && b2.is_empty() => true,
-      (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
-      (&EndOfSearch, &EndOfSearch) => true,
-      (_, _) => false,
+    pub fn pruned() -> Status<Space> {
+        Unknown(vec![])
     }
-  }
 }
 
-pub trait SearchTreeVisitor<Space> where
-  Space: Freeze
+impl<Space> Debug for Status<Space>
+where
+    Space: Freeze,
 {
-  fn start(&mut self, _space: &Space) {}
-  fn enter(&mut self, space: Space) -> (Space::FrozenState, Status<Space>);
+    fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+        let name = match self {
+            &Satisfiable => "Satisfiable",
+            &Unsatisfiable => "Unsatisfiable",
+            &Unknown(ref branches) if branches.is_empty() => "Pruned",
+            &Unknown(_) => "Unknown",
+            &EndOfSearch => "End of search",
+        };
+        formatter.write_str(name)
+    }
+}
+
+impl<Space> PartialEq for Status<Space>
+where
+    Space: Freeze,
+{
+    fn eq(&self, other: &Status<Space>) -> bool {
+        match (self, other) {
+            (&Satisfiable, &Satisfiable) => true,
+            (&Unsatisfiable, &Unsatisfiable) => true,
+            (&Unknown(ref b1), &Unknown(ref b2)) if b1.is_empty() && b2.is_empty() => true,
+            (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
+            (&EndOfSearch, &EndOfSearch) => true,
+            (_, _) => false,
+        }
+    }
+}
+
+pub trait SearchTreeVisitor<Space>
+where
+    Space: Freeze,
+{
+    fn start(&mut self, _space: &Space) {}
+    fn enter(&mut self, space: Space) -> (Space::FrozenState, Status<Space>);
 }

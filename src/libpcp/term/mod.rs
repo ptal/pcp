@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod identity;
-pub mod constant;
 pub mod addition;
+pub mod constant;
+pub mod identity;
 pub mod ops;
 pub mod sum;
 
-pub use term::identity::Identity;
-pub use term::constant::Constant;
 pub use term::addition::Addition;
+pub use term::constant::Constant;
+pub use term::identity::Identity;
 pub use term::sum::Sum;

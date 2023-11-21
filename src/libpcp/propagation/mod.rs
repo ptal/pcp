@@ -16,20 +16,19 @@
 //!
 //! The constraints store is parametrized by the type of the variables store to keep both concrete implementation independents. Stores are stacked in a hierarchical manner and they communicate only from top to bottom; the variables store is not aware of the constraints store.
 
-
+pub mod concept;
+pub mod events;
+pub mod ops;
 pub mod reactor;
 pub mod reactors;
 pub mod scheduler;
 pub mod schedulers;
-pub mod events;
 pub mod store;
-pub mod ops;
-pub mod concept;
 
+pub use propagation::concept::*;
+pub use propagation::ops::*;
 pub use propagation::reactor::Reactor;
 pub use propagation::scheduler::Scheduler;
-pub use propagation::ops::*;
-pub use propagation::concept::*;
 
 pub type CStoreFD<VStore> =
-  store::Store<VStore, events::FDEvent, reactors::IndexedDeps, schedulers::RelaxedFifo>;
+    store::Store<VStore, events::FDEvent, reactors::IndexedDeps, schedulers::RelaxedFifo>;

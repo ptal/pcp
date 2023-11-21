@@ -18,81 +18,86 @@ use std::fmt::Debug;
 
 #[derive(Clone)]
 pub struct Model {
-  pub groups: Vec<(String, usize)>,
-  pub var_names: HashMap<usize, String>
+    pub groups: Vec<(String, usize)>,
+    pub var_names: HashMap<usize, String>,
 }
 
-impl Model
-{
-  pub fn new() -> Self {
-    Model {
-      groups: vec![],
-      var_names: HashMap::new()
+impl Model {
+    pub fn new() -> Self {
+        Model {
+            groups: vec![],
+            var_names: HashMap::new(),
+        }
     }
-  }
 
-  pub fn open_group(&mut self, name: &str) {
-    self.groups.push((String::from(name), 1));
-  }
-
-  pub fn close_group(&mut self) {
-    self.groups.pop().expect("Cannot close a non-opened group.");
-  }
-
-  pub fn alloc_var<VStore, Domain>(&mut self,
-    vstore: &mut VStore, dom: Domain) -> Var<VStore> where
-   VStore: VStoreConcept<Item=Domain>,
-   Domain: Clone + Debug + 'static
-  {
-    let name = self.make_name();
-    self.alloc_var_with_name(vstore, dom, name)
-  }
-
-  pub fn alloc_var_with_name<VStore, Domain>(&mut self,
-    vstore: &mut VStore, dom: Domain, name: String) -> Var<VStore> where
-   VStore: VStoreConcept<Item=Domain>,
-   Domain: Clone + Debug + 'static
-  {
-    let loc = vstore.alloc(dom);
-    self.register_var(loc.index(), name);
-    Box::new(loc)
-  }
-
-
-  pub fn register_var(&mut self, var: usize, name: String) {
-    self.var_names.insert(var, name);
-  }
-
-  pub fn var_name(&self, idx: usize) -> String {
-    match self.var_names.get(&idx) {
-      Some(name) => name.clone(),
-      None => format!("_{}", idx)
+    pub fn open_group(&mut self, name: &str) {
+        self.groups.push((String::from(name), 1));
     }
-  }
 
-  pub fn inc_group(&mut self) {
-    self.groups.last_mut()
-      .expect("Open a group with `open_group` before allocating a variable.").1 += 1;
-  }
-
-  fn make_name(&mut self) -> String {
-    let mut name = String::new();
-    for (g, i) in self.groups.clone() {
-      name.push_str(&format!("{}{}", g, i));
+    pub fn close_group(&mut self) {
+        self.groups.pop().expect("Cannot close a non-opened group.");
     }
-    self.inc_group();
-    name
-  }
 
-  pub fn display_global<VStore>(&self, name: &str, args: &Vec<Var<VStore>>) {
-    print!("{}(", name);
-    let mut i = 0;
-    while i < args.len() - 1 {
-      args[i].display(self);
-      print!(", ");
-      i += 1;
+    pub fn alloc_var<VStore, Domain>(&mut self, vstore: &mut VStore, dom: Domain) -> Var<VStore>
+    where
+        VStore: VStoreConcept<Item = Domain>,
+        Domain: Clone + Debug + 'static,
+    {
+        let name = self.make_name();
+        self.alloc_var_with_name(vstore, dom, name)
     }
-    args[i].display(self);
-    print!(") (decomposed)");
-  }
+
+    pub fn alloc_var_with_name<VStore, Domain>(
+        &mut self,
+        vstore: &mut VStore,
+        dom: Domain,
+        name: String,
+    ) -> Var<VStore>
+    where
+        VStore: VStoreConcept<Item = Domain>,
+        Domain: Clone + Debug + 'static,
+    {
+        let loc = vstore.alloc(dom);
+        self.register_var(loc.index(), name);
+        Box::new(loc)
+    }
+
+    pub fn register_var(&mut self, var: usize, name: String) {
+        self.var_names.insert(var, name);
+    }
+
+    pub fn var_name(&self, idx: usize) -> String {
+        match self.var_names.get(&idx) {
+            Some(name) => name.clone(),
+            None => format!("_{}", idx),
+        }
+    }
+
+    pub fn inc_group(&mut self) {
+        self.groups
+            .last_mut()
+            .expect("Open a group with `open_group` before allocating a variable.")
+            .1 += 1;
+    }
+
+    fn make_name(&mut self) -> String {
+        let mut name = String::new();
+        for (g, i) in self.groups.clone() {
+            name.push_str(&format!("{}{}", g, i));
+        }
+        self.inc_group();
+        name
+    }
+
+    pub fn display_global<VStore>(&self, name: &str, args: &Vec<Var<VStore>>) {
+        print!("{}(", name);
+        let mut i = 0;
+        while i < args.len() - 1 {
+            args[i].display(self);
+            print!(", ");
+            i += 1;
+        }
+        args[i].display(self);
+        print!(") (decomposed)");
+    }
 }
