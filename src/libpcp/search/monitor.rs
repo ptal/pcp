@@ -45,10 +45,7 @@ pub struct Monitor<'a, M: 'a, C> {
 
 impl<'a, M, C> Monitor<'a, M, C> {
     pub fn new(monitor: &'a mut M, child: C) -> Monitor<'a, M, C> {
-        Monitor {
-            monitor: monitor,
-            child: child,
-        }
+        Monitor { monitor, child }
     }
 }
 

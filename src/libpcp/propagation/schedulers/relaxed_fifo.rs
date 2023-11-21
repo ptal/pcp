@@ -35,7 +35,7 @@ impl Scheduler for RelaxedFifo {
         RelaxedFifo {
             inside_queue: BitSet::with_capacity(capacity),
             queue: VecDeque::with_capacity(capacity),
-            capacity: capacity,
+            capacity,
         }
     }
 

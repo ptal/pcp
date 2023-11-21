@@ -137,7 +137,7 @@ pub struct FrozenTrailMemory<Trail, Domain> {
 
 impl<Trail, Domain> FrozenTrailMemory<Trail, Domain> {
     fn new(store: TrailMemory<Trail, Domain>) -> FrozenTrailMemory<Trail, Domain> {
-        FrozenTrailMemory { store: store }
+        FrozenTrailMemory { store }
     }
 }
 

@@ -34,7 +34,7 @@ pub struct XLessYPlusZ<VStore> {
 
 impl<VStore> XLessYPlusZ<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
-        XLessYPlusZ { x: x, y: y, z: z }
+        XLessYPlusZ { x, y, z }
     }
 }
 

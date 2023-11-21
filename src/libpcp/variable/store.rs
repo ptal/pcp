@@ -67,7 +67,7 @@ where
 {
     fn from_memory(memory: Memory) -> Self {
         Store {
-            memory: memory,
+            memory,
             delta: VecMap::new(),
             has_changed: false,
         }

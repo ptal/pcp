@@ -212,10 +212,7 @@ mod test {
 
     impl Node {
         pub fn new(value: Domain, children: Vec<usize>) -> Self {
-            Node {
-                value: value,
-                children: children,
-            }
+            Node { value, children }
         }
     }
 

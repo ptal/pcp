@@ -27,7 +27,7 @@ pub struct Constant<V> {
 
 impl<V> Constant<V> {
     pub fn new(value: V) -> Constant<V> {
-        Constant { value: value }
+        Constant { value }
     }
 }
 

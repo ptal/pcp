@@ -57,9 +57,7 @@ impl<Domain> Index<usize> for CopyMemory<Domain> {
 
 impl<Domain> CopyMemory<Domain> {
     fn restore(variables: Vec<Domain>) -> CopyMemory<Domain> {
-        CopyMemory {
-            variables: variables,
-        }
+        CopyMemory { variables }
     }
 }
 

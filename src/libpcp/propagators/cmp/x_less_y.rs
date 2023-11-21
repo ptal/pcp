@@ -32,7 +32,7 @@ pub struct XLessY<VStore> {
 
 impl<VStore> XLessY<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>) -> XLessY<VStore> {
-        XLessY { x: x, y: y }
+        XLessY { x, y }
     }
 }
 

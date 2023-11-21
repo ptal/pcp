@@ -299,7 +299,7 @@ where
     S: Scheduler,
 {
     fn new(cstore: Store<VStore, Event, R, S>) -> Self {
-        FrozenStore { cstore: cstore }
+        FrozenStore { cstore }
     }
 }
 

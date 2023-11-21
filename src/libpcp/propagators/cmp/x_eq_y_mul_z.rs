@@ -36,7 +36,7 @@ pub struct XEqYMulZ<VStore> {
 
 impl<VStore> XEqYMulZ<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
-        XEqYMulZ { x: x, y: y, z: z }
+        XEqYMulZ { x, y, z }
     }
 }
 

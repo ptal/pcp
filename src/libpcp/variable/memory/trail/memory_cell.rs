@@ -22,10 +22,7 @@ pub struct MemoryCell<Domain> {
 
 impl<Domain> MemoryCell<Domain> {
     pub fn new(location: usize, value: Domain) -> MemoryCell<Domain> {
-        MemoryCell {
-            location: location,
-            value: value,
-        }
+        MemoryCell { location, value }
     }
 }
 

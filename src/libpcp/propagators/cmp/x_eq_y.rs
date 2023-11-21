@@ -32,7 +32,7 @@ pub struct XEqY<VStore> {
 
 impl<VStore> XEqY<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>) -> Self {
-        XEqY { x: x, y: y }
+        XEqY { x, y }
     }
 }
 

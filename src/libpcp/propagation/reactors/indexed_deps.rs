@@ -56,7 +56,7 @@ impl IndexedDeps {
 impl Reactor for IndexedDeps {
     fn new(num_vars: usize, num_events: usize) -> IndexedDeps {
         IndexedDeps {
-            num_events: num_events,
+            num_events,
             num_subscriptions: 0,
             deps: FromIterator::from_iter(repeat(vec![]).take(num_vars * num_events)),
         }

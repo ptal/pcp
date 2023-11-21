@@ -28,7 +28,7 @@ pub struct Identity<Domain> {
 impl<Domain> Identity<Domain> {
     pub fn new(idx: usize) -> Identity<Domain> {
         Identity {
-            idx: idx,
+            idx,
             phantom: PhantomData,
         }
     }

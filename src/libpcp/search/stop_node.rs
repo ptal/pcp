@@ -26,8 +26,8 @@ pub struct StopNode<C> {
 impl<C> StopNode<C> {
     pub fn new(limit: usize, child: C) -> StopNode<C> {
         StopNode {
-            child: child,
-            limit: limit,
+            child,
+            limit,
             nodes_explored: 0,
         }
     }

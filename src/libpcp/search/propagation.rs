@@ -24,7 +24,7 @@ pub struct Propagation<C> {
 
 impl<C> Propagation<C> {
     pub fn new(child: C) -> Propagation<C> {
-        Propagation { child: child }
+        Propagation { child }
     }
 }
 

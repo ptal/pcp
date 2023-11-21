@@ -31,7 +31,7 @@ pub struct XNeqY<VStore> {
 
 impl<VStore> XNeqY<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>) -> Self {
-        XNeqY { x: x, y: y }
+        XNeqY { x, y }
     }
 }
 

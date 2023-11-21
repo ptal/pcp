@@ -34,7 +34,7 @@ pub struct XGreaterYPlusZ<VStore> {
 
 impl<VStore> XGreaterYPlusZ<VStore> {
     pub fn new(x: Var<VStore>, y: Var<VStore>, z: Var<VStore>) -> Self {
-        XGreaterYPlusZ { x: x, y: y, z: z }
+        XGreaterYPlusZ { x, y, z }
     }
 }
 
