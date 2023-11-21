@@ -40,7 +40,7 @@ impl Scheduler for RelaxedFifo {
     }
 
     fn schedule(&mut self, idx: usize) {
-        assert!((idx as usize) < self.capacity);
+        assert!(idx < self.capacity);
         if !self.inside_queue.contains(idx) {
             self.inside_queue.insert(idx);
             self.queue.push_back(idx);
@@ -48,7 +48,7 @@ impl Scheduler for RelaxedFifo {
     }
 
     fn unschedule(&mut self, idx: usize) {
-        assert!((idx as usize) < self.capacity);
+        assert!(idx < self.capacity);
         if self.inside_queue.contains(idx) {
             let queue_idx = self.queue.iter().position(|&e| e == idx);
             assert!(queue_idx.is_some());
