@@ -34,7 +34,7 @@ impl IndexedDeps {
         self.num_events * var + ev.to_index()
     }
 
-    fn deps_of_mut<'a, E>(&'a mut self, var: usize, ev: E) -> &'a mut Vec<usize>
+    fn deps_of_mut<E>(&mut self, var: usize, ev: E) -> &mut Vec<usize>
     where
         E: EventIndex,
     {

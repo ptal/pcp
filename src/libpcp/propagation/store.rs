@@ -209,13 +209,13 @@ where
 
 impl<VStore, Event, R, S> Index<usize> for Store<VStore, Event, R, S> {
     type Output = Box<dyn PropagatorConcept<VStore, Event> + 'static>;
-    fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         &self.propagators[index]
     }
 }
 
 impl<VStore, Event, R, S> IndexMut<usize> for Store<VStore, Event, R, S> {
-    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Self::Output {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.propagators[index]
     }
 }

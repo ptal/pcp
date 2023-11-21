@@ -77,7 +77,7 @@ impl<Trail, Domain> Cardinality for TrailMemory<Trail, Domain> {
 }
 
 impl<Trail, Domain> Iterable for TrailMemory<Trail, Domain> {
-    fn iter<'a>(&'a self) -> slice::Iter<'a, Domain> {
+    fn iter(&self) -> slice::Iter<'_, Domain> {
         self.variables.iter()
     }
 }
@@ -106,7 +106,7 @@ where
 
 impl<Trail, Domain> Index<usize> for TrailMemory<Trail, Domain> {
     type Output = Domain;
-    fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    fn index(&self, index: usize) -> &Domain {
         &self.variables[index]
     }
 }
