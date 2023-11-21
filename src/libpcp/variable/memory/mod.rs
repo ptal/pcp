@@ -228,7 +228,7 @@ mod test {
                 root: 0,
                 nodes: vec![],
             };
-            tree.root = tree.from_shape(depth, &shape);
+            tree.root = tree.from_shape(depth, shape);
             tree
         }
 

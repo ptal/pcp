@@ -90,15 +90,15 @@ impl<VStore, Event, R, S> DisplayStateful<(Model, VStore)> for Store<VStore, Eve
         let mut unknown = vec![];
         let mut unsatisfiable = vec![];
         for (i, p) in self.propagators.iter().enumerate() {
-            match p.is_subsumed(&vstore) {
+            match p.is_subsumed(vstore) {
                 False => unsatisfiable.push(i),
                 True => subsumed.push(i),
                 Unknown => unknown.push(i),
             };
         }
-        self.display_constraints(&model, unsatisfiable, "unsatisfiable:");
-        self.display_constraints(&model, subsumed, "subsumed:");
-        self.display_constraints(&model, unknown, "unknown:");
+        self.display_constraints(model, unsatisfiable, "unsatisfiable:");
+        self.display_constraints(model, subsumed, "subsumed:");
+        self.display_constraints(model, unknown, "unknown:");
     }
 }
 
