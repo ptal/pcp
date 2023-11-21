@@ -85,7 +85,7 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> {
 }
 
 impl<VStore, Event, R, S> DisplayStateful<(Model, VStore)> for Store<VStore, Event, R, S> {
-    fn display(&self, &(ref model, ref vstore): &(Model, VStore)) {
+    fn display(&self, (model, vstore): &(Model, VStore)) {
         let mut subsumed = vec![];
         let mut unknown = vec![];
         let mut unsatisfiable = vec![];

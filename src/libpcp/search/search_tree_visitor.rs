@@ -45,7 +45,7 @@ where
         let name = match self {
             &Satisfiable => "Satisfiable",
             &Unsatisfiable => "Unsatisfiable",
-            &Unknown(ref branches) if branches.is_empty() => "Pruned",
+            Unknown(branches) if branches.is_empty() => "Pruned",
             &Unknown(_) => "Unknown",
             &EndOfSearch => "End of search",
         };
@@ -61,7 +61,7 @@ where
         match (self, other) {
             (&Satisfiable, &Satisfiable) => true,
             (&Unsatisfiable, &Unsatisfiable) => true,
-            (&Unknown(ref b1), &Unknown(ref b2)) if b1.is_empty() && b2.is_empty() => true,
+            (Unknown(b1), Unknown(b2)) if b1.is_empty() && b2.is_empty() => true,
             (&Unknown(_), &Unknown(_)) => panic!("Cannot compare unknown status."),
             (&EndOfSearch, &EndOfSearch) => true,
             (_, _) => false,

@@ -26,7 +26,7 @@ pub trait SearchMonitor<Space: Freeze> {
             &Satisfiable => self.on_solution(space),
             &Unsatisfiable => self.on_failure(space),
             &EndOfSearch => self.on_end_of_search(space),
-            &Unknown(ref b) if b.is_empty() => self.on_prune(space),
+            Unknown(b) if b.is_empty() => self.on_prune(space),
             &Unknown(_) => self.on_unknown(space),
         }
     }
