@@ -36,7 +36,7 @@ where
     Domain: Collection<Item = Bound>,
 {
     pub fn new(x: Var<VStore>, v: Bound) -> Self {
-        Addition { x: x, v: v }
+        Addition { x, v }
     }
 }
 

@@ -50,16 +50,14 @@ impl<Domain> Replace for CopyMemory<Domain> {
 
 impl<Domain> Index<usize> for CopyMemory<Domain> {
     type Output = Domain;
-    fn index<'a>(&'a self, index: usize) -> &'a Domain {
+    fn index(&self, index: usize) -> &Domain {
         &self.variables[index]
     }
 }
 
 impl<Domain> CopyMemory<Domain> {
     fn restore(variables: Vec<Domain>) -> CopyMemory<Domain> {
-        CopyMemory {
-            variables: variables,
-        }
+        CopyMemory { variables }
     }
 }
 
@@ -91,7 +89,7 @@ impl<Domain> Cardinality for CopyMemory<Domain> {
 }
 
 impl<Domain> Iterable for CopyMemory<Domain> {
-    fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
+    fn iter(&self) -> slice::Iter<'_, Self::Item> {
         self.variables.iter()
     }
 }

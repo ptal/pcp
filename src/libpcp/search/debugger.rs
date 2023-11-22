@@ -27,10 +27,7 @@ pub struct Debugger<C> {
 
 impl<C> Debugger<C> {
     pub fn new(model: Model, child: C) -> Debugger<C> {
-        Debugger {
-            model: model,
-            child: child,
-        }
+        Debugger { model, child }
     }
 }
 

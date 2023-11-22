@@ -32,7 +32,7 @@ pub struct BooleanNeg<VStore> {
 
 impl<VStore> BooleanNeg<VStore> {
     pub fn new(b: Boolean<VStore>) -> Self {
-        BooleanNeg { b: b }
+        BooleanNeg { b }
     }
 }
 

@@ -44,10 +44,10 @@ where
 {
     pub fn new(mode: Mode, var: Var<VStore>, child: C) -> Self {
         BranchAndBound {
-            mode: mode,
-            var: var,
+            mode,
+            var,
             value: None,
-            child: child,
+            child,
         }
     }
 }

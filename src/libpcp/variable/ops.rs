@@ -17,13 +17,13 @@ use std::slice;
 use vec_map::Drain;
 
 pub trait DrainDelta<Event> {
-    fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event>;
+    fn drain_delta(&mut self) -> Drain<'_, Event>;
     fn has_changed(&self) -> bool;
     fn reset_changed(&mut self);
 }
 
 pub trait Iterable: Collection {
-    fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item>;
+    fn iter(&self) -> slice::Iter<'_, Self::Item>;
 }
 
 pub trait MonotonicUpdate: AssociativeCollection {

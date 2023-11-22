@@ -27,7 +27,7 @@ pub struct Constant<V> {
 
 impl<V> Constant<V> {
     pub fn new(value: V) -> Constant<V> {
-        Constant { value: value }
+        Constant { value }
     }
 }
 
@@ -89,7 +89,7 @@ mod test {
         let dom0_4 = (0, 4).to_interval();
         let mut store = VStore::empty();
         let x = Box::new(store.alloc(dom0_10)) as Var<VStore>;
-        let c = Box::new(Constant::new(5 as i32)) as Var<VStore>;
+        let c = Box::new(Constant::new(5_i32)) as Var<VStore>;
 
         let x_less_c = XLessY::new(x.bclone(), c);
         test_propagation(

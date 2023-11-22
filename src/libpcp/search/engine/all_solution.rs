@@ -23,7 +23,7 @@ pub struct AllSolution<C> {
 
 impl<C> AllSolution<C> {
     pub fn new(child: C) -> Self {
-        AllSolution { child: child }
+        AllSolution { child }
     }
 }
 

@@ -67,7 +67,7 @@ where
 {
     fn from_memory(memory: Memory) -> Self {
         Store {
-            memory: memory,
+            memory,
             delta: VecMap::new(),
             has_changed: false,
         }
@@ -121,7 +121,7 @@ impl<Memory, Event> Iterable for Store<Memory, Event>
 where
     Memory: MemoryConcept,
 {
-    fn iter<'a>(&'a self) -> slice::Iter<'a, Self::Item> {
+    fn iter(&self) -> slice::Iter<'_, Self::Item> {
         self.memory.iter()
     }
 }
@@ -172,7 +172,7 @@ where
 {
     type Output = <Memory as Collection>::Item;
 
-    fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         assert!(
             index < self.memory.size(),
             "Variable not registered in the store. Variable index must be obtained with `alloc`."
@@ -223,7 +223,7 @@ where
 }
 
 impl<Memory, Event> DrainDelta<Event> for Store<Memory, Event> {
-    fn drain_delta<'a>(&'a mut self) -> Drain<'a, Event> {
+    fn drain_delta(&mut self) -> Drain<'_, Event> {
         self.delta.drain()
     }
 

@@ -212,10 +212,7 @@ mod test {
 
     impl Node {
         pub fn new(value: Domain, children: Vec<usize>) -> Self {
-            Node {
-                value: value,
-                children: children,
-            }
+            Node { value, children }
         }
     }
 
@@ -231,7 +228,7 @@ mod test {
                 root: 0,
                 nodes: vec![],
             };
-            tree.root = tree.from_shape(depth, &shape);
+            tree.root = tree.from_shape(depth, shape);
             tree
         }
 
@@ -246,7 +243,7 @@ mod test {
         fn from_shape(&mut self, depth: usize, shape: &TreeShape) -> usize {
             use self::TreeShape::*;
             match shape {
-                &Node(ref value, ref children) if depth > 0 => {
+                Node(value, children) if depth > 0 => {
                     let children = children
                         .iter()
                         .map(|child| self.from_shape(depth - 1, child))

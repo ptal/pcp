@@ -28,7 +28,7 @@ pub struct Disjunction<VStore> {
 
 impl<VStore> Disjunction<VStore> {
     pub fn new(fs: Vec<Formula<VStore>>) -> Self {
-        Disjunction { fs: fs }
+        Disjunction { fs }
     }
 }
 

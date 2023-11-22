@@ -30,9 +30,9 @@ pub struct Brancher<Var, Val, D> {
 impl<Var, Val, D> Brancher<Var, Val, D> {
     pub fn new(var_selector: Var, val_selector: Val, distributor: D) -> Self {
         Brancher {
-            var_selector: var_selector,
-            val_selector: val_selector,
-            distributor: distributor,
+            var_selector,
+            val_selector,
+            distributor,
         }
     }
 }

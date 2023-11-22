@@ -34,7 +34,7 @@ impl IndexedDeps {
         self.num_events * var + ev.to_index()
     }
 
-    fn deps_of_mut<'a, E>(&'a mut self, var: usize, ev: E) -> &'a mut Vec<usize>
+    fn deps_of_mut<E>(&mut self, var: usize, ev: E) -> &mut Vec<usize>
     where
         E: EventIndex,
     {
@@ -56,7 +56,7 @@ impl IndexedDeps {
 impl Reactor for IndexedDeps {
     fn new(num_vars: usize, num_events: usize) -> IndexedDeps {
         IndexedDeps {
-            num_events: num_events,
+            num_events,
             num_subscriptions: 0,
             deps: FromIterator::from_iter(repeat(vec![]).take(num_vars * num_events)),
         }

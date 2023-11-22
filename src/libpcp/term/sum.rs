@@ -26,7 +26,7 @@ pub struct Sum<VStore> {
 
 impl<VStore> Sum<VStore> {
     pub fn new(vars: Vec<Var<VStore>>) -> Self {
-        Sum { vars: vars }
+        Sum { vars }
     }
 }
 

@@ -27,8 +27,8 @@ pub struct Space<VStore, CStore, Restoration> {
 impl<VStore, CStore, Restoration> Space<VStore, CStore, Restoration> {
     pub fn new(vstore: VStore, cstore: CStore) -> Self {
         Space {
-            vstore: vstore,
-            cstore: cstore,
+            vstore,
+            cstore,
             phantom_restoration: PhantomData,
         }
     }

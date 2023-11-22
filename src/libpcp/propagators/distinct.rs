@@ -81,7 +81,7 @@ where
         }
         Distinct {
             conj: Conjunction::new(props),
-            vars: vars,
+            vars,
         }
     }
 }

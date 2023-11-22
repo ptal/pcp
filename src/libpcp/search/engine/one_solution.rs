@@ -37,7 +37,7 @@ where
     pub fn new(child: C) -> OneSolution<C, Q, Space> {
         OneSolution {
             queue: Q::empty(),
-            child: child,
+            child,
             started_exploration: false,
             phantom_space: PhantomData,
         }

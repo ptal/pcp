@@ -36,10 +36,10 @@ impl<VStore> Cumulative<VStore> {
         assert_eq!(tasks, durations.len());
         assert_eq!(tasks, resources.len());
         Cumulative {
-            starts: starts,
-            durations: durations,
-            resources: resources,
-            capacity: capacity,
+            starts,
+            durations,
+            resources,
+            capacity,
             intermediate: vec![],
         }
     }
@@ -163,10 +163,10 @@ mod test {
             capacity: Interval<i32>,
         ) -> Self {
             CumulativeTest {
-                starts: starts,
-                durations: durations,
-                resources: resources,
-                capacity: capacity,
+                starts,
+                durations,
+                resources,
+                capacity,
             }
         }
 

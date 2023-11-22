@@ -85,20 +85,20 @@ impl<VStore, Event, R, S> Store<VStore, Event, R, S> {
 }
 
 impl<VStore, Event, R, S> DisplayStateful<(Model, VStore)> for Store<VStore, Event, R, S> {
-    fn display(&self, &(ref model, ref vstore): &(Model, VStore)) {
+    fn display(&self, (model, vstore): &(Model, VStore)) {
         let mut subsumed = vec![];
         let mut unknown = vec![];
         let mut unsatisfiable = vec![];
         for (i, p) in self.propagators.iter().enumerate() {
-            match p.is_subsumed(&vstore) {
+            match p.is_subsumed(vstore) {
                 False => unsatisfiable.push(i),
                 True => subsumed.push(i),
                 Unknown => unknown.push(i),
             };
         }
-        self.display_constraints(&model, unsatisfiable, "unsatisfiable:");
-        self.display_constraints(&model, subsumed, "subsumed:");
-        self.display_constraints(&model, unknown, "unknown:");
+        self.display_constraints(model, unsatisfiable, "unsatisfiable:");
+        self.display_constraints(model, subsumed, "subsumed:");
+        self.display_constraints(model, unknown, "unknown:");
     }
 }
 
@@ -209,13 +209,13 @@ where
 
 impl<VStore, Event, R, S> Index<usize> for Store<VStore, Event, R, S> {
     type Output = Box<dyn PropagatorConcept<VStore, Event> + 'static>;
-    fn index<'a>(&'a self, index: usize) -> &'a Self::Output {
+    fn index(&self, index: usize) -> &Self::Output {
         &self.propagators[index]
     }
 }
 
 impl<VStore, Event, R, S> IndexMut<usize> for Store<VStore, Event, R, S> {
-    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Self::Output {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.propagators[index]
     }
 }
@@ -299,7 +299,7 @@ where
     S: Scheduler,
 {
     fn new(cstore: Store<VStore, Event, R, S>) -> Self {
-        FrozenStore { cstore: cstore }
+        FrozenStore { cstore }
     }
 }
 

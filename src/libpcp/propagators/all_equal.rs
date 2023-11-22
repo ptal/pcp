@@ -57,7 +57,7 @@ where
         }
         AllEqual {
             conj: Conjunction::new(props),
-            vars: vars,
+            vars,
         }
     }
 }
